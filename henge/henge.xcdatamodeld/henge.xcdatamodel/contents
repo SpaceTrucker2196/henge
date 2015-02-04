@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="6254" systemVersion="14C109" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
+    <entity name="Action" representedClassName="Action" syncable="YES">
+        <attribute name="amended" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="watered" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="weeded" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <relationship name="observation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Observation" inverseName="action" inverseEntity="Observation" syncable="YES"/>
+    </entity>
+    <entity name="Crop" representedClassName="Crop" syncable="YES">
+        <attribute name="cost" optional="YES" attributeType="Decimal" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="cropId" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="cultivar" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="field" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="matureEarlyDays" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="matureLateDays" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="seededDate" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="transplantedDate" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="vendor" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="observations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Observation" inverseName="crop" inverseEntity="Observation" syncable="YES"/>
+    </entity>
+    <entity name="Observation" representedClassName="Observation" syncable="YES">
+        <attribute name="diseasePests" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="photoPath" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="ripeness" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="vigor" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <relationship name="action" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Action" inverseName="observation" inverseEntity="Action" syncable="YES"/>
+        <relationship name="crop" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Crop" inverseName="observations" inverseEntity="Crop" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="Crop" positionX="261" positionY="198" width="128" height="208"/>
+        <element name="Observation" positionX="261" positionY="270" width="128" height="148"/>
+        <element name="Action" positionX="279" positionY="297" width="128" height="118"/>
+    </elements>
+</model>

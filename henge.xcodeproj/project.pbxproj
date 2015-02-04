@@ -1,0 +1,600 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		EE32C5951A7A835400C2ADEA /* VegiCalcTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE32C5941A7A835400C2ADEA /* VegiCalcTableViewController.m */; };
+		EEA29EB41A7D62C1000AC27F /* NSDate-Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA29EB31A7D62C1000AC27F /* NSDate-Utilities.m */; };
+		EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */; };
+		EEA8EE531A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA8EE521A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m */; };
+		EEAB421A1A8281CC00F383E5 /* CropDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */; };
+		EEAB421D1A82946500F383E5 /* Action.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB421C1A82946500F383E5 /* Action.m */; };
+		EEAB42201A82946600F383E5 /* Observation.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB421F1A82946600F383E5 /* Observation.m */; };
+		EEC88AF31A79D872008E9519 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EEC88AF21A79D872008E9519 /* main.m */; };
+		EEC88AF61A79D872008E9519 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EEC88AF51A79D872008E9519 /* AppDelegate.m */; };
+		EEC88AF91A79D872008E9519 /* henge.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EEC88AF71A79D872008E9519 /* henge.xcdatamodeld */; };
+		EEC88AFC1A79D872008E9519 /* CropTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEC88AFB1A79D872008E9519 /* CropTableViewController.m */; };
+		EEC88AFF1A79D872008E9519 /* DetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEC88AFE1A79D872008E9519 /* DetailViewController.m */; };
+		EEC88B021A79D872008E9519 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EEC88B001A79D872008E9519 /* Main.storyboard */; };
+		EEC88B041A79D872008E9519 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EEC88B031A79D872008E9519 /* Images.xcassets */; };
+		EEC88B071A79D872008E9519 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = EEC88B051A79D872008E9519 /* LaunchScreen.xib */; };
+		EEC88B131A79D872008E9519 /* hengeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = EEC88B121A79D872008E9519 /* hengeTests.m */; };
+		EEC88B211A79DAA4008E9519 /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B1C1A79DAA4008E9519 /* Bolts.framework */; };
+		EEC88B221A79DAA4008E9519 /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B1D1A79DAA4008E9519 /* Parse.framework */; };
+		EEC88B231A79DAA4008E9519 /* ParseCrashReporting.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B1E1A79DAA4008E9519 /* ParseCrashReporting.framework */; };
+		EEC88B241A79DAA4008E9519 /* ParseFacebookUtils.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B1F1A79DAA4008E9519 /* ParseFacebookUtils.framework */; };
+		EEC88B251A79DAA4008E9519 /* ParseUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B201A79DAA4008E9519 /* ParseUI.framework */; };
+		EEC88B281A79DB3D008E9519 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B271A79DB3D008E9519 /* AudioToolbox.framework */; };
+		EEC88B2A1A79DB46008E9519 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B291A79DB46008E9519 /* CFNetwork.framework */; };
+		EEC88B2C1A79DB52008E9519 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B2B1A79DB52008E9519 /* CoreGraphics.framework */; };
+		EEC88B2E1A79DB5F008E9519 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B2D1A79DB5F008E9519 /* CoreLocation.framework */; };
+		EEC88B301A79DB69008E9519 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B2F1A79DB69008E9519 /* MobileCoreServices.framework */; };
+		EEC88B321A79DB74008E9519 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B311A79DB74008E9519 /* QuartzCore.framework */; };
+		EEC88B341A79DB7D008E9519 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B331A79DB7D008E9519 /* Security.framework */; };
+		EEC88B361A79DB84008E9519 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B351A79DB84008E9519 /* StoreKit.framework */; };
+		EEC88B381A79DB91008E9519 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B371A79DB91008E9519 /* SystemConfiguration.framework */; };
+		EEC88B3A1A79DB9F008E9519 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B391A79DB9F008E9519 /* libz.dylib */; };
+		EEC88B3C1A79DBAA008E9519 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B3B1A79DBAA008E9519 /* libsqlite3.dylib */; };
+		EEC88B3E1A79E520008E9519 /* DSC_9486 - Version 2.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EEC88B3D1A79E520008E9519 /* DSC_9486 - Version 2.jpg */; };
+		EECAE57C1A816AA400C6A731 /* Crop.m in Sources */ = {isa = PBXBuildFile; fileRef = EECAE57B1A816AA400C6A731 /* Crop.m */; };
+		EECAE57F1A816B1F00C6A731 /* GUIDCategory.m in Sources */ = {isa = PBXBuildFile; fileRef = EECAE57E1A816B1F00C6A731 /* GUIDCategory.m */; };
+		EECAE5811A816E5200C6A731 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EECAE5801A816E5200C6A731 /* UIKit.framework */; };
+		EECAE5841A81792800C6A731 /* CropTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = EECAE5831A81792800C6A731 /* CropTableViewCell.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		EEC88B0D1A79D872008E9519 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EEC88AE51A79D872008E9519 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EEC88AEC1A79D872008E9519;
+			remoteInfo = henge;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		EE32C5931A7A835400C2ADEA /* VegiCalcTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VegiCalcTableViewController.h; sourceTree = "<group>"; };
+		EE32C5941A7A835400C2ADEA /* VegiCalcTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VegiCalcTableViewController.m; sourceTree = "<group>"; };
+		EEA29EB21A7D62C1000AC27F /* NSDate-Utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate-Utilities.h"; sourceTree = "<group>"; };
+		EEA29EB31A7D62C1000AC27F /* NSDate-Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate-Utilities.m"; sourceTree = "<group>"; };
+		EEA54AC21A7B0A5700B33EB5 /* AlmanacViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlmanacViewController.h; sourceTree = "<group>"; };
+		EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlmanacViewController.m; sourceTree = "<group>"; };
+		EEA8EE511A7C4EC1002A9AB5 /* VegiCalcDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VegiCalcDetailViewController.h; sourceTree = "<group>"; };
+		EEA8EE521A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VegiCalcDetailViewController.m; sourceTree = "<group>"; };
+		EEAB42181A8281CC00F383E5 /* CropDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropDetailViewController.h; sourceTree = "<group>"; };
+		EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropDetailViewController.m; sourceTree = "<group>"; };
+		EEAB421B1A82946500F383E5 /* Action.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Action.h; sourceTree = "<group>"; };
+		EEAB421C1A82946500F383E5 /* Action.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Action.m; sourceTree = "<group>"; };
+		EEAB421E1A82946600F383E5 /* Observation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Observation.h; sourceTree = "<group>"; };
+		EEAB421F1A82946600F383E5 /* Observation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Observation.m; sourceTree = "<group>"; };
+		EEC88AED1A79D872008E9519 /* henge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = henge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EEC88AF11A79D872008E9519 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EEC88AF21A79D872008E9519 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		EEC88AF41A79D872008E9519 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		EEC88AF51A79D872008E9519 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		EEC88AF81A79D872008E9519 /* henge.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = henge.xcdatamodel; sourceTree = "<group>"; };
+		EEC88AFA1A79D872008E9519 /* CropTableViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CropTableViewController.h; sourceTree = "<group>"; };
+		EEC88AFB1A79D872008E9519 /* CropTableViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CropTableViewController.m; sourceTree = "<group>"; };
+		EEC88AFD1A79D872008E9519 /* DetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DetailViewController.h; sourceTree = "<group>"; };
+		EEC88AFE1A79D872008E9519 /* DetailViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DetailViewController.m; sourceTree = "<group>"; };
+		EEC88B011A79D872008E9519 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		EEC88B031A79D872008E9519 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		EEC88B061A79D872008E9519 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		EEC88B0C1A79D872008E9519 /* hengeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hengeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		EEC88B111A79D872008E9519 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EEC88B121A79D872008E9519 /* hengeTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = hengeTests.m; sourceTree = "<group>"; };
+		EEC88B1C1A79DAA4008E9519 /* Bolts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Bolts.framework; sourceTree = "<group>"; };
+		EEC88B1D1A79DAA4008E9519 /* Parse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Parse.framework; sourceTree = "<group>"; };
+		EEC88B1E1A79DAA4008E9519 /* ParseCrashReporting.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ParseCrashReporting.framework; sourceTree = "<group>"; };
+		EEC88B1F1A79DAA4008E9519 /* ParseFacebookUtils.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ParseFacebookUtils.framework; sourceTree = "<group>"; };
+		EEC88B201A79DAA4008E9519 /* ParseUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ParseUI.framework; sourceTree = "<group>"; };
+		EEC88B271A79DB3D008E9519 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		EEC88B291A79DB46008E9519 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		EEC88B2B1A79DB52008E9519 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		EEC88B2D1A79DB5F008E9519 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		EEC88B2F1A79DB69008E9519 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
+		EEC88B311A79DB74008E9519 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		EEC88B331A79DB7D008E9519 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		EEC88B351A79DB84008E9519 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		EEC88B371A79DB91008E9519 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		EEC88B391A79DB9F008E9519 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		EEC88B3B1A79DBAA008E9519 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
+		EEC88B3D1A79E520008E9519 /* DSC_9486 - Version 2.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "DSC_9486 - Version 2.jpg"; sourceTree = "<group>"; };
+		EECAE57A1A816AA400C6A731 /* Crop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Crop.h; sourceTree = "<group>"; };
+		EECAE57B1A816AA400C6A731 /* Crop.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Crop.m; sourceTree = "<group>"; };
+		EECAE57D1A816B1F00C6A731 /* GUIDCategory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GUIDCategory.h; sourceTree = "<group>"; };
+		EECAE57E1A816B1F00C6A731 /* GUIDCategory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GUIDCategory.m; sourceTree = "<group>"; };
+		EECAE5801A816E5200C6A731 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		EECAE5821A81792800C6A731 /* CropTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropTableViewCell.h; sourceTree = "<group>"; };
+		EECAE5831A81792800C6A731 /* CropTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropTableViewCell.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		EEC88AEA1A79D872008E9519 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EECAE5811A816E5200C6A731 /* UIKit.framework in Frameworks */,
+				EEC88B3C1A79DBAA008E9519 /* libsqlite3.dylib in Frameworks */,
+				EEC88B3A1A79DB9F008E9519 /* libz.dylib in Frameworks */,
+				EEC88B381A79DB91008E9519 /* SystemConfiguration.framework in Frameworks */,
+				EEC88B361A79DB84008E9519 /* StoreKit.framework in Frameworks */,
+				EEC88B341A79DB7D008E9519 /* Security.framework in Frameworks */,
+				EEC88B321A79DB74008E9519 /* QuartzCore.framework in Frameworks */,
+				EEC88B301A79DB69008E9519 /* MobileCoreServices.framework in Frameworks */,
+				EEC88B2E1A79DB5F008E9519 /* CoreLocation.framework in Frameworks */,
+				EEC88B2C1A79DB52008E9519 /* CoreGraphics.framework in Frameworks */,
+				EEC88B2A1A79DB46008E9519 /* CFNetwork.framework in Frameworks */,
+				EEC88B281A79DB3D008E9519 /* AudioToolbox.framework in Frameworks */,
+				EEC88B221A79DAA4008E9519 /* Parse.framework in Frameworks */,
+				EEC88B231A79DAA4008E9519 /* ParseCrashReporting.framework in Frameworks */,
+				EEC88B251A79DAA4008E9519 /* ParseUI.framework in Frameworks */,
+				EEC88B241A79DAA4008E9519 /* ParseFacebookUtils.framework in Frameworks */,
+				EEC88B211A79DAA4008E9519 /* Bolts.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EEC88B091A79D872008E9519 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		EEC88AE41A79D872008E9519 = {
+			isa = PBXGroup;
+			children = (
+				EECAE5801A816E5200C6A731 /* UIKit.framework */,
+				EEC88B3B1A79DBAA008E9519 /* libsqlite3.dylib */,
+				EEC88B391A79DB9F008E9519 /* libz.dylib */,
+				EEC88B371A79DB91008E9519 /* SystemConfiguration.framework */,
+				EEC88B351A79DB84008E9519 /* StoreKit.framework */,
+				EEC88B331A79DB7D008E9519 /* Security.framework */,
+				EEC88B311A79DB74008E9519 /* QuartzCore.framework */,
+				EEC88B2F1A79DB69008E9519 /* MobileCoreServices.framework */,
+				EEC88B2D1A79DB5F008E9519 /* CoreLocation.framework */,
+				EEC88B2B1A79DB52008E9519 /* CoreGraphics.framework */,
+				EEC88B291A79DB46008E9519 /* CFNetwork.framework */,
+				EEC88B271A79DB3D008E9519 /* AudioToolbox.framework */,
+				EEC88AEF1A79D872008E9519 /* henge */,
+				EEC88B0F1A79D872008E9519 /* hengeTests */,
+				EEC88AEE1A79D872008E9519 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		EEC88AEE1A79D872008E9519 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				EEC88AED1A79D872008E9519 /* henge.app */,
+				EEC88B0C1A79D872008E9519 /* hengeTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		EEC88AEF1A79D872008E9519 /* henge */ = {
+			isa = PBXGroup;
+			children = (
+				EECAE57D1A816B1F00C6A731 /* GUIDCategory.h */,
+				EECAE57E1A816B1F00C6A731 /* GUIDCategory.m */,
+				EEA29EB21A7D62C1000AC27F /* NSDate-Utilities.h */,
+				EEA29EB31A7D62C1000AC27F /* NSDate-Utilities.m */,
+				EEC88B261A79DAAE008E9519 /* Parse */,
+				EEC88AF41A79D872008E9519 /* AppDelegate.h */,
+				EEC88AF51A79D872008E9519 /* AppDelegate.m */,
+				EEC88AFA1A79D872008E9519 /* CropTableViewController.h */,
+				EEC88AFB1A79D872008E9519 /* CropTableViewController.m */,
+				EEC88AFD1A79D872008E9519 /* DetailViewController.h */,
+				EEC88AFE1A79D872008E9519 /* DetailViewController.m */,
+				EEC88B001A79D872008E9519 /* Main.storyboard */,
+				EEC88B031A79D872008E9519 /* Images.xcassets */,
+				EEC88B051A79D872008E9519 /* LaunchScreen.xib */,
+				EEC88AF71A79D872008E9519 /* henge.xcdatamodeld */,
+				EEAB421E1A82946600F383E5 /* Observation.h */,
+				EEAB421F1A82946600F383E5 /* Observation.m */,
+				EEAB421B1A82946500F383E5 /* Action.h */,
+				EEAB421C1A82946500F383E5 /* Action.m */,
+				EECAE57A1A816AA400C6A731 /* Crop.h */,
+				EECAE57B1A816AA400C6A731 /* Crop.m */,
+				EEC88AF01A79D872008E9519 /* Supporting Files */,
+				EE32C5931A7A835400C2ADEA /* VegiCalcTableViewController.h */,
+				EE32C5941A7A835400C2ADEA /* VegiCalcTableViewController.m */,
+				EEA54AC21A7B0A5700B33EB5 /* AlmanacViewController.h */,
+				EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */,
+				EEA8EE511A7C4EC1002A9AB5 /* VegiCalcDetailViewController.h */,
+				EEA8EE521A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m */,
+				EECAE5821A81792800C6A731 /* CropTableViewCell.h */,
+				EECAE5831A81792800C6A731 /* CropTableViewCell.m */,
+				EEAB42181A8281CC00F383E5 /* CropDetailViewController.h */,
+				EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */,
+			);
+			path = henge;
+			sourceTree = "<group>";
+		};
+		EEC88AF01A79D872008E9519 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				EEC88AF11A79D872008E9519 /* Info.plist */,
+				EEC88AF21A79D872008E9519 /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		EEC88B0F1A79D872008E9519 /* hengeTests */ = {
+			isa = PBXGroup;
+			children = (
+				EEC88B121A79D872008E9519 /* hengeTests.m */,
+				EEC88B101A79D872008E9519 /* Supporting Files */,
+			);
+			path = hengeTests;
+			sourceTree = "<group>";
+		};
+		EEC88B101A79D872008E9519 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				EEC88B111A79D872008E9519 /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		EEC88B261A79DAAE008E9519 /* Parse */ = {
+			isa = PBXGroup;
+			children = (
+				EEC88B3D1A79E520008E9519 /* DSC_9486 - Version 2.jpg */,
+				EEC88B1C1A79DAA4008E9519 /* Bolts.framework */,
+				EEC88B1D1A79DAA4008E9519 /* Parse.framework */,
+				EEC88B1E1A79DAA4008E9519 /* ParseCrashReporting.framework */,
+				EEC88B1F1A79DAA4008E9519 /* ParseFacebookUtils.framework */,
+				EEC88B201A79DAA4008E9519 /* ParseUI.framework */,
+			);
+			name = Parse;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		EEC88AEC1A79D872008E9519 /* henge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EEC88B161A79D872008E9519 /* Build configuration list for PBXNativeTarget "henge" */;
+			buildPhases = (
+				EEC88AE91A79D872008E9519 /* Sources */,
+				EEC88AEA1A79D872008E9519 /* Frameworks */,
+				EEC88AEB1A79D872008E9519 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = henge;
+			productName = henge;
+			productReference = EEC88AED1A79D872008E9519 /* henge.app */;
+			productType = "com.apple.product-type.application";
+		};
+		EEC88B0B1A79D872008E9519 /* hengeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EEC88B191A79D872008E9519 /* Build configuration list for PBXNativeTarget "hengeTests" */;
+			buildPhases = (
+				EEC88B081A79D872008E9519 /* Sources */,
+				EEC88B091A79D872008E9519 /* Frameworks */,
+				EEC88B0A1A79D872008E9519 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EEC88B0E1A79D872008E9519 /* PBXTargetDependency */,
+			);
+			name = hengeTests;
+			productName = hengeTests;
+			productReference = EEC88B0C1A79D872008E9519 /* hengeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		EEC88AE51A79D872008E9519 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = River.io;
+				TargetAttributes = {
+					EEC88AEC1A79D872008E9519 = {
+						CreatedOnToolsVersion = 6.1.1;
+					};
+					EEC88B0B1A79D872008E9519 = {
+						CreatedOnToolsVersion = 6.1.1;
+						TestTargetID = EEC88AEC1A79D872008E9519;
+					};
+				};
+			};
+			buildConfigurationList = EEC88AE81A79D872008E9519 /* Build configuration list for PBXProject "henge" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = EEC88AE41A79D872008E9519;
+			productRefGroup = EEC88AEE1A79D872008E9519 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EEC88AEC1A79D872008E9519 /* henge */,
+				EEC88B0B1A79D872008E9519 /* hengeTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		EEC88AEB1A79D872008E9519 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EEC88B3E1A79E520008E9519 /* DSC_9486 - Version 2.jpg in Resources */,
+				EEC88B021A79D872008E9519 /* Main.storyboard in Resources */,
+				EEC88B071A79D872008E9519 /* LaunchScreen.xib in Resources */,
+				EEC88B041A79D872008E9519 /* Images.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EEC88B0A1A79D872008E9519 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EEC88AE91A79D872008E9519 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EEA29EB41A7D62C1000AC27F /* NSDate-Utilities.m in Sources */,
+				EEAB42201A82946600F383E5 /* Observation.m in Sources */,
+				EEC88AFF1A79D872008E9519 /* DetailViewController.m in Sources */,
+				EEA8EE531A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m in Sources */,
+				EEC88AFC1A79D872008E9519 /* CropTableViewController.m in Sources */,
+				EECAE57F1A816B1F00C6A731 /* GUIDCategory.m in Sources */,
+				EECAE5841A81792800C6A731 /* CropTableViewCell.m in Sources */,
+				EEC88AF61A79D872008E9519 /* AppDelegate.m in Sources */,
+				EECAE57C1A816AA400C6A731 /* Crop.m in Sources */,
+				EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */,
+				EEAB421D1A82946500F383E5 /* Action.m in Sources */,
+				EE32C5951A7A835400C2ADEA /* VegiCalcTableViewController.m in Sources */,
+				EEC88AF31A79D872008E9519 /* main.m in Sources */,
+				EEAB421A1A8281CC00F383E5 /* CropDetailViewController.m in Sources */,
+				EEC88AF91A79D872008E9519 /* henge.xcdatamodeld in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EEC88B081A79D872008E9519 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EEC88B131A79D872008E9519 /* hengeTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		EEC88B0E1A79D872008E9519 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EEC88AEC1A79D872008E9519 /* henge */;
+			targetProxy = EEC88B0D1A79D872008E9519 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		EEC88B001A79D872008E9519 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				EEC88B011A79D872008E9519 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		EEC88B051A79D872008E9519 /* LaunchScreen.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				EEC88B061A79D872008E9519 /* Base */,
+			);
+			name = LaunchScreen.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		EEC88B141A79D872008E9519 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		EEC88B151A79D872008E9519 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		EEC88B171A79D872008E9519 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/henge",
+				);
+				INFOPLIST_FILE = henge/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		EEC88B181A79D872008E9519 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/henge",
+				);
+				INFOPLIST_FILE = henge/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		EEC88B1A1A79D872008E9519 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = hengeTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/henge.app/henge";
+			};
+			name = Debug;
+		};
+		EEC88B1B1A79D872008E9519 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = hengeTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/henge.app/henge";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		EEC88AE81A79D872008E9519 /* Build configuration list for PBXProject "henge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EEC88B141A79D872008E9519 /* Debug */,
+				EEC88B151A79D872008E9519 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EEC88B161A79D872008E9519 /* Build configuration list for PBXNativeTarget "henge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EEC88B171A79D872008E9519 /* Debug */,
+				EEC88B181A79D872008E9519 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EEC88B191A79D872008E9519 /* Build configuration list for PBXNativeTarget "hengeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EEC88B1A1A79D872008E9519 /* Debug */,
+				EEC88B1B1A79D872008E9519 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		EEC88AF71A79D872008E9519 /* henge.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				EEC88AF81A79D872008E9519 /* henge.xcdatamodel */,
+			);
+			currentVersion = EEC88AF81A79D872008E9519 /* henge.xcdatamodel */;
+			path = henge.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = EEC88AE51A79D872008E9519 /* Project object */;
+}
