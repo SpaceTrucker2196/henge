@@ -914,6 +914,55 @@
             </objects>
             <point key="canvasLocation" x="-662" y="-204"/>
         </scene>
+        <!--Crop Date Picker View Controller-->
+        <scene sceneID="lqZ-d8-Mwm">
+            <objects>
+                <viewController id="ft3-ok-Krl" customClass="CropDatePickerViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="rhD-qB-D76"/>
+                        <viewControllerLayoutGuide type="bottom" id="Yc7-3n-Pax"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="nfb-eN-AqU">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <datePicker contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" datePickerMode="dateAndTime" minuteInterval="1" translatesAutoresizingMaskIntoConstraints="NO" id="7q9-6Q-UMc">
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="162"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" priority="250" constant="600" id="jNX-IZ-We1"/>
+                                    <constraint firstAttribute="height" constant="162" id="rre-0i-DZx"/>
+                                </constraints>
+                                <date key="date" timeIntervalSinceReferenceDate="444769111.65669698">
+                                    <!--2015-02-04 18:58:31 +0000-->
+                                </date>
+                            </datePicker>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Nw5-kE-utm">
+                                <rect key="frame" x="0.0" y="170" width="600" height="30"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" priority="250" constant="600" id="t4i-16-7SE"/>
+                                    <constraint firstAttribute="height" constant="30" id="upR-BD-I4K"/>
+                                </constraints>
+                                <state key="normal" title="Planted">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="7q9-6Q-UMc" firstAttribute="top" secondItem="rhD-qB-D76" secondAttribute="bottom" id="5hq-Kc-ODC"/>
+                            <constraint firstItem="7q9-6Q-UMc" firstAttribute="leading" secondItem="nfb-eN-AqU" secondAttribute="leading" id="926-yf-oF9"/>
+                            <constraint firstAttribute="trailing" secondItem="7q9-6Q-UMc" secondAttribute="trailing" id="CqH-6g-2kl"/>
+                            <constraint firstItem="Nw5-kE-utm" firstAttribute="leading" secondItem="nfb-eN-AqU" secondAttribute="leading" id="bsp-FD-TCm"/>
+                            <constraint firstAttribute="trailing" secondItem="Nw5-kE-utm" secondAttribute="trailing" id="pdO-CU-Skz"/>
+                            <constraint firstItem="Nw5-kE-utm" firstAttribute="top" secondItem="7q9-6Q-UMc" secondAttribute="bottom" constant="8" id="rFJ-vS-I5b"/>
+                        </constraints>
+                    </view>
+                    <nil key="simulatedStatusBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="jZo-bt-z4E" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-662" y="524"/>
+        </scene>
         <!--Crop Detail View Controller-->
         <scene sceneID="80U-Eu-lj0">
             <objects>
@@ -1051,12 +1100,23 @@
                                                                 <state key="normal" title="Button">
                                                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                                                 </state>
+                                                                <connections>
+                                                                    <action selector="seededButtonAction:" destination="MgI-Qx-pyL" eventType="touchUpInside" id="sww-DI-Kcx"/>
+                                                                    <segue destination="ft3-ok-Krl" kind="popoverPresentation" identifier="seededDatePopover" popoverAnchorView="nuS-fH-0kf" id="b2S-pa-sHk">
+                                                                        <popoverArrowDirection key="popoverArrowDirection" up="YES" down="YES" left="YES" right="YES"/>
+                                                                    </segue>
+                                                                </connections>
                                                             </button>
                                                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="right" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jUU-xg-DSr">
                                                                 <rect key="frame" x="462" y="85" width="130" height="30"/>
                                                                 <state key="normal" title="Button">
                                                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                                                 </state>
+                                                                <connections>
+                                                                    <segue destination="ft3-ok-Krl" kind="popoverPresentation" identifier="transplantedDatePopover" popoverAnchorView="jUU-xg-DSr" id="qkG-2M-YeD">
+                                                                        <popoverArrowDirection key="popoverArrowDirection" up="YES" down="YES" left="YES" right="YES"/>
+                                                                    </segue>
+                                                                </connections>
                                                             </button>
                                                         </subviews>
                                                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -1119,7 +1179,7 @@
                                                                     </mask>
                                                                 </variation>
                                                             </label>
-                                                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="jxd-jg-AbW">
+                                                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="100" translatesAutoresizingMaskIntoConstraints="NO" id="jxd-jg-AbW">
                                                                 <rect key="frame" x="6" y="56" width="588" height="31"/>
                                                                 <constraints>
                                                                     <constraint firstAttribute="height" constant="30" id="V58-hj-tzY"/>
@@ -1129,7 +1189,7 @@
                                                                     <action selector="vigorSliderChanged:" destination="MgI-Qx-pyL" eventType="valueChanged" id="u7E-6Z-i2n"/>
                                                                 </connections>
                                                             </slider>
-                                                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="AZZ-Qe-bH7">
+                                                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="100" translatesAutoresizingMaskIntoConstraints="NO" id="AZZ-Qe-bH7">
                                                                 <rect key="frame" x="6" y="113" width="588" height="31"/>
                                                                 <constraints>
                                                                     <constraint firstAttribute="height" constant="30" id="Xvy-Sg-k4V"/>
@@ -1139,7 +1199,7 @@
                                                                     <action selector="diseasePestSliderChanged:" destination="MgI-Qx-pyL" eventType="valueChanged" id="cEJ-AS-nan"/>
                                                                 </connections>
                                                             </slider>
-                                                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="33e-pR-07g">
+                                                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="100" translatesAutoresizingMaskIntoConstraints="NO" id="33e-pR-07g">
                                                                 <rect key="frame" x="6" y="170" width="588" height="31"/>
                                                                 <constraints>
                                                                     <constraint firstAttribute="height" constant="30" id="3YE-fv-NUJ"/>
@@ -1453,7 +1513,7 @@
                     </view>
                     <toolbarItems/>
                     <connections>
-                        <outlet property="cropDetailsLabel" destination="cPa-eb-8nY" id="Lyp-wj-NgZ"/>
+                        <outlet property="cropDetailsLabel" destination="cPa-eb-8nY" id="e49-Ff-qWC"/>
                         <outlet property="cropNameLabel" destination="0wR-4i-5j0" id="tch-Yt-Sx0"/>
                         <outlet property="diseasePestSlider" destination="AZZ-Qe-bH7" id="bx5-5V-jlt"/>
                         <outlet property="harvestDateLabel" destination="ZNm-VP-aFR" id="B7m-6W-6rg"/>
@@ -1461,7 +1521,7 @@
                         <outlet property="lastWateredTable" destination="E11-VV-6n8" id="UKx-ee-QcY"/>
                         <outlet property="ripenessSlider" destination="33e-pR-07g" id="PSP-M2-xSz"/>
                         <outlet property="seededDateButton" destination="nuS-fH-0kf" id="a6I-N3-pF1"/>
-                        <outlet property="seededDateTitle" destination="nuS-fH-0kf" id="fcu-t2-VMS"/>
+                        <outlet property="seededDateTitle" destination="ahX-Xt-jXq" id="XwG-pL-gxK"/>
                         <outlet property="transplantedDateButton" destination="jUU-xg-DSr" id="1v2-Yh-FRg"/>
                         <outlet property="transplantedDateLabel" destination="hhb-R1-kNh" id="aL4-C1-GEK"/>
                         <outlet property="vigorSlider" destination="jxd-jg-AbW" id="6GF-XI-rYh"/>
@@ -1487,7 +1547,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="szT-ZH-Pug" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="28" y="532"/>
+            <point key="canvasLocation" x="61" y="1164"/>
         </scene>
         <!--View Controller-->
         <scene sceneID="6Pg-fW-Arl">
@@ -1529,4 +1589,7 @@
     <resources>
         <image name="DSC_9486 - Version 2.jpg" width="1504" height="1000"/>
     </resources>
+    <inferredMetricsTieBreakers>
+        <segue reference="qkG-2M-YeD"/>
+    </inferredMetricsTieBreakers>
 </document>

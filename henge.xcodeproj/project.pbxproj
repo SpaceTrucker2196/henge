@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EE17B8EA1A82A518000AA80F /* CropDatePickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */; };
 		EE32C5951A7A835400C2ADEA /* VegiCalcTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE32C5941A7A835400C2ADEA /* VegiCalcTableViewController.m */; };
 		EEA29EB41A7D62C1000AC27F /* NSDate-Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA29EB31A7D62C1000AC27F /* NSDate-Utilities.m */; };
 		EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */; };
@@ -57,6 +58,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		EE17B8E81A82A518000AA80F /* CropDatePickerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropDatePickerViewController.h; sourceTree = "<group>"; };
+		EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropDatePickerViewController.m; sourceTree = "<group>"; };
 		EE32C5931A7A835400C2ADEA /* VegiCalcTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VegiCalcTableViewController.h; sourceTree = "<group>"; };
 		EE32C5941A7A835400C2ADEA /* VegiCalcTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VegiCalcTableViewController.m; sourceTree = "<group>"; };
 		EEA29EB21A7D62C1000AC27F /* NSDate-Utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate-Utilities.h"; sourceTree = "<group>"; };
@@ -213,6 +216,8 @@
 				EECAE5831A81792800C6A731 /* CropTableViewCell.m */,
 				EEAB42181A8281CC00F383E5 /* CropDetailViewController.h */,
 				EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */,
+				EE17B8E81A82A518000AA80F /* CropDatePickerViewController.h */,
+				EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */,
 			);
 			path = henge;
 			sourceTree = "<group>";
@@ -365,6 +370,7 @@
 				EECAE57F1A816B1F00C6A731 /* GUIDCategory.m in Sources */,
 				EECAE5841A81792800C6A731 /* CropTableViewCell.m in Sources */,
 				EEC88AF61A79D872008E9519 /* AppDelegate.m in Sources */,
+				EE17B8EA1A82A518000AA80F /* CropDatePickerViewController.m in Sources */,
 				EECAE57C1A816AA400C6A731 /* Crop.m in Sources */,
 				EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */,
 				EEAB421D1A82946500F383E5 /* Action.m in Sources */,

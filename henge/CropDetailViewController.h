@@ -8,14 +8,16 @@
 
 #import <UIKit/UIKit.h>
 #import "Crop.h"
+#import "CropDatePickerViewController.h"
 
-@interface CropDetailViewController : UIViewController
+@interface CropDetailViewController : UIViewController <CropDatePickerDelegate>
 
 @property (nonatomic,strong) Crop *cropInView;
 @property (strong, nonatomic) id detailItem;
 @property (weak, nonatomic) IBOutlet UILabel *cropNameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *seededDateTitle;
 @property (weak, nonatomic) IBOutlet UILabel *cropDetailsLabel;
-@property (weak, nonatomic) IBOutlet UIButton *seededDateTitle;
+
 @property (weak, nonatomic) IBOutlet UIButton *seededDateButton;
 @property (weak, nonatomic) IBOutlet UILabel *transplantedDateLabel;
 @property (weak, nonatomic) IBOutlet UIButton *transplantedDateButton;
@@ -31,5 +33,8 @@
 - (IBAction)ripenessSliderChanged:(id)sender;
 - (IBAction)diseasePestSliderChanged:(id)sender;
 - (IBAction)waterAction:(id)sender;
+- (IBAction)seededButtonAction:(id)sender;
+
+-(void)datePicked:(NSDate *)date;
 
 @end

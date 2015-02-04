@@ -35,7 +35,7 @@
     {
         _cropInView = newDetailItem;
         // Update the view.
-        [self configureView];
+       // [self configureView];
     }
 }
 
@@ -48,8 +48,12 @@
 -(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [self getLatestObservationForCrop:_cropInView];
+    self.currentObservation = [self getLatestObservationForCrop:_cropInView];
     [self configureView];
+}
+
+-(void)datePicked:(NSDate *)date
+{
     
 }
 
@@ -67,9 +71,18 @@
     }
     else
     {
-        _seededDateTitle.alpha = 0;
-        _seededDateButton.alpha = 0;
+        if (_cropInView.transplantedDate)
+        {
+            _seededDateTitle.alpha = 0;
+            _seededDateButton.alpha = 0;
+        }
+        else
+        {
+            [_seededDateButton setTitle:@"Plant Seeds" forState:UIControlStateNormal];
+        }
     }
+    
+    
     
     if (_cropInView.transplantedDate)
     {
@@ -84,7 +97,9 @@
         _transplantedDateLabel.alpha = 0;
     }
     
-    
+    [_vigorSlider setValue:[_currentObservation.vigor floatValue] animated:YES];
+    [_diseasePestSlider setValue:[_currentObservation.diseasePests floatValue] animated:YES];
+    [_ripenessSlider setValue:[_currentObservation.ripeness floatValue] animated:YES];
     
     _lastWateredTable.text = @"Never Watered";
     _lastAmendLabel.text = @"No Ammendments Applied";
@@ -103,8 +118,8 @@
     NSEntityDescription *entity = [NSEntityDescription entityForName:@"Observation" inManagedObjectContext:crop.managedObjectContext];
     [fetchRequest setEntity:entity];
     
-    //NSPredicate *pred = [NSPredicate predicateWithFormat:@"assignment != nil"];
-    //[fetchRequest setPredicate:pred];
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"((timestamp != nil) AND (crop = %@))",_cropInView];
+    [fetchRequest setPredicate:pred];
     
     NSSortDescriptor *sortDescriptor1 = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:YES];
     
@@ -127,6 +142,8 @@
         observation.vigor = @50;
         observation.diseasePests = @50;
         observation.ripeness = @0;
+        observation.timestamp = [NSDate date];
+        observation.crop = _cropInView;
         
         return observation;
     }
@@ -186,17 +203,66 @@
 
 - (IBAction)vigorSliderChanged:(id)sender
 {
-
+    if ([_currentObservation.timestamp isToday])
+    {
+        _currentObservation.vigor = [NSNumber numberWithFloat:_vigorSlider.value];
+    }
+    else
+    {
+        Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_currentObservation.managedObjectContext];
+        
+        observation.vigor = [NSNumber numberWithFloat:_vigorSlider.value];
+        observation.diseasePests = _currentObservation.diseasePests;
+        observation.ripeness = _currentObservation.ripeness;
+        observation.crop = _cropInView;
+    }
+    
+    [_currentObservation.managedObjectContext save:nil];
 }
 
 - (IBAction)ripenessSliderChanged:(id)sender
 {
 
+    if ([_currentObservation.timestamp isToday])
+    {
+        _currentObservation.ripeness = [NSNumber numberWithFloat:_ripenessSlider.value];
+    }
+    else
+    {
+        Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_currentObservation.managedObjectContext];
+        observation.vigor = _currentObservation.vigor;
+        observation.diseasePests = _currentObservation.diseasePests;
+        observation.ripeness = [NSNumber numberWithFloat:_ripenessSlider.value];
+        observation.crop = _cropInView;
+    }
+    
+    [_currentObservation.managedObjectContext save:nil];
 }
 
-- (IBAction)diseasePestSliderChanged:(id)sender {
+- (IBAction)diseasePestSliderChanged:(id)sender
+{
+    if ([_currentObservation.timestamp isToday])
+    {
+        _currentObservation.diseasePests = [NSNumber numberWithFloat:_diseasePestSlider.value];
+    }
+    else
+    {
+        Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_currentObservation.managedObjectContext];
+        observation.vigor = _currentObservation.vigor;
+        observation.diseasePests = [NSNumber numberWithFloat:_diseasePestSlider.value];
+        observation.ripeness = _currentObservation.ripeness;
+        observation.crop = _cropInView;
+    }
+    
+    [_currentObservation.managedObjectContext save:nil];
+    
 }
 
-- (IBAction)waterAction:(id)sender {
+- (IBAction)waterAction:(id)sender
+{
+
+}
+
+- (IBAction)seededButtonAction:(id)sender {
 }
 @end
