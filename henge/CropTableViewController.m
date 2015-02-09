@@ -11,6 +11,8 @@
 #import "AppDelegate.h"
 #import "Crop.h"
 #import "CropTableViewCell.h"
+#import "NSDate-Utilities.h"
+#import "CropHeaderTableViewCell.h"
 
 @interface CropTableViewController ()
 
@@ -34,6 +36,9 @@
     
     UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
     self.navigationItem.rightBarButtonItem = addButton;
+    
+    
+    //[self.tableView registerClass:[UITableViewHeaderFooterView class] forHeaderFooterViewReuseIdentifier:@"CropHeaderCell"];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -77,6 +82,39 @@
     return [[self.fetchedResultsController sections] count];
 }
 
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    return 30.0;
+}
+
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    UIView *sectionHeaderView = [[UIView alloc] initWithFrame:
+                                 CGRectMake(0, 0, tableView.frame.size.width, 30.0)];
+    sectionHeaderView.backgroundColor = [UIColor clearColor];
+    
+    UILabel *headerLabel = [[UILabel alloc] initWithFrame:
+                            CGRectMake(0, 8, sectionHeaderView.frame.size.width, 15.0)];
+    
+    headerLabel.backgroundColor = [UIColor clearColor];
+    headerLabel.textAlignment = NSTextAlignmentCenter;
+    [headerLabel setFont:[UIFont fontWithName:@"IowanOldStyle-Roman" size:18.0]];
+    
+     id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
+    headerLabel.text = [NSString stringWithFormat:@"%@ Season",[sectionInfo name]];
+    [sectionHeaderView addSubview:headerLabel];
+    
+    UIView *borderView = [[UIView alloc] initWithFrame:
+                                 CGRectMake(0, 29, tableView.frame.size.width, 1.0)];
+    borderView.backgroundColor = [UIColor whiteColor];
+   // [sectionHeaderView addSubview:borderView];
+    
+     return sectionHeaderView;
+
+}
+
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
     return [sectionInfo numberOfObjects];
@@ -112,16 +150,119 @@
     Crop *crop = [self.fetchedResultsController objectAtIndexPath:indexPath];
    
     cell.titleLabel.text = crop.name;
+    cell.plantedDate.hidden = YES;
     
     if (crop.seededDate)
     {
-        cell.descriptionLabel.text = @"Seeded";
+        cell.actionLabel.text  = @"Seeded";
     }
     else
     {
         cell.actionLabel.text = @"Plant";
     }
+    
+    if ([crop.cultivar isEqualToString:crop.name])
+    {
+        cell.descriptionLabel.hidden = YES;
+    }
+    else
+    {
+         cell.descriptionLabel.hidden =  NO;
+        cell.descriptionLabel.text = crop.cultivar;
+    }
+    
+    //cell.descriptionLabel.text = [NSString stringWithFormat:@"Growing days remain %@",[self numberOfGrowingDaysLeftForCrop:crop]];
+    
+    if ([[self numberOfGrowingDaysLeftForCrop:crop]floatValue] > 0)
+    {
+        cell.timelineProgressView.hidden = NO;
+        float daysLeft = [[self numberOfGrowingDaysLeftForCrop:crop]floatValue];
+        float totalDays = [crop.matureEarlyDays floatValue];
+        float percentLeft = daysLeft / totalDays;
+        float percentComplete = 1 - percentLeft;
+    //cell.timelineProgressView.progress = .5;
+        [cell.timelineProgressView setProgress:percentComplete animated:YES];
+        cell.plantedDate.hidden = YES;
+    }
+    else
+    {
+        cell.timelineProgressView.hidden = YES;
+        
+        if (crop.seededDate)
+        {
+            cell.plantedDate.hidden = NO;
+            
+            NSString *weekString;
+            if (crop.seededDate.nthWeekday < 2)
+            {
+                weekString = [NSString stringWithFormat:@"Early"];
+            }
+            
+            if (crop.seededDate.nthWeekday == 2 )
+            {
+                weekString = [NSString stringWithFormat:@"Mid"];
+                
+            }
+            
+            if (crop.seededDate.nthWeekday > 2 )
+            {
+                weekString = [NSString stringWithFormat:@"End of"];
+            }
+            
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc]init];
+            
+            [dateFormatter setDateFormat:@"MMM"];
+            cell.plantedDate.text = [NSString stringWithFormat:@"%@ %@ Direct Seed",weekString,[dateFormatter stringFromDate:crop.seededDate]];
+        }
+        
+        if (crop.transplantedDate)
+        {
+            cell.plantedDate.hidden = NO;
+            
+            NSString *weekString;
+            if (crop.transplantedDate.nthWeekday < 2)
+            {
+                weekString = [NSString stringWithFormat:@"Early"];
+            }
+            
+            if (crop.transplantedDate.nthWeekday == 2 )
+            {
+                weekString = [NSString stringWithFormat:@"Mid"];
+                
+            }
+            
+            if (crop.transplantedDate.nthWeekday > 2 )
+            {
+                weekString = [NSString stringWithFormat:@"End of"];
+            }
+            
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc]init];
+            
+            [dateFormatter setDateFormat:@"MMM"];
+            cell.plantedDate.text = [NSString stringWithFormat:@"%@ %@ Transplant",weekString,[dateFormatter stringFromDate:crop.seededDate]];
+        }
+
+    }
 }
+
+-(NSNumber *)numberOfGrowingDaysLeftForCrop:(Crop *)crop
+{
+    NSDate *matureDate = [[crop seededDate]dateByAddingDays:[crop.matureEarlyDays integerValue]];
+    
+    NSInteger daysLeft = [[NSDate date]daysBeforeDate:matureDate];
+    
+    if (daysLeft >= 0)
+    {
+     
+        return [NSNumber numberWithInteger:daysLeft];
+    }
+    else
+    {
+        return @0;
+    }
+}
+
+
 
 #pragma mark - Fetched results controller
 
@@ -140,14 +281,15 @@
     [fetchRequest setFetchBatchSize:20];
     
     // Edit the sort key as appropriate.
-    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"name" ascending:NO];
-    NSArray *sortDescriptors = @[sortDescriptor];
+    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"yearGrown" ascending:YES];
+    NSSortDescriptor *sortDescriptor2 = [[NSSortDescriptor alloc] initWithKey:@"name" ascending:YES];
+    NSArray *sortDescriptors = @[sortDescriptor,sortDescriptor2];
     
     [fetchRequest setSortDescriptors:sortDescriptors];
     
     // Edit the section name key path and cache name if appropriate.
     // nil for section name key path means "no sections".
-    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:self.managedObjectContext sectionNameKeyPath:nil cacheName:@"Master"];
+    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:self.managedObjectContext sectionNameKeyPath:@"yearGrown" cacheName:@"Master"];
     aFetchedResultsController.delegate = self;
     self.fetchedResultsController = aFetchedResultsController;
     

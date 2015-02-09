@@ -13,5 +13,9 @@
 @property (weak, nonatomic) IBOutlet UILabel *moonFullDateLabel;
 @property (weak, nonatomic) IBOutlet UILabel *springDateLabel;
 @property (weak, nonatomic) IBOutlet UILabel *fallDateLabel;
+@property (weak, nonatomic) IBOutlet UIProgressView *winterProgressView;
+@property (weak, nonatomic) IBOutlet UIProgressView *springProgressView;
+@property (weak, nonatomic) IBOutlet UIProgressView *summerProgressView;
+@property (weak, nonatomic) IBOutlet UIProgressView *fallProgressView;
 
 @end

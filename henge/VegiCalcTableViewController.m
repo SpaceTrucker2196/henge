@@ -88,6 +88,7 @@
 
     cell.textLabel.text = [vegiObject objectForKey:@"cultivarCommon"];
     
+    
     return cell;
 }
 

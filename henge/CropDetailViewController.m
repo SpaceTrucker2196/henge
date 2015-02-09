@@ -12,12 +12,14 @@
 #import "AppDelegate.h"
 #import "Action.h"
 #import "Observation.h"
+#import "CropDatePickerViewController.h"
 
 @interface CropDetailViewController ()
 
 @property (nonatomic,strong) NSDateFormatter *fancyDateFormatter;
 @property (nonatomic,strong) AppDelegate *appDelegate;
 @property (nonatomic,strong) Observation *currentObservation;
+@property (assign)BOOL *pickingTransplantDate;
 
 @end
 
@@ -28,6 +30,10 @@
     // Do any additional setup after loading the view.
     self.fancyDateFormatter = [[NSDateFormatter alloc]init];
     [_fancyDateFormatter setDateStyle:NSDateFormatterFullStyle];
+    
+    
+    [_cropNameLabel setDelegate:self];
+    
 }
 
 - (void)setDetailItem:(id)newDetailItem {
@@ -54,7 +60,28 @@
 
 -(void)datePicked:(NSDate *)date
 {
+    if (self.pickingTransplantDate)
+    {
+        _cropInView.transplantedDate = date;
+       
+        if (!_cropInView.seededDate)
+        {
+            //default transplant age is 5 weeks
+            _cropInView.seededDate =[date dateBySubtractingDays:35];
+        }
+    }
+    else
+    {
+        _cropInView.seededDate = date;
+  
+    }
     
+    //reset the year of the crop
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy"];
+    _cropInView.yearGrown = [formatter stringFromDate:date];
+
+    [_cropInView.managedObjectContext save:nil];
 }
 
 -(void)configureView
@@ -66,8 +93,7 @@
     {
         _seededDateTitle.alpha = 1;
         _seededDateButton.alpha = 1;
-        
-        _seededDateButton.titleLabel.text = [_fancyDateFormatter stringFromDate:_cropInView.seededDate];
+        [_seededDateButton setTitle:[self stringFromDate:_cropInView.seededDate]forState:UIControlStateNormal];
     }
     else
     {
@@ -89,12 +115,21 @@
         _transplantedDateLabel.alpha = 1;
         _transplantedDateButton.alpha = 1;
         
-        _transplantedDateLabel.text = [_fancyDateFormatter stringFromDate:_cropInView.transplantedDate];
+        [_transplantedDateButton setTitle:[self stringFromDate:_cropInView.transplantedDate]forState:UIControlStateNormal];
     }
     else
     {
-        _transplantedDateButton.alpha = 0;
-        _transplantedDateLabel.alpha = 0;
+        if (_cropInView.seededDate)
+        {
+            _transplantedDateButton.alpha = 0;
+            _transplantedDateLabel.alpha = 0;
+        }
+        else
+        {
+            _transplantedDateButton.alpha = 1;
+            _transplantedDateLabel.alpha = 1;
+            [_transplantedDateButton setTitle:@"Transplant" forState:UIControlStateNormal];
+        }
     }
     
     [_vigorSlider setValue:[_currentObservation.vigor floatValue] animated:YES];
@@ -186,15 +221,32 @@
     return  [NSString stringWithFormat:@"%@ %@",weekString,[dateFormatter stringFromDate:harvestDate]];
 }
 
-/*
+
 #pragma mark - Navigation
 
 // In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     // Get the new view controller using [segue destinationViewController].
     // Pass the selected object to the new view controller.
+    
+    
+    
+   if ([[segue identifier] isEqualToString:@"seededDatePopover"])
+    {
+        CropDatePickerViewController *gvc = [segue destinationViewController];
+        gvc.delegate = self;
+         self.pickingTransplantDate = NO;
+    }
+    
+    if ([[segue identifier] isEqualToString:@"transplantedDatePopover"])
+    {
+        CropDatePickerViewController *gvc = [segue destinationViewController];
+        gvc.delegate = self;
+        self.pickingTransplantDate = YES;
+    }
+    
 }
-*/
+
 
 - (IBAction)closeButtonAction:(id)sender
 {
@@ -258,11 +310,53 @@
     
 }
 
+-(NSString *)stringFromDate:(NSDate *)DateLocal
+{
+    
+    NSDateFormatter *prefixDateFormatter = [[NSDateFormatter alloc] init];
+    [prefixDateFormatter setFormatterBehavior:NSDateFormatterBehavior10_4];
+    [prefixDateFormatter setDateFormat:@"MMMM d."];//June 13th, 2013
+    NSString * prefixDateString = [prefixDateFormatter stringFromDate:DateLocal];
+    NSDateFormatter *monthDayFormatter = [[NSDateFormatter alloc] init];
+    [monthDayFormatter setFormatterBehavior:NSDateFormatterBehavior10_4];
+    [monthDayFormatter setDateFormat:@"d"];
+    int date_day = [[monthDayFormatter stringFromDate:DateLocal] intValue];
+    NSString *suffix_string = @"|st|nd|rd|th|th|th|th|th|th|th|th|th|th|th|th|th|th|th|th|th|st|nd|rd|th|th|th|th|th|th|th|st";
+    NSArray *suffixes = [suffix_string componentsSeparatedByString: @"|"];
+    NSString *suffix = [suffixes objectAtIndex:date_day];
+    
+    prefixDateString = [prefixDateString stringByReplacingOccurrencesOfString:@"." withString:suffix];
+    NSString *dateString =prefixDateString;
+    //  NSLog(@"%@", dateString);
+    return dateString;
+}
+
 - (IBAction)waterAction:(id)sender
 {
 
 }
 
 - (IBAction)seededButtonAction:(id)sender {
+}
+
+#pragma mark - text field delegate methods
+
+- (void)textFieldDidBeginEditing:(UITextField *)textField
+{
+    [_closeButton setHidden:YES];
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    if (textField == self.cropNameLabel) {
+        [textField resignFirstResponder];
+        
+        _cropInView.name = _cropNameLabel.text;
+        [_cropInView.managedObjectContext save:nil];
+        
+          [_closeButton setHidden:NO];
+        
+        return NO;
+    }
+    return YES;
 }
 @end

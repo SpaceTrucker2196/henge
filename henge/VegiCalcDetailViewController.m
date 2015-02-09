@@ -313,6 +313,11 @@
     crop.matureEarlyDays = [NSNumber numberWithInteger:[[_cultivarObject objectForKey:@"earlyMatureDays"]integerValue]];
     crop.matureLateDays =  [NSNumber numberWithInteger:[[_cultivarObject objectForKey:@"lateMatureDays"]integerValue]];
     
+    NSDate *now = [NSDate date];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy"];
+    crop.yearGrown = [formatter stringFromDate:now];
+
     NSString *commonMature =  [_cultivarObject objectForKey:@"commonMatureDays"];
     
     if ([commonMature length] > 0)
@@ -325,7 +330,7 @@
 
     [crop.managedObjectContext save:nil];
     
-     [self dismissViewControllerAnimated:YES completion:nil];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (IBAction)areaFactorChanged:(id)sender

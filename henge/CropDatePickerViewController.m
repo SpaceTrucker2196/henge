@@ -34,4 +34,9 @@
 }
 */
 
+- (IBAction)plantedButtonAction:(id)sender
+{
+    [_delegate datePicked:_datePicker.date];
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
 @end

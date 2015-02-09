@@ -14,5 +14,10 @@
 @end
 
 @interface CropDatePickerViewController : UIViewController
+@property (weak, nonatomic) IBOutlet UIDatePicker *datePicker;
+
+@property (nonatomic, weak) id<CropDatePickerDelegate> delegate;
+
+- (IBAction)plantedButtonAction:(id)sender;
 
 @end

@@ -13,5 +13,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *descriptionLabel;
 @property (weak, nonatomic) IBOutlet UIProgressView *timelineProgressView;
 @property (weak, nonatomic) IBOutlet UILabel *actionLabel;
+@property (weak, nonatomic) IBOutlet UILabel *plantedDate;
 
 @end

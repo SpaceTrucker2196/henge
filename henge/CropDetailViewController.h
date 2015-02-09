@@ -10,11 +10,11 @@
 #import "Crop.h"
 #import "CropDatePickerViewController.h"
 
-@interface CropDetailViewController : UIViewController <CropDatePickerDelegate>
+@interface CropDetailViewController : UIViewController <CropDatePickerDelegate, UITextFieldDelegate>
 
 @property (nonatomic,strong) Crop *cropInView;
 @property (strong, nonatomic) id detailItem;
-@property (weak, nonatomic) IBOutlet UILabel *cropNameLabel;
+@property (weak, nonatomic) IBOutlet UITextField *cropNameLabel;
 @property (weak, nonatomic) IBOutlet UILabel *seededDateTitle;
 @property (weak, nonatomic) IBOutlet UILabel *cropDetailsLabel;
 
@@ -27,6 +27,7 @@
 @property (weak, nonatomic) IBOutlet UISlider *vigorSlider;
 @property (weak, nonatomic) IBOutlet UISlider *diseasePestSlider;
 @property (weak, nonatomic) IBOutlet UISlider *ripenessSlider;
+@property (weak, nonatomic) IBOutlet UIButton *closeButton;
 
 - (IBAction)closeButtonAction:(id)sender;
 - (IBAction)vigorSliderChanged:(id)sender;

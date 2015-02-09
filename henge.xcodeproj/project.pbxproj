@@ -8,7 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		EE17B8EA1A82A518000AA80F /* CropDatePickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */; };
+		EE17B8ED1A83E8FD000AA80F /* CropHeaderTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = EE17B8EC1A83E8FD000AA80F /* CropHeaderTableViewCell.m */; };
+		EE207B3D1A87C0E100B3B8F8 /* Crop.m in Sources */ = {isa = PBXBuildFile; fileRef = EE207B3C1A87C0E100B3B8F8 /* Crop.m */; };
 		EE32C5951A7A835400C2ADEA /* VegiCalcTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE32C5941A7A835400C2ADEA /* VegiCalcTableViewController.m */; };
+		EE81281B1A85217200A693BD /* NewCropViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE81281A1A85217200A693BD /* NewCropViewController.m */; };
+		EE81281E1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = EE81281D1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m */; };
+		EE8128211A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = EE8128201A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m */; };
 		EEA29EB41A7D62C1000AC27F /* NSDate-Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA29EB31A7D62C1000AC27F /* NSDate-Utilities.m */; };
 		EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */; };
 		EEA8EE531A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA8EE521A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m */; };
@@ -41,7 +46,6 @@
 		EEC88B3A1A79DB9F008E9519 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B391A79DB9F008E9519 /* libz.dylib */; };
 		EEC88B3C1A79DBAA008E9519 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = EEC88B3B1A79DBAA008E9519 /* libsqlite3.dylib */; };
 		EEC88B3E1A79E520008E9519 /* DSC_9486 - Version 2.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EEC88B3D1A79E520008E9519 /* DSC_9486 - Version 2.jpg */; };
-		EECAE57C1A816AA400C6A731 /* Crop.m in Sources */ = {isa = PBXBuildFile; fileRef = EECAE57B1A816AA400C6A731 /* Crop.m */; };
 		EECAE57F1A816B1F00C6A731 /* GUIDCategory.m in Sources */ = {isa = PBXBuildFile; fileRef = EECAE57E1A816B1F00C6A731 /* GUIDCategory.m */; };
 		EECAE5811A816E5200C6A731 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EECAE5801A816E5200C6A731 /* UIKit.framework */; };
 		EECAE5841A81792800C6A731 /* CropTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = EECAE5831A81792800C6A731 /* CropTableViewCell.m */; };
@@ -60,8 +64,18 @@
 /* Begin PBXFileReference section */
 		EE17B8E81A82A518000AA80F /* CropDatePickerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropDatePickerViewController.h; sourceTree = "<group>"; };
 		EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropDatePickerViewController.m; sourceTree = "<group>"; };
+		EE17B8EB1A83E8FD000AA80F /* CropHeaderTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropHeaderTableViewCell.h; sourceTree = "<group>"; };
+		EE17B8EC1A83E8FD000AA80F /* CropHeaderTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropHeaderTableViewCell.m; sourceTree = "<group>"; };
+		EE207B3B1A87C0E100B3B8F8 /* Crop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Crop.h; sourceTree = "<group>"; };
+		EE207B3C1A87C0E100B3B8F8 /* Crop.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Crop.m; sourceTree = "<group>"; };
 		EE32C5931A7A835400C2ADEA /* VegiCalcTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VegiCalcTableViewController.h; sourceTree = "<group>"; };
 		EE32C5941A7A835400C2ADEA /* VegiCalcTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VegiCalcTableViewController.m; sourceTree = "<group>"; };
+		EE8128191A85217200A693BD /* NewCropViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewCropViewController.h; sourceTree = "<group>"; };
+		EE81281A1A85217200A693BD /* NewCropViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewCropViewController.m; sourceTree = "<group>"; };
+		EE81281C1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPKeyboardAvoidingScrollView.h; sourceTree = "<group>"; };
+		EE81281D1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPKeyboardAvoidingScrollView.m; sourceTree = "<group>"; };
+		EE81281F1A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIScrollView+TPKeyboardAvoidingAdditions.h"; sourceTree = "<group>"; };
+		EE8128201A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+TPKeyboardAvoidingAdditions.m"; sourceTree = "<group>"; };
 		EEA29EB21A7D62C1000AC27F /* NSDate-Utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate-Utilities.h"; sourceTree = "<group>"; };
 		EEA29EB31A7D62C1000AC27F /* NSDate-Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate-Utilities.m"; sourceTree = "<group>"; };
 		EEA54AC21A7B0A5700B33EB5 /* AlmanacViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlmanacViewController.h; sourceTree = "<group>"; };
@@ -107,8 +121,6 @@
 		EEC88B391A79DB9F008E9519 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		EEC88B3B1A79DBAA008E9519 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
 		EEC88B3D1A79E520008E9519 /* DSC_9486 - Version 2.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "DSC_9486 - Version 2.jpg"; sourceTree = "<group>"; };
-		EECAE57A1A816AA400C6A731 /* Crop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Crop.h; sourceTree = "<group>"; };
-		EECAE57B1A816AA400C6A731 /* Crop.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Crop.m; sourceTree = "<group>"; };
 		EECAE57D1A816B1F00C6A731 /* GUIDCategory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GUIDCategory.h; sourceTree = "<group>"; };
 		EECAE57E1A816B1F00C6A731 /* GUIDCategory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GUIDCategory.m; sourceTree = "<group>"; };
 		EECAE5801A816E5200C6A731 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -184,6 +196,10 @@
 		EEC88AEF1A79D872008E9519 /* henge */ = {
 			isa = PBXGroup;
 			children = (
+				EE81281F1A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.h */,
+				EE8128201A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m */,
+				EE81281C1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.h */,
+				EE81281D1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m */,
 				EECAE57D1A816B1F00C6A731 /* GUIDCategory.h */,
 				EECAE57E1A816B1F00C6A731 /* GUIDCategory.m */,
 				EEA29EB21A7D62C1000AC27F /* NSDate-Utilities.h */,
@@ -191,20 +207,18 @@
 				EEC88B261A79DAAE008E9519 /* Parse */,
 				EEC88AF41A79D872008E9519 /* AppDelegate.h */,
 				EEC88AF51A79D872008E9519 /* AppDelegate.m */,
-				EEC88AFA1A79D872008E9519 /* CropTableViewController.h */,
-				EEC88AFB1A79D872008E9519 /* CropTableViewController.m */,
 				EEC88AFD1A79D872008E9519 /* DetailViewController.h */,
 				EEC88AFE1A79D872008E9519 /* DetailViewController.m */,
 				EEC88B001A79D872008E9519 /* Main.storyboard */,
 				EEC88B031A79D872008E9519 /* Images.xcassets */,
 				EEC88B051A79D872008E9519 /* LaunchScreen.xib */,
 				EEC88AF71A79D872008E9519 /* henge.xcdatamodeld */,
+				EE207B3B1A87C0E100B3B8F8 /* Crop.h */,
+				EE207B3C1A87C0E100B3B8F8 /* Crop.m */,
 				EEAB421E1A82946600F383E5 /* Observation.h */,
 				EEAB421F1A82946600F383E5 /* Observation.m */,
 				EEAB421B1A82946500F383E5 /* Action.h */,
 				EEAB421C1A82946500F383E5 /* Action.m */,
-				EECAE57A1A816AA400C6A731 /* Crop.h */,
-				EECAE57B1A816AA400C6A731 /* Crop.m */,
 				EEC88AF01A79D872008E9519 /* Supporting Files */,
 				EE32C5931A7A835400C2ADEA /* VegiCalcTableViewController.h */,
 				EE32C5941A7A835400C2ADEA /* VegiCalcTableViewController.m */,
@@ -212,12 +226,18 @@
 				EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */,
 				EEA8EE511A7C4EC1002A9AB5 /* VegiCalcDetailViewController.h */,
 				EEA8EE521A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m */,
+				EEC88AFA1A79D872008E9519 /* CropTableViewController.h */,
+				EEC88AFB1A79D872008E9519 /* CropTableViewController.m */,
 				EECAE5821A81792800C6A731 /* CropTableViewCell.h */,
 				EECAE5831A81792800C6A731 /* CropTableViewCell.m */,
 				EEAB42181A8281CC00F383E5 /* CropDetailViewController.h */,
 				EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */,
 				EE17B8E81A82A518000AA80F /* CropDatePickerViewController.h */,
 				EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */,
+				EE17B8EB1A83E8FD000AA80F /* CropHeaderTableViewCell.h */,
+				EE17B8EC1A83E8FD000AA80F /* CropHeaderTableViewCell.m */,
+				EE8128191A85217200A693BD /* NewCropViewController.h */,
+				EE81281A1A85217200A693BD /* NewCropViewController.m */,
 			);
 			path = henge;
 			sourceTree = "<group>";
@@ -365,16 +385,20 @@
 				EEA29EB41A7D62C1000AC27F /* NSDate-Utilities.m in Sources */,
 				EEAB42201A82946600F383E5 /* Observation.m in Sources */,
 				EEC88AFF1A79D872008E9519 /* DetailViewController.m in Sources */,
+				EE81281B1A85217200A693BD /* NewCropViewController.m in Sources */,
 				EEA8EE531A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m in Sources */,
+				EE207B3D1A87C0E100B3B8F8 /* Crop.m in Sources */,
+				EE17B8ED1A83E8FD000AA80F /* CropHeaderTableViewCell.m in Sources */,
 				EEC88AFC1A79D872008E9519 /* CropTableViewController.m in Sources */,
 				EECAE57F1A816B1F00C6A731 /* GUIDCategory.m in Sources */,
 				EECAE5841A81792800C6A731 /* CropTableViewCell.m in Sources */,
+				EE8128211A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m in Sources */,
 				EEC88AF61A79D872008E9519 /* AppDelegate.m in Sources */,
 				EE17B8EA1A82A518000AA80F /* CropDatePickerViewController.m in Sources */,
-				EECAE57C1A816AA400C6A731 /* Crop.m in Sources */,
 				EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */,
 				EEAB421D1A82946500F383E5 /* Action.m in Sources */,
 				EE32C5951A7A835400C2ADEA /* VegiCalcTableViewController.m in Sources */,
+				EE81281E1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m in Sources */,
 				EEC88AF31A79D872008E9519 /* main.m in Sources */,
 				EEAB421A1A8281CC00F383E5 /* CropDetailViewController.m in Sources */,
 				EEC88AF91A79D872008E9519 /* henge.xcdatamodeld in Sources */,
