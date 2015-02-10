@@ -8,7 +8,7 @@
 
 #import "BotanicaTableViewController.h"
 //#import "Parse/Parse.h"
-#import "VegiCalcDetailViewController.h"
+#import "BotanicaDetailViewController.h"
 #import "BotanicaTableViewCell.h"
 
 @interface BotanicaTableViewController ()
@@ -84,7 +84,7 @@
         UITableViewCell *cell = (UITableViewCell*)sender;
         NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
         
-        VegiCalcDetailViewController *vc = (VegiCalcDetailViewController *)[segue destinationViewController];
+        BotanicaDetailViewController *vc = (BotanicaDetailViewController *)[segue destinationViewController];
         [vc loadCultivarObj:[_vegiArray objectAtIndex:indexPath.row]];
     }
 }

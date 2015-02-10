@@ -11,12 +11,15 @@
 		EE17B8ED1A83E8FD000AA80F /* CropHeaderTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = EE17B8EC1A83E8FD000AA80F /* CropHeaderTableViewCell.m */; };
 		EE207B3D1A87C0E100B3B8F8 /* Crop.m in Sources */ = {isa = PBXBuildFile; fileRef = EE207B3C1A87C0E100B3B8F8 /* Crop.m */; };
 		EE32C5951A7A835400C2ADEA /* BotanicaTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE32C5941A7A835400C2ADEA /* BotanicaTableViewController.m */; };
+		EE416A1E1A8A6E9B00B83C64 /* CropHistoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE416A1D1A8A6E9B00B83C64 /* CropHistoryViewController.m */; };
+		EE416A211A8A7D8200B83C64 /* CropHistoryTableTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE416A201A8A7D8200B83C64 /* CropHistoryTableTableViewController.m */; };
+		EE416A241A8A7D9D00B83C64 /* CropHistoryTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = EE416A231A8A7D9D00B83C64 /* CropHistoryTableViewCell.m */; };
 		EE81281B1A85217200A693BD /* EditCropViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE81281A1A85217200A693BD /* EditCropViewController.m */; };
 		EE81281E1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = EE81281D1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m */; };
 		EE8128211A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = EE8128201A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m */; };
 		EEA29EB41A7D62C1000AC27F /* NSDate-Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA29EB31A7D62C1000AC27F /* NSDate-Utilities.m */; };
 		EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */; };
-		EEA8EE531A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA8EE521A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m */; };
+		EEA8EE531A7C4EC1002A9AB5 /* BotanicaDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEA8EE521A7C4EC1002A9AB5 /* BotanicaDetailViewController.m */; };
 		EEAB421A1A8281CC00F383E5 /* CropDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */; };
 		EEAB421D1A82946500F383E5 /* Action.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB421C1A82946500F383E5 /* Action.m */; };
 		EEAB42201A82946600F383E5 /* Observation.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB421F1A82946600F383E5 /* Observation.m */; };
@@ -73,6 +76,12 @@
 		EE207B3C1A87C0E100B3B8F8 /* Crop.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Crop.m; sourceTree = "<group>"; };
 		EE32C5931A7A835400C2ADEA /* BotanicaTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BotanicaTableViewController.h; sourceTree = "<group>"; };
 		EE32C5941A7A835400C2ADEA /* BotanicaTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BotanicaTableViewController.m; sourceTree = "<group>"; };
+		EE416A1C1A8A6E9B00B83C64 /* CropHistoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropHistoryViewController.h; sourceTree = "<group>"; };
+		EE416A1D1A8A6E9B00B83C64 /* CropHistoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropHistoryViewController.m; sourceTree = "<group>"; };
+		EE416A1F1A8A7D8200B83C64 /* CropHistoryTableTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropHistoryTableTableViewController.h; sourceTree = "<group>"; };
+		EE416A201A8A7D8200B83C64 /* CropHistoryTableTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropHistoryTableTableViewController.m; sourceTree = "<group>"; };
+		EE416A221A8A7D9D00B83C64 /* CropHistoryTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropHistoryTableViewCell.h; sourceTree = "<group>"; };
+		EE416A231A8A7D9D00B83C64 /* CropHistoryTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropHistoryTableViewCell.m; sourceTree = "<group>"; };
 		EE8128191A85217200A693BD /* EditCropViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditCropViewController.h; sourceTree = "<group>"; };
 		EE81281A1A85217200A693BD /* EditCropViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EditCropViewController.m; sourceTree = "<group>"; };
 		EE81281C1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPKeyboardAvoidingScrollView.h; sourceTree = "<group>"; };
@@ -83,8 +92,8 @@
 		EEA29EB31A7D62C1000AC27F /* NSDate-Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate-Utilities.m"; sourceTree = "<group>"; };
 		EEA54AC21A7B0A5700B33EB5 /* AlmanacViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlmanacViewController.h; sourceTree = "<group>"; };
 		EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlmanacViewController.m; sourceTree = "<group>"; };
-		EEA8EE511A7C4EC1002A9AB5 /* VegiCalcDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VegiCalcDetailViewController.h; sourceTree = "<group>"; };
-		EEA8EE521A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VegiCalcDetailViewController.m; sourceTree = "<group>"; };
+		EEA8EE511A7C4EC1002A9AB5 /* BotanicaDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BotanicaDetailViewController.h; sourceTree = "<group>"; };
+		EEA8EE521A7C4EC1002A9AB5 /* BotanicaDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BotanicaDetailViewController.m; sourceTree = "<group>"; };
 		EEAB42181A8281CC00F383E5 /* CropDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropDetailViewController.h; sourceTree = "<group>"; };
 		EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropDetailViewController.m; sourceTree = "<group>"; };
 		EEAB421B1A82946500F383E5 /* Action.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Action.h; sourceTree = "<group>"; };
@@ -234,8 +243,8 @@
 				EED2FDDD1A896A26009D4B0F /* BotanicaTableViewCell.m */,
 				EEA54AC21A7B0A5700B33EB5 /* AlmanacViewController.h */,
 				EEA54AC31A7B0A5700B33EB5 /* AlmanacViewController.m */,
-				EEA8EE511A7C4EC1002A9AB5 /* VegiCalcDetailViewController.h */,
-				EEA8EE521A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m */,
+				EEA8EE511A7C4EC1002A9AB5 /* BotanicaDetailViewController.h */,
+				EEA8EE521A7C4EC1002A9AB5 /* BotanicaDetailViewController.m */,
 				EEC88AFA1A79D872008E9519 /* CropTableViewController.h */,
 				EEC88AFB1A79D872008E9519 /* CropTableViewController.m */,
 				EECAE5821A81792800C6A731 /* CropTableViewCell.h */,
@@ -250,6 +259,12 @@
 				EE81281A1A85217200A693BD /* EditCropViewController.m */,
 				EED2FDD71A890900009D4B0F /* EditCropGrowingNotesViewController.h */,
 				EED2FDD81A890900009D4B0F /* EditCropGrowingNotesViewController.m */,
+				EE416A1C1A8A6E9B00B83C64 /* CropHistoryViewController.h */,
+				EE416A1D1A8A6E9B00B83C64 /* CropHistoryViewController.m */,
+				EE416A1F1A8A7D8200B83C64 /* CropHistoryTableTableViewController.h */,
+				EE416A201A8A7D8200B83C64 /* CropHistoryTableTableViewController.m */,
+				EE416A221A8A7D9D00B83C64 /* CropHistoryTableViewCell.h */,
+				EE416A231A8A7D9D00B83C64 /* CropHistoryTableViewCell.m */,
 			);
 			path = henge;
 			sourceTree = "<group>";
@@ -400,16 +415,19 @@
 				EEAB42201A82946600F383E5 /* Observation.m in Sources */,
 				EEC88AFF1A79D872008E9519 /* DetailViewController.m in Sources */,
 				EE81281B1A85217200A693BD /* EditCropViewController.m in Sources */,
-				EEA8EE531A7C4EC1002A9AB5 /* VegiCalcDetailViewController.m in Sources */,
+				EEA8EE531A7C4EC1002A9AB5 /* BotanicaDetailViewController.m in Sources */,
+				EE416A211A8A7D8200B83C64 /* CropHistoryTableTableViewController.m in Sources */,
 				EE207B3D1A87C0E100B3B8F8 /* Crop.m in Sources */,
 				EE17B8ED1A83E8FD000AA80F /* CropHeaderTableViewCell.m in Sources */,
 				EEC88AFC1A79D872008E9519 /* CropTableViewController.m in Sources */,
 				EECAE57F1A816B1F00C6A731 /* GUIDCategory.m in Sources */,
+				EE416A1E1A8A6E9B00B83C64 /* CropHistoryViewController.m in Sources */,
 				EECAE5841A81792800C6A731 /* CropTableViewCell.m in Sources */,
 				EED2FDDE1A896A26009D4B0F /* BotanicaTableViewCell.m in Sources */,
 				EE8128211A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m in Sources */,
 				EEC88AF61A79D872008E9519 /* AppDelegate.m in Sources */,
 				EE17B8EA1A82A518000AA80F /* CropDatePickerViewController.m in Sources */,
+				EE416A241A8A7D9D00B83C64 /* CropHistoryTableViewCell.m in Sources */,
 				EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */,
 				EED2FDD91A890900009D4B0F /* EditCropGrowingNotesViewController.m in Sources */,
 				EEAB421D1A82946500F383E5 /* Action.m in Sources */,

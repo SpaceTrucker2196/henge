@@ -14,6 +14,7 @@
 #import "Observation.h"
 #import "CropDatePickerViewController.h"
 #import "EditCropViewController.h"
+#import "CropHistoryViewController.h"
 
 @interface CropDetailViewController ()
 
@@ -230,15 +231,12 @@
     // Get the new view controller using [segue destinationViewController].
     // Pass the selected object to the new view controller.
     
-    
-    
    if ([[segue identifier] isEqualToString:@"seededDatePopover"])
     {
         CropDatePickerViewController *gvc = [segue destinationViewController];
         gvc.delegate = self;
          self.pickingTransplantDate = NO;
     }
-    
     if ([[segue identifier] isEqualToString:@"transplantedDatePopover"])
     {
         CropDatePickerViewController *gvc = [segue destinationViewController];
@@ -248,6 +246,11 @@
     if ([[segue identifier] isEqualToString:@"editCropData"])
     {
         EditCropViewController *gvc = [segue destinationViewController];
+        gvc.cropInView = self.cropInView;
+    }
+    if ([[segue identifier] isEqualToString:@"historyView"])
+    {
+        CropHistoryViewController *gvc = [segue destinationViewController];
         gvc.cropInView = self.cropInView;
     }
     
