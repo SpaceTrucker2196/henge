@@ -327,7 +327,25 @@
     }
     
     crop.name = [_cultivarObject objectForKey:@"cultivarCommon"];
+    
+    
+    crop.vendor = [_cultivarObject objectForKey:@"seedVendor"];
+    
+    crop.seedCountCommonRow = [[NSDecimalNumber alloc]initWithInteger:[[_cultivarObject objectForKey:@"commonRowSeedCount"]integerValue]];
+    crop.seedWeightAcre = [[NSDecimalNumber alloc]initWithInteger:[[_cultivarObject objectForKey:@"seedWeightAcre"]integerValue]];
+    crop.seedWeightAcreUnit = [_cultivarObject objectForKey:@"seedWeightAcreUnit"];
+    crop.seedCountAcre = [[NSDecimalNumber alloc]initWithInteger:[[_cultivarObject objectForKey:@"seedCountAcre"]integerValue]];
+    crop.seedCountAcreUnit = [_cultivarObject objectForKey:@"seedCountAcreUnit"];
+    crop.commonRowYield = [[NSDecimalNumber alloc]initWithInteger:[[_cultivarObject objectForKey:@"commonRowYield"]integerValue]];
+    crop.commonRowYieldUnit = [_cultivarObject objectForKey:@"commonRowYieldUnit"];
+    crop.acreYield = [[NSDecimalNumber alloc]initWithInteger:[[_cultivarObject objectForKey:@"acreYield"]integerValue]];
+    crop.acreYieldUnit = [_cultivarObject objectForKey:@"acreYieldUnit"];
+    crop.storageHumidityPercent = [[NSDecimalNumber alloc]initWithInteger:[[_cultivarObject objectForKey:@"storageHumidityPercent"]integerValue]];
+    crop.storageTempF = [[NSDecimalNumber alloc]initWithFloat:[[_cultivarObject objectForKey:@"storageTempF"]floatValue]];
+    crop.storageHoldWeeks = [[NSDecimalNumber alloc]initWithFloat:[[_cultivarObject objectForKey:@"storageHoldWeeks"]floatValue]];
+    crop.cultivarNotes = [_cultivarObject objectForKey:@"cultivarNotes"];
 
+    
     [crop.managedObjectContext save:nil];
     
     [self dismissViewControllerAnimated:YES completion:nil];

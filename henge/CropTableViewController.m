@@ -99,7 +99,7 @@
     
     headerLabel.backgroundColor = [UIColor clearColor];
     headerLabel.textAlignment = NSTextAlignmentCenter;
-    [headerLabel setFont:[UIFont fontWithName:@"IowanOldStyle-Roman" size:18.0]];
+    [headerLabel setFont:[UIFont fontWithName:@"HelveticaNeue-Medium" size:18.0]];
     
      id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
     headerLabel.text = [NSString stringWithFormat:@"%@ Season",[sectionInfo name]];

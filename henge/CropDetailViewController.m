@@ -13,13 +13,14 @@
 #import "Action.h"
 #import "Observation.h"
 #import "CropDatePickerViewController.h"
+#import "EditCropViewController.h"
 
 @interface CropDetailViewController ()
 
 @property (nonatomic,strong) NSDateFormatter *fancyDateFormatter;
 @property (nonatomic,strong) AppDelegate *appDelegate;
 @property (nonatomic,strong) Observation *currentObservation;
-@property (assign)BOOL *pickingTransplantDate;
+@property (assign)BOOL pickingTransplantDate;
 
 @end
 
@@ -243,6 +244,11 @@
         CropDatePickerViewController *gvc = [segue destinationViewController];
         gvc.delegate = self;
         self.pickingTransplantDate = YES;
+    }
+    if ([[segue identifier] isEqualToString:@"editCropData"])
+    {
+        EditCropViewController *gvc = [segue destinationViewController];
+        gvc.cropInView = self.cropInView;
     }
     
 }
