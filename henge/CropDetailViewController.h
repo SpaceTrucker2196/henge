@@ -35,6 +35,8 @@
 - (IBAction)diseasePestSliderChanged:(id)sender;
 - (IBAction)waterAction:(id)sender;
 - (IBAction)seededButtonAction:(id)sender;
+- (IBAction)amendButtonAction:(id)sender;
+- (IBAction)harvestButtonAction:(id)sender;
 
 -(void)datePicked:(NSDate *)date;
 

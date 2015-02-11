@@ -8,15 +8,13 @@
 
 #import "CropTableViewController.h"
 #import "DetailViewController.h"
-#import "AppDelegate.h"
+
 #import "Crop.h"
 #import "CropTableViewCell.h"
 #import "NSDate-Utilities.h"
 #import "CropHeaderTableViewCell.h"
 
 @interface CropTableViewController ()
-
-@property (nonatomic,strong)AppDelegate *appDelegate;
 
 @end
 
@@ -29,13 +27,13 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
-    self.navigationItem.leftBarButtonItem = self.editButtonItem;
+   //s self.navigationItem.leftBarButtonItem = self.editButtonItem;
 
     self.appDelegate = (AppDelegate *)[[UIApplication sharedApplication]delegate];
     self.managedObjectContext  = _appDelegate.managedObjectContext;
     
-    UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
-    self.navigationItem.rightBarButtonItem = addButton;
+//    UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
+//    self.navigationItem.rightBarButtonItem = addButton;
     
     
     //[self.tableView registerClass:[UITableViewHeaderFooterView class] forHeaderFooterViewReuseIdentifier:@"CropHeaderCell"];

@@ -7,7 +7,7 @@
 //
 
 #import "CropHistoryViewController.h"
-#import "CropHist
+#import "CropHistoryTableTableViewController.h"
 
 @interface CropHistoryViewController ()
 
@@ -36,10 +36,10 @@
  // Get the new view controller using [segue destinationViewController].
  // Pass the selected object to the new view controller.
  
-     if ([[segue identifier] isEqualToString:@"seededDatePopover"])
+     if ([[segue identifier] isEqualToString:@"embedHistoryTable"])
      {
-         CropDatePickerViewController *gvc = [segue destinationViewController];
-         gvc.delegate = self;
+         CropHistoryTableTableViewController *gvc = [segue destinationViewController];
+         gvc.cropInView = _cropInView;
        
      }
 }

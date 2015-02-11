@@ -42,7 +42,9 @@
         <relationship name="observations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Observation" inverseName="crop" inverseEntity="Observation" syncable="YES"/>
     </entity>
     <entity name="Observation" representedClassName="Observation" syncable="YES">
+        <attribute name="actionDescription" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="diseasePests" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="note" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="photoPath" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="ripeness" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
         <attribute name="timestamp" optional="YES" attributeType="Date" syncable="YES"/>
@@ -53,6 +55,6 @@
     <elements>
         <element name="Action" positionX="279" positionY="297" width="128" height="118"/>
         <element name="Crop" positionX="261" positionY="198" width="128" height="525"/>
-        <element name="Observation" positionX="261" positionY="270" width="128" height="148"/>
+        <element name="Observation" positionX="261" positionY="270" width="128" height="180"/>
     </elements>
 </model>

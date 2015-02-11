@@ -18,6 +18,8 @@
 @property (nonatomic, retain) NSNumber * ripeness;
 @property (nonatomic, retain) NSDate * timestamp;
 @property (nonatomic, retain) NSString * photoPath;
+@property (nonatomic, retain) NSString * actionDescription;
+@property (nonatomic, retain) NSString * note;
 @property (nonatomic, retain) Crop *crop;
 @property (nonatomic, retain) Action *action;
 

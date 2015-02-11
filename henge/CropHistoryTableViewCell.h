@@ -9,5 +9,10 @@
 #import <UIKit/UIKit.h>
 
 @interface CropHistoryTableViewCell : UITableViewCell
+@property (weak, nonatomic) IBOutlet UILabel *dateLabel;
+@property (weak, nonatomic) IBOutlet UILabel *detailLabel;
+@property (weak, nonatomic) IBOutlet UIProgressView *vigorProgressView;
+@property (weak, nonatomic) IBOutlet UIProgressView *diseaseProgressView;
+@property (weak, nonatomic) IBOutlet UIProgressView *ripnessProgessView;
 
 @end

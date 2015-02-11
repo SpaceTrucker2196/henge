@@ -20,5 +20,6 @@
 @dynamic photoPath;
 @dynamic crop;
 @dynamic action;
-
+@dynamic actionDescription;
+@dynamic note;
 @end
