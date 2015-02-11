@@ -7,7 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-
+//!  AlmanacViewController
+/*!
+ The AlmanacViewController is the home screen showing calendar information and embeds a tableview of the list of crops.
+ */
 @interface AlmanacViewController : UIViewController
 @property (weak, nonatomic) IBOutlet UILabel *moonNewDateLabel;
 @property (weak, nonatomic) IBOutlet UILabel *moonFullDateLabel;

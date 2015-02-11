@@ -19,19 +19,16 @@
 
 @implementation BotanicaTableViewController
 
+/// perform initial view setup and load tableview data from parse.
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
-    
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
-    self.vegiArray = [[NSArray alloc]init];
+
     self.tableView.delegate = self;
-   [self loadFromParse];
+    
+    [self loadFromParse];
 }
 
+/// refresh the view when it appears.
 -(void)viewWillAppear:(BOOL)animated
 {
    // [self loadFromParse];
@@ -43,7 +40,7 @@
     // Dispose of any resources that can be recreated.
 }
 
-
+/// fill the data array by loading information from parse
 - (void)loadFromParse
 {
     //Create query for all Post object by the current user
@@ -69,6 +66,8 @@
         
     }];
 }
+
+/// method to refresh view. Sometimes tableview isn't reloading cells proper.y
 -(void)refreshView
 {
     dispatch_async(dispatch_get_main_queue(), ^{
