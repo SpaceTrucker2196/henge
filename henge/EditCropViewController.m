@@ -20,6 +20,7 @@
 
 @implementation EditCropViewController
 
+//Initialize vew and get appDelegate Reference.
 - (void)viewDidLoad {
     [super viewDidLoad];
     
@@ -32,6 +33,7 @@
     // Dispose of any resources that can be recreated.
 }
 
+//configure the view on viewWillAppear
 -(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
@@ -53,7 +55,7 @@
     }
 }
 
-
+//test input fields to make sure we have enough data to get started
 -(BOOL)inputFieldsAreValid
 {
     if ([_cultivarNameTextField.text length]>0)
@@ -64,6 +66,8 @@
     return NO;
 }
 
+//test input fields to make sure we have enough data to upload to parse
+//present an alert view if we dont.
 -(BOOL)inputFieldsAreValidForParse
 {
     if (([_cultivarNameTextField.text length]>0) &&
@@ -86,6 +90,7 @@
     return NO;
 }
 
+//configure the view appropriately if we have a crop or need to create one.
 -(void)configureView
 {
     if (_cropInView)
@@ -123,7 +128,7 @@
         _addToSeasonButton.hidden = NO;
     }
 }
-
+//create a new crop in the local data model
 -(void)newCropFromInputFields
 {
     self.cropInView = [NSEntityDescription insertNewObjectForEntityForName:@"Crop" inManagedObjectContext:_appDelegate.managedObjectContext];
@@ -165,7 +170,7 @@
     [_appDelegate.managedObjectContext save:nil];
     
 }
-
+//upload crop to parse Incoming class.
 -(void)newParseObjectForCrop:(Crop *)crop
 {
     PFObject *uploadObject = [PFObject objectWithClassName:@"VegiMatrixIncoming"];
@@ -266,12 +271,13 @@
     
 }
 
-
+//close and save
 - (IBAction)closeButtonAction:(id)sender
 {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+//add a new crop to the current growing season. Present an alert if the crop name is empty.
 - (IBAction)addAction:(id)sender
 {
     if ([self inputFieldsAreValid])
@@ -286,6 +292,7 @@
     }
 }
 
+//send to Henge action.
 - (IBAction)saveToHengeAction:(id)sender
 {
     if ([self inputFieldsAreValid])

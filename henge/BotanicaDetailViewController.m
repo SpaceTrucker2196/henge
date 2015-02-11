@@ -13,25 +13,26 @@
 #import "GUIDCategory.h"
 
 @interface BotanicaDetailViewController ()
-@property (assign) BOOL isAcreMode;
+@property (assign) BOOL isAcreMode; /*! is the view in Acre or Row mode for calculations? */
 @property (nonatomic,strong)AppDelegate *appDelegate;
 @end
 
 @implementation BotanicaDetailViewController
 
+///Initalize the view. Set isAcreMode to NO.
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.isAcreMode = NO;
-    // Do any additional setup after loading the view.
-    
     self.appDelegate = (AppDelegate *)[[UIApplication sharedApplication]delegate];
 }
 
+///Load a new culivar object for the view.
 -(void)loadCultivarObj:(PFObject *)culitvarObject
 {
     self.cultivarObject = culitvarObject;
 }
 
+///A field was edited perform calculations after checking isAcreMode
 - (IBAction)editedAction:(id)sender
 {
     if (self.isAcreMode)
@@ -43,13 +44,14 @@
         [self calcForRow];
     }
 }
-
+///Configure the view on viewWillAppear
 -(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:YES];
     [self configureView];
 }
 
+///Updates all view fields when needed.
 -(void)configureView
 {
     NSString *cultivar = [_cultivarObject objectForKey:@"cultivarCommon"];
@@ -131,13 +133,23 @@
     }
 }
 
+/// special view configuration for isAcreMode = YES
 -(void)configureViewForAcre
 {
     _areaSizeTextField.text = @"1";
     _harvestUnits.text = [_cultivarObject objectForKey:@"acreYieldUnit"];
     
 }
+/// special view configuration for isAcreMode = NO
+-(void)configureViewForRow
+{
+    _areaSizeTextField.text = @"1";
+    _areaLengthTextField.text = @"10";
+    _seedUnits.text = @"seeds";
+    _harvestUnits.text = [_cultivarObject objectForKey:@"commonRowYieldUnit"];
+}\
 
+/// Makes acre Calculations. Hides fields not needed calculates and updates view fields for isAcreMode = YES.
 -(void)calcForAcre
 {
     _harvestQuantity.alpha = 0;
@@ -195,14 +207,7 @@
     }
 }
 
--(void)configureViewForRow
-{
-    _areaSizeTextField.text = @"1";
-    _areaLengthTextField.text = @"10";
-    _seedUnits.text = @"seeds";
-    _harvestUnits.text = [_cultivarObject objectForKey:@"commonRowYieldUnit"];
-}\
-
+/// Makes Row calculations. Hides fields not needed calculates and updates view fields for isAcreMode = NO.
 -(void)calcForRow
 {
     _harvestQuantity.alpha = 0;
@@ -289,21 +294,23 @@
     // Dispose of any resources that can be recreated.
 }
 
-/*
-#pragma mark - Navigation
 
+#pragma mark - Navigation
+/*
 // In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     // Get the new view controller using [segue destinationViewController].
     // Pass the selected object to the new view controller.
 }
 */
-
+/// close view when user taps the close button.
 - (IBAction)closeButtonAction:(id)sender {
     
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+/// Handle add to current growing season action. Copies data from the Parse object and creates a
+/// new Crop core data entity it the local data model.
 - (IBAction)addButtonAction:(id)sender
 {
     Crop *crop = [NSEntityDescription insertNewObjectForEntityForName:@"Crop" inManagedObjectContext:_appDelegate.managedObjectContext];
@@ -351,6 +358,7 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+///Handle area / row mode changes and set isAcreMode.
 - (IBAction)areaFactorChanged:(id)sender
 {
     switch (self.sizeSelector.selectedSegmentIndex)

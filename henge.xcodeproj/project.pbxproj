@@ -23,6 +23,7 @@
 		EEAB421A1A8281CC00F383E5 /* CropDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */; };
 		EEAB421D1A82946500F383E5 /* Action.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB421C1A82946500F383E5 /* Action.m */; };
 		EEAB42201A82946600F383E5 /* Observation.m in Sources */ = {isa = PBXBuildFile; fileRef = EEAB421F1A82946600F383E5 /* Observation.m */; };
+		EEBF0E921A8BEFF800135981 /* iOS Simulator Screen Shot Feb 11, 2015, 11.34.06 AM.png in Resources */ = {isa = PBXBuildFile; fileRef = EEBF0E911A8BEFF800135981 /* iOS Simulator Screen Shot Feb 11, 2015, 11.34.06 AM.png */; };
 		EEC88AF31A79D872008E9519 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EEC88AF21A79D872008E9519 /* main.m */; };
 		EEC88AF61A79D872008E9519 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EEC88AF51A79D872008E9519 /* AppDelegate.m */; };
 		EEC88AF91A79D872008E9519 /* henge.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EEC88AF71A79D872008E9519 /* henge.xcdatamodeld */; };
@@ -100,6 +101,7 @@
 		EEAB421C1A82946500F383E5 /* Action.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Action.m; sourceTree = "<group>"; };
 		EEAB421E1A82946600F383E5 /* Observation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Observation.h; sourceTree = "<group>"; };
 		EEAB421F1A82946600F383E5 /* Observation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Observation.m; sourceTree = "<group>"; };
+		EEBF0E911A8BEFF800135981 /* iOS Simulator Screen Shot Feb 11, 2015, 11.34.06 AM.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "iOS Simulator Screen Shot Feb 11, 2015, 11.34.06 AM.png"; sourceTree = "<group>"; };
 		EEC88AED1A79D872008E9519 /* henge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = henge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EEC88AF11A79D872008E9519 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		EEC88AF21A79D872008E9519 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -213,6 +215,7 @@
 		EEC88AEF1A79D872008E9519 /* henge */ = {
 			isa = PBXGroup;
 			children = (
+				EEBF0E911A8BEFF800135981 /* iOS Simulator Screen Shot Feb 11, 2015, 11.34.06 AM.png */,
 				EE81281F1A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.h */,
 				EE8128201A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m */,
 				EE81281C1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.h */,
@@ -394,6 +397,7 @@
 				EEC88B071A79D872008E9519 /* LaunchScreen.xib in Resources */,
 				EEC88B041A79D872008E9519 /* Images.xcassets in Resources */,
 				EED2FDDB1A8951ED009D4B0F /* DSC_9381.jpg in Resources */,
+				EEBF0E921A8BEFF800135981 /* iOS Simulator Screen Shot Feb 11, 2015, 11.34.06 AM.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

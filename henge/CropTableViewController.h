@@ -9,12 +9,14 @@
 #import <UIKit/UIKit.h>
 #import <CoreData/CoreData.h>
 #import "AppDelegate.h"
-
+//!  CropTableViewController
+/*!
+ Lists the Crop entities in the local data model sectioned by Year.
+ 
+ */
 @interface CropTableViewController : UITableViewController <NSFetchedResultsControllerDelegate>
 
-@property (nonatomic,strong) AppDelegate *appDelegate;
-@property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
-@property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
+
 
 
 @end

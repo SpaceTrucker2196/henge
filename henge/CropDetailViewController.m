@@ -27,6 +27,7 @@
 
 @implementation CropDetailViewController
 
+///Initialize the view. Set dateformatter, textfield delegates, and reference to app delegate
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
@@ -38,6 +39,7 @@
     
 }
 
+///Sets _cropInView
 - (void)setDetailItem:(id)newDetailItem {
     if (_cropInView != newDetailItem)
     {
@@ -52,7 +54,7 @@
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-
+///Perform viewWillAppear get current observation and update the view.
 -(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
@@ -60,6 +62,7 @@
     [self configureView];
 }
 
+///handle the datepicked by the datepicker and update observation for seeded or transplant
 -(void)datePicked:(NSDate *)date
 {
     if (self.pickingTransplantDate)
@@ -103,7 +106,7 @@
 
     [_cropInView.managedObjectContext save:nil];
 }
-
+///update the view from the cropInView property.
 -(void)configureView
 {
     _cropNameLabel.text = _cropInView.name;
@@ -165,6 +168,7 @@
     //_ripenessSlider;
 }
 
+///gets the latest observation for a crop or creates a new one if one does not exist.
 -(Observation *)getLatestObservationForCrop:(Crop *)crop
 {
     NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
@@ -203,7 +207,7 @@
         return observation;
     }
 }
-
+///Creates a fuzzy date for when a crop will be ready for harvest like Early July or Late August.
 -(NSString *)getHarvestStringForCrop:(Crop *)crop
 {
     NSDate *harvestDate;
@@ -244,7 +248,7 @@
 
 #pragma mark - Navigation
 
-// In a storyboard-based application, you will often want to do a little preparation before navigation
+/// In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     // Get the new view controller using [segue destinationViewController].
     // Pass the selected object to the new view controller.
@@ -276,13 +280,17 @@
     
 }
 
-
+///closes the view and saves any data model changes.
 - (IBAction)closeButtonAction:(id)sender
 {
     [self dismissViewControllerAnimated:YES completion:nil];
     [_currentObservation.managedObjectContext save:nil];
 }
 
+
+//All slider changed actions update the current observation if one exists for the current day. If one doesn't
+//exist a new one is created copying the previous observations to the new. This way if a user only changes vigor
+// the other slider values are not defaulted to 0.
 - (IBAction)vigorSliderChanged:(id)sender
 {
     if ([_currentObservation.timestamp isToday])
@@ -347,7 +355,7 @@
  //   [_currentObservation.managedObjectContext save:nil];
     
 }
-
+//Make a date in the 31st or 16th format
 -(NSString *)stringFromDate:(NSDate *)DateLocal
 {
     
@@ -369,6 +377,7 @@
     return dateString;
 }
 
+//All actions create new observations regardless if there is a current observation.
 - (IBAction)waterAction:(id)sender
 {
     Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_appDelegate.managedObjectContext];
@@ -414,7 +423,6 @@
 }
 
 #pragma mark - text field delegate methods
-
 - (void)textFieldDidBeginEditing:(UITextField *)textField
 {
     [_closeButton setHidden:YES];

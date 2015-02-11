@@ -3361,10 +3361,10 @@
                                                                 </state>
                                                                 <variation key="default">
                                                                     <mask key="constraints">
-                                                                        <exclude reference="rI5-rC-1Qb"/>
-                                                                        <exclude reference="v7m-tl-irT"/>
                                                                         <exclude reference="je8-PV-Fh9"/>
                                                                         <exclude reference="jvE-nr-1O0"/>
+                                                                        <exclude reference="rI5-rC-1Qb"/>
+                                                                        <exclude reference="v7m-tl-irT"/>
                                                                     </mask>
                                                                 </variation>
                                                                 <connections>

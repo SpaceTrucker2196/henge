@@ -9,13 +9,14 @@
 #import <UIKit/UIKit.h>
 #import "Crop.h"
 #import "AppDelegate.h"
-
+//!  Crop History Table
+/*!
+ Lists the history of observations for the current crop.
+ */
 @interface CropHistoryTableTableViewController : UITableViewController <NSFetchedResultsControllerDelegate>
 
 @property (nonatomic, strong) Crop *cropInView;
-@property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
-@property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
-@property (strong, nonatomic) AppDelegate *appDelegate;
+
 
 
 

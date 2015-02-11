@@ -17,6 +17,7 @@
 
 @implementation AlmanacViewController
 
+/// Initialize the date and set up the date formatter
 - (void)viewDidLoad {
     [super viewDidLoad];
     
@@ -27,6 +28,7 @@
     
 }
 
+/// Perform view will appear and load season and moon data from parse
 -(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
@@ -40,8 +42,11 @@
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+
 }
 
+
+/// Gets the current New Moon date from the Almanac Class in Parse
 - (void)loadNewMoonFromParse
 {
     //Create query for all Post object by the current user
@@ -63,7 +68,8 @@
     }];
 }
 
-
+/// Gets seaons data from the Almanac Class in Parse and calculates the year
+/// progress bars.
 -(void)loadSeasonFromParse
 {
     //Create query for all Post object by the current user
@@ -140,6 +146,7 @@
 
 }
 
+/// Gets the current Full Moon date from the Almanac Class in Parse
 - (void)loadFullMoonFromParse
 {
     //Create query for all Post object by the current user
@@ -160,7 +167,7 @@
         }
     }];
 }
-
+/// Gets the current Spring Equinox  date from the Almanac Class in Parse
 - (void)loadSpringDateFromParse
 {
     //Create query for all Post object by the current user
@@ -182,6 +189,7 @@
     }];
 }
 
+/// Gets the current Fall Equinox  date from the Almanac Class in Parse
 - (void)loadFallDateFromParse
 {
     //Create query for all Post object by the current user
@@ -203,7 +211,7 @@
     }];
 }
 
-
+/// creates a date with a format liek June 1st or March 15th.
 -(NSString *)stringFromDate:(NSDate *)DateLocal
 {
     

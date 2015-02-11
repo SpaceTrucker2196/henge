@@ -13,24 +13,19 @@
 @interface CropHistoryTableTableViewController ()
 
 @property (nonatomic,strong) NSPredicate *fetchPredicate;
-
+@property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
+@property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
+@property (strong, nonatomic) AppDelegate *appDelegate;
 @end
 
 @implementation CropHistoryTableTableViewController
 
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
     [super viewDidLoad];
-    
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
-    
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
-    
-    
+
     self.appDelegate = (AppDelegate *)[[UIApplication sharedApplication]delegate];
     self.managedObjectContext  = _appDelegate.managedObjectContext;
-    
 }
 
 - (void)didReceiveMemoryWarning {

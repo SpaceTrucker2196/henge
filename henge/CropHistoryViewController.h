@@ -8,12 +8,15 @@
 
 #import <UIKit/UIKit.h>
 #import "Crop.h"
-
+//!  Crop History
+/*!
+ Lists the history of observations for the current crop.
+ */
 @interface CropHistoryViewController : UIViewController
 
-@property (nonatomic,strong) Crop *cropInView;
-@property (weak, nonatomic) IBOutlet UITextField *nameTextField;
-@property (weak, nonatomic) IBOutlet UILabel *detailsTextField;
+@property (nonatomic,strong) Crop *cropInView; /*! The current crop we are view history for */
+@property (weak, nonatomic) IBOutlet UITextField *nameTextField; /*! Crop Name */
+@property (weak, nonatomic) IBOutlet UILabel *detailsTextField; /*! crop details */
 
-- (IBAction)closeButtonAction:(id)sender;
+- (IBAction)closeButtonAction:(id)sender; /*! close */
 @end

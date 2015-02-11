@@ -8,6 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import "Crop.h"
+//!  Edit Growing notes
+/*!
+    An editor for creating and editing crop growing notes.
+ */
 
 @interface EditCropGrowingNotesViewController : UIViewController
 @property (weak, nonatomic) Crop *cropInView;

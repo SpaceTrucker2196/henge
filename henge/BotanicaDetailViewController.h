@@ -15,7 +15,7 @@
  */
 @interface BotanicaDetailViewController : UIViewController <UITextFieldDelegate>
 
-@property (strong, nonatomic) PFObject  *cultivarObject;
+@property (strong, nonatomic) PFObject  *cultivarObject; /*! An Entity of the Vegimatix class from parse*/
 
 @property (weak, nonatomic) IBOutlet UILabel *nameLabel; /*! The Cultivar Name */
 @property (weak, nonatomic) IBOutlet UILabel *maturityLabel; /*! The Cultivar Name */
@@ -29,11 +29,11 @@
 @property (weak, nonatomic) IBOutlet UILabel *seedUnits; /*! measurement units */
 @property (weak, nonatomic) IBOutlet UITextField *harvestQuantity; /*! Estimated Harvest Size */
 @property (weak, nonatomic) IBOutlet UILabel *harvestUnits;  /*! measurement units */
-@property (weak, nonatomic) IBOutlet UILabel *harvestDateLabel;
-@property (weak, nonatomic) IBOutlet UILabel *storageLabel;
-@property (weak, nonatomic) IBOutlet UILabel *seedsLabel;
-@property (weak, nonatomic) IBOutlet UILabel *harvestLabel;
-@property (weak, nonatomic) IBOutlet UILabel *notesLabel;
+@property (weak, nonatomic) IBOutlet UILabel *harvestDateLabel; /*! estimated harvest date */
+@property (weak, nonatomic) IBOutlet UILabel *storageLabel; /*! Label for Storage Date section */
+@property (weak, nonatomic) IBOutlet UILabel *seedsLabel; /*! amount of seeds needed */
+@property (weak, nonatomic) IBOutlet UILabel *harvestLabel; /*! Estimated Harvest Label */
+@property (weak, nonatomic) IBOutlet UILabel *notesLabel; /*! Growing Notes */
 
 
 - (IBAction)closeButtonAction:(id)sender; /*! Close the View */

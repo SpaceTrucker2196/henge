@@ -12,12 +12,16 @@
 @required
 -(void)datePicked:(NSDate *)date;
 @end
-
+//!  CropDatepicker
+/*!
+    A simple reusable date picker with a protocol to update 
+    a date.
+ */
 @interface CropDatePickerViewController : UIViewController
-@property (weak, nonatomic) IBOutlet UIDatePicker *datePicker;
+@property (weak, nonatomic) IBOutlet UIDatePicker *datePicker; /*! The views datepicker */
 
-@property (nonatomic, weak) id<CropDatePickerDelegate> delegate;
+@property (nonatomic, weak) id<CropDatePickerDelegate> delegate;  /*! The delegate who wants to know the date. */
 
-- (IBAction)plantedButtonAction:(id)sender;
+- (IBAction)plantedButtonAction:(id)sender; /*! the action button which closes the view and picks the date*/
 
 @end
