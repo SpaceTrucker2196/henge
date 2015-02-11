@@ -1,23 +1,24 @@
 //
-//  CropGrowingNotesViewController.m
+//  CropObservationNotesViewController.m
 //  henge
 //
-//  Created by Jeff Kunzelman on 2/9/15.
+//  Created by Jeff Kunzelman on 2/11/15.
 //  Copyright (c) 2015 River.io. All rights reserved.
 //
 
-#import "EditCropGrowingNotesViewController.h"
+#import "CropObservationNotesViewController.h"
+#import "Observation.h"
 
-@interface EditCropGrowingNotesViewController ()
+@interface CropObservationNotesViewController ()
 
 @end
 
-@implementation EditCropGrowingNotesViewController
+@implementation CropObservationNotesViewController
 
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
     [super viewDidLoad];
     // Do any additional setup after loading the view.
-    
     // register for keyboard notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWasShown:) name:UIKeyboardDidShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillBeHidden:) name:UIKeyboardDidHideNotification object:nil];
@@ -28,33 +29,31 @@
     [[NSNotificationCenter defaultCenter]removeObserver:self];
 }
 
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:YES];
+    [self configureView];
+    
+    if (!_observationInView)
+    {
+        [_notesTextView becomeFirstResponder];
+    }
+}
+
+-(void)configureView
+{
+    _cropNameTextField.text = _cropInView.name;
+    NSDateFormatter *dateformatter = [[NSDateFormatter alloc] init];
+    [dateformatter setDateFormat:@"MMMM dd"];
+    _detailsLabel.text = [dateformatter stringFromDate:[NSDate date]];
+    
+}
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
--(void)viewWillAppear:(BOOL)animated
-{
-    [super viewWillAppear:YES];
-    
-    _cultivarName.text = _cropInView.cultivar;
-    _growingNotesTextView.text = _cropInView.cultivarNotes;
-    
-    if ([_cropInView.cultivarNotes length] < 1)
-    {
-        [_growingNotesTextView becomeFirstResponder];
-    }
-}
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 #pragma mark - Keyboard handling
 //Handle KeyboardWasShown and change the size of the text view in proportion
 -(void)keyboardWasShown:(NSNotification *)notif
@@ -72,11 +71,17 @@
     // [self.view layoutIfNeeded];
 }
 
-- (IBAction)closeButton:(id)sender
+- (IBAction)closeButtonAction:(id)sender
 {
-    if (![_cropInView.cultivarNotes isEqualToString:_growingNotesTextView.text])
+    if ([_notesTextView.text length] > 0)
     {
-        _cropInView.cultivarNotes = _growingNotesTextView.text;
+        Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_cropInView.managedObjectContext];
+
+        observation.timestamp = [NSDate date];
+        observation.actionDescription = @"Note";
+        observation.note = _notesTextView.text;
+        observation.crop = _cropInView;
+        
         [_cropInView.managedObjectContext save:nil];
     }
     

@@ -2160,7 +2160,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="rLD-jf-MsW" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1386" y="1476"/>
+            <point key="canvasLocation" x="-1156" y="1306"/>
         </scene>
         <!--Crop Date Picker View Controller-->
         <scene sceneID="lqZ-d8-Mwm">
@@ -2714,7 +2714,7 @@
                                                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                                                 </state>
                                                                 <connections>
-                                                                    <segue destination="cfV-ci-SKa" kind="presentation" id="mPI-jm-nu3"/>
+                                                                    <segue destination="cfV-ci-SKa" kind="presentation" identifier="addNote" id="mPI-jm-nu3"/>
                                                                 </connections>
                                                             </button>
                                                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dqy-mb-0El">
@@ -3287,7 +3287,7 @@
         <!--Crop Notes-->
         <scene sceneID="Rri-xE-l4B">
             <objects>
-                <viewController title="Crop Notes" automaticallyAdjustsScrollViewInsets="NO" id="cfV-ci-SKa" sceneMemberID="viewController">
+                <viewController title="Crop Notes" automaticallyAdjustsScrollViewInsets="NO" id="cfV-ci-SKa" customClass="CropObservationNotesViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="Zkl-D8-wV0"/>
                         <viewControllerLayoutGuide type="bottom" id="QxQ-ww-HsX"/>
@@ -3309,14 +3309,14 @@
                                     <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <visualEffectView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6zy-hH-7UG">
+                                        <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="6zy-hH-7UG">
                                             <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                                             <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="ASl-9H-3Jg">
                                                 <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="3ZO-Ko-NXl">
-                                                        <rect key="frame" x="0.0" y="0.0" width="95" height="80"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="600" height="80"/>
                                                         <subviews>
                                                             <textField opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="Crop Name" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="O2k-Y3-GRN">
                                                                 <rect key="frame" x="58" y="8" width="496" height="30"/>
@@ -3346,10 +3346,12 @@
                                                                     <outlet property="delegate" destination="MgI-Qx-pyL" id="qHa-Xp-2LJ"/>
                                                                 </connections>
                                                             </textField>
-                                                            <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Rtp-le-xa6">
+                                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Rtp-le-xa6">
                                                                 <rect key="frame" x="562" y="8" width="30" height="30"/>
                                                                 <color key="backgroundColor" cocoaTouchSystemColor="lightTextColor"/>
                                                                 <constraints>
+                                                                    <constraint firstAttribute="width" constant="30" id="CCz-3M-VAI"/>
+                                                                    <constraint firstAttribute="height" constant="30" id="fuk-4C-Rlo"/>
                                                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="30" id="je8-PV-Fh9"/>
                                                                     <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="30" id="jvE-nr-1O0"/>
                                                                     <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="30" id="rI5-rC-1Qb"/>
@@ -3368,11 +3370,12 @@
                                                                     </mask>
                                                                 </variation>
                                                                 <connections>
+                                                                    <action selector="closeButtonAction:" destination="cfV-ci-SKa" eventType="touchUpInside" id="4Bt-7N-i9s"/>
                                                                     <action selector="closeButtonAction:" destination="MgI-Qx-pyL" eventType="touchUpInside" id="S8i-RI-LQ7"/>
                                                                     <action selector="closeButtonAction:" destination="Qfs-EQ-YNk" eventType="touchUpInside" id="ryJ-HK-2IH"/>
                                                                 </connections>
                                                             </button>
-                                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Crop details" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="amg-QU-LPC">
+                                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Crop details" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="amg-QU-LPC">
                                                                 <rect key="frame" x="8" y="51" width="584" height="21"/>
                                                                 <constraints>
                                                                     <constraint firstAttribute="height" constant="21" id="GEg-z7-O9i"/>
@@ -3388,26 +3391,58 @@
                                                             <constraint firstItem="O2k-Y3-GRN" firstAttribute="top" secondItem="3ZO-Ko-NXl" secondAttribute="top" constant="8" id="13J-1z-bes"/>
                                                             <constraint firstAttribute="trailing" secondItem="amg-QU-LPC" secondAttribute="trailing" constant="8" id="Arq-yv-UoF"/>
                                                             <constraint firstItem="O2k-Y3-GRN" firstAttribute="leading" secondItem="3ZO-Ko-NXl" secondAttribute="leading" constant="58" id="LxN-Py-6lU"/>
+                                                            <constraint firstAttribute="trailing" secondItem="Rtp-le-xa6" secondAttribute="trailing" constant="8" id="O8R-T3-Ywh"/>
                                                             <constraint firstItem="amg-QU-LPC" firstAttribute="leading" secondItem="3ZO-Ko-NXl" secondAttribute="leading" constant="8" id="Qh1-WF-le8"/>
                                                             <constraint firstAttribute="height" constant="80" id="R6K-Kd-Qvc"/>
+                                                            <constraint firstItem="Rtp-le-xa6" firstAttribute="top" secondItem="3ZO-Ko-NXl" secondAttribute="top" constant="8" id="T3r-gp-qvy"/>
                                                             <constraint firstAttribute="width" priority="250" constant="600" id="kkw-sg-SSv"/>
                                                             <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="80" id="nCD-TV-Z5f"/>
                                                             <constraint firstItem="Rtp-le-xa6" firstAttribute="leading" secondItem="O2k-Y3-GRN" secondAttribute="trailing" constant="8" id="nwX-Vt-ySc"/>
                                                             <constraint firstItem="amg-QU-LPC" firstAttribute="top" secondItem="Rtp-le-xa6" secondAttribute="bottom" constant="13" id="ogT-6A-g07"/>
                                                         </constraints>
+                                                        <variation key="default">
+                                                            <mask key="constraints">
+                                                                <exclude reference="nCD-TV-Z5f"/>
+                                                            </mask>
+                                                        </variation>
                                                     </view>
+                                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="hlb-Rr-EME">
+                                                        <rect key="frame" x="8" y="88" width="584" height="504"/>
+                                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                                        <constraints>
+                                                            <constraint firstAttribute="height" priority="250" constant="504" id="2L6-C4-nVZ"/>
+                                                            <constraint firstAttribute="width" priority="250" constant="584" id="iBR-A7-l0z"/>
+                                                        </constraints>
+                                                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                                    </textView>
                                                 </subviews>
                                                 <constraints>
+                                                    <constraint firstItem="hlb-Rr-EME" firstAttribute="top" secondItem="3ZO-Ko-NXl" secondAttribute="bottom" constant="8" id="5G3-MC-6Bh"/>
                                                     <constraint firstItem="3ZO-Ko-NXl" firstAttribute="leading" secondItem="ASl-9H-3Jg" secondAttribute="leading" id="HfF-3w-Wej"/>
                                                     <constraint firstAttribute="trailing" secondItem="3ZO-Ko-NXl" secondAttribute="trailing" id="L0Z-pP-R0g"/>
+                                                    <constraint firstAttribute="bottom" secondItem="hlb-Rr-EME" secondAttribute="bottom" constant="8" id="VzU-IF-LnM"/>
+                                                    <constraint firstItem="hlb-Rr-EME" firstAttribute="leading" secondItem="ASl-9H-3Jg" secondAttribute="leading" constant="8" id="Yhd-fI-DvH"/>
                                                     <constraint firstItem="3ZO-Ko-NXl" firstAttribute="top" secondItem="ASl-9H-3Jg" secondAttribute="top" id="cK2-QP-65D"/>
+                                                    <constraint firstAttribute="trailing" secondItem="hlb-Rr-EME" secondAttribute="trailing" constant="8" id="v28-sO-SVr"/>
                                                 </constraints>
                                             </view>
+                                            <constraints>
+                                                <constraint firstAttribute="height" priority="250" constant="600" id="fka-P1-rkC"/>
+                                                <constraint firstAttribute="width" priority="250" constant="600" id="vOw-Ql-E3Q"/>
+                                            </constraints>
                                             <vibrancyEffect>
                                                 <blurEffect style="dark"/>
                                             </vibrancyEffect>
                                         </visualEffectView>
                                     </subviews>
+                                    <constraints>
+                                        <constraint firstAttribute="trailing" secondItem="6zy-hH-7UG" secondAttribute="trailing" id="5K8-Gq-tL1"/>
+                                        <constraint firstItem="6zy-hH-7UG" firstAttribute="top" secondItem="pns-yU-7CA" secondAttribute="top" id="NIU-eM-JkC"/>
+                                        <constraint firstItem="6zy-hH-7UG" firstAttribute="leading" secondItem="pns-yU-7CA" secondAttribute="leading" id="TWH-GJ-W4E"/>
+                                        <constraint firstAttribute="bottom" secondItem="6zy-hH-7UG" secondAttribute="bottom" id="Zbx-k6-bDg"/>
+                                    </constraints>
                                 </view>
                                 <constraints>
                                     <constraint firstAttribute="height" priority="250" constant="600" id="Xzg-b3-RcX"/>
@@ -3429,10 +3464,15 @@
                         </constraints>
                     </view>
                     <toolbarItems/>
+                    <connections>
+                        <outlet property="cropNameTextField" destination="O2k-Y3-GRN" id="zxO-hB-oGp"/>
+                        <outlet property="detailsLabel" destination="amg-QU-LPC" id="6Xe-7e-Ue8"/>
+                        <outlet property="notesTextView" destination="hlb-Rr-EME" id="pYC-Xv-gQH"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iW8-rs-Nde" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="211" y="467"/>
+            <point key="canvasLocation" x="211" y="548"/>
         </scene>
     </scenes>
     <resources>

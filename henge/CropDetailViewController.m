@@ -15,6 +15,7 @@
 #import "CropDatePickerViewController.h"
 #import "EditCropViewController.h"
 #import "CropHistoryViewController.h"
+#import "CropObservationNotesViewController.h"
 
 @interface CropDetailViewController ()
 
@@ -255,29 +256,35 @@
     
    if ([[segue identifier] isEqualToString:@"seededDatePopover"])
     {
-        CropDatePickerViewController *gvc = [segue destinationViewController];
-        gvc.delegate = self;
+        CropDatePickerViewController *destinationViewController = [segue destinationViewController];
+        destinationViewController.delegate = self;
          self.pickingTransplantDate = NO;
     }
     if ([[segue identifier] isEqualToString:@"transplantedDatePopover"])
     {
-        CropDatePickerViewController *gvc = [segue destinationViewController];
-        gvc.delegate = self;
+        CropDatePickerViewController *destinationViewController = [segue destinationViewController];
+        destinationViewController.delegate = self;
         self.pickingTransplantDate = YES;
     }
     if ([[segue identifier] isEqualToString:@"editCropData"])
     {
-        EditCropViewController *gvc = [segue destinationViewController];
-        gvc.cropInView = self.cropInView;
+        EditCropViewController *destinationViewController = [segue destinationViewController];
+        destinationViewController.cropInView = self.cropInView;
         [_currentObservation.managedObjectContext save:nil];
     }
     if ([[segue identifier] isEqualToString:@"historyView"])
     {
-        CropHistoryViewController *gvc = [segue destinationViewController];
-        gvc.cropInView = self.cropInView;
+        CropHistoryViewController *destinationViewController = [segue destinationViewController];
+        destinationViewController.cropInView = self.cropInView;
         [_currentObservation.managedObjectContext save:nil];
     }
     
+    if ([[segue identifier] isEqualToString:@"addNote"])
+    {
+        CropObservationNotesViewController *destinationViewController = [segue destinationViewController];
+        destinationViewController.cropInView = self.cropInView;
+        [_currentObservation.managedObjectContext save:nil];
+    }
 }
 
 ///closes the view and saves any data model changes.
