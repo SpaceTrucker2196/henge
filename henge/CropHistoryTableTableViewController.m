@@ -57,11 +57,26 @@
     
     cell.dateLabel.text = [dateFormat stringFromDate:observation.timestamp];
     cell.detailLabel.text = observation.actionDescription;
+    cell.notesLabel.hidden = YES;
     
-    cell.vigorProgressView.progress = ([observation.vigor floatValue] / 100);
-    cell.diseaseProgressView.progress = ([observation.diseasePests floatValue] / 100);
-    cell.ripnessProgessView.progress = ([observation.ripeness floatValue] / 100);
+    if ([observation.vigor floatValue] > 0)
+    {
+        cell.statsView.hidden = NO;
+        cell.vigorProgressView.progress = ([observation.vigor floatValue] / 100);
+        cell.diseaseProgressView.progress = ([observation.diseasePests floatValue] / 100);
+        cell.ripnessProgessView.progress = ([observation.ripeness floatValue] / 100);
+    }
+    else
+    {
+        cell.statsView.hidden = YES;
+    }
 
+    if ([observation.note length] > 0)
+    {
+        cell.statsView.hidden = YES;
+        cell.notesLabel.hidden = NO;
+        cell.notesLabel.text = observation.note;
+    }
     NSLog(@"%@",observation);
     
     return cell;

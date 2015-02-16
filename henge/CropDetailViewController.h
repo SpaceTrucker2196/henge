@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "Crop.h"
-#import "CropDatePickerViewController.h"
 //!  CropDetailViewController
 /*!
  This view shows a crop entity from the local data model. From this view the user can perform observations
@@ -24,10 +23,12 @@
  transplant the age is assumed at 4 weeks. A facility for setting transplant age or managing plant starts
  will be added later.
  */
-@interface CropDetailViewController : UIViewController <CropDatePickerDelegate, UITextFieldDelegate>
+@interface CropDetailViewController : UIViewController <UITextFieldDelegate>
 
 @property (nonatomic,strong) Crop *cropInView;  /*! The current Crop entity in the view */
 @property (strong, nonatomic) id detailItem; /*! detail object for delegate */
+
+//fields
 @property (weak, nonatomic) IBOutlet UITextField *cropNameLabel; /*! The crop name */
 @property (weak, nonatomic) IBOutlet UILabel *seededDateTitle; /*! The seeded date title. This will hide when a transplant */
 @property (weak, nonatomic) IBOutlet UILabel *cropDetailsLabel; /*! The cultivar name */
@@ -44,6 +45,15 @@
 @property (weak, nonatomic) IBOutlet UISlider *ripenessSlider; /*! sets how ripe the fruit is */
 @property (weak, nonatomic) IBOutlet UIButton *closeButton; /*! closes the field and saves any changes. Hides when making changes until user is done with edit*/
 
+//datepickers
+@property (weak, nonatomic) IBOutlet UIDatePicker *seedDatePicker; /*! picker for the seeded date */
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *seedDatePickerViewLeftConstraint; /*! constraint for showing and hiding the datepicker*/
+@property (weak, nonatomic) IBOutlet UIDatePicker *transplantDatePicker;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *transplantDatePickerViewRightConstraint;
+
+//button actions
+- (IBAction)transplantDateAction:(id)sender;
+- (IBAction)seedDatePickerChangedAction:(id)sender;
 - (IBAction)closeButtonAction:(id)sender;  /*! closes the field and saves any changes */
 - (IBAction)vigorSliderChanged:(id)sender; /*! Handle vigor changes */
 - (IBAction)ripenessSliderChanged:(id)sender; /*! Handle ripeness changes */
@@ -52,7 +62,7 @@
 - (IBAction)seededButtonAction:(id)sender; /*! unused */
 - (IBAction)amendButtonAction:(id)sender; /*! adds observation for soil amendment */
 - (IBAction)harvestButtonAction:(id)sender; /*!  adds observation for harvest date */
+- (IBAction)transplantButtonAction:(id)sender;
 
--(void)datePicked:(NSDate *)date; /*! date picked by the datepicker*/
 
 @end

@@ -14,5 +14,7 @@
 @property (weak, nonatomic) IBOutlet UIProgressView *vigorProgressView;
 @property (weak, nonatomic) IBOutlet UIProgressView *diseaseProgressView;
 @property (weak, nonatomic) IBOutlet UIProgressView *ripnessProgessView;
+@property (weak, nonatomic) IBOutlet UIView *statsView;
+@property (weak, nonatomic) IBOutlet UILabel *notesLabel;
 
 @end

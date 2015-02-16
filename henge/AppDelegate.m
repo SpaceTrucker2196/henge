@@ -5,7 +5,7 @@
 //  Created by Jeff Kunzelman on 1/28/15.
 //  Copyright (c) 2015 River.io. All rights reserved.
 //
-
+#import <Crashlytics/Crashlytics.h>
 #import "AppDelegate.h"
 #import "DetailViewController.h"
 #import "CropTableViewController.h"
@@ -35,7 +35,7 @@
 //    controller.managedObjectContext = self.managedObjectContext;
     
     
-    
+    [Crashlytics startWithAPIKey:@"a54e32536dedad76baaa01144f6f44df94bd3f97"];
     
     return YES;
 }

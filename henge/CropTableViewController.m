@@ -90,7 +90,9 @@
     
     headerLabel.backgroundColor = [UIColor clearColor];
     headerLabel.textAlignment = NSTextAlignmentCenter;
-    [headerLabel setFont:[UIFont fontWithName:@"HelveticaNeue-Medium" size:18.0]];
+    [headerLabel setFont:[UIFont fontWithName:@"IowanOldStyle-Roman" size:14.0]];
+    headerLabel.alpha = .6;
+    headerLabel.textColor =  [UIColor whiteColor];
     
      id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
     headerLabel.text = [NSString stringWithFormat:@"%@ Season",[sectionInfo name]];
@@ -98,7 +100,7 @@
     
     UIView *borderView = [[UIView alloc] initWithFrame:
                                  CGRectMake(0, 29, tableView.frame.size.width, 1.0)];
-    borderView.backgroundColor = [UIColor whiteColor];
+    borderView.backgroundColor = [UIColor darkGrayColor];
    // [sectionHeaderView addSubview:borderView];
     
      return sectionHeaderView;

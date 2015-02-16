@@ -7,13 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		EE17B8EA1A82A518000AA80F /* CropDatePickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */; };
 		EE17B8ED1A83E8FD000AA80F /* CropHeaderTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = EE17B8EC1A83E8FD000AA80F /* CropHeaderTableViewCell.m */; };
 		EE207B3D1A87C0E100B3B8F8 /* Crop.m in Sources */ = {isa = PBXBuildFile; fileRef = EE207B3C1A87C0E100B3B8F8 /* Crop.m */; };
 		EE32C5951A7A835400C2ADEA /* BotanicaTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE32C5941A7A835400C2ADEA /* BotanicaTableViewController.m */; };
 		EE416A1E1A8A6E9B00B83C64 /* CropHistoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE416A1D1A8A6E9B00B83C64 /* CropHistoryViewController.m */; };
 		EE416A211A8A7D8200B83C64 /* CropHistoryTableTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE416A201A8A7D8200B83C64 /* CropHistoryTableTableViewController.m */; };
 		EE416A241A8A7D9D00B83C64 /* CropHistoryTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = EE416A231A8A7D9D00B83C64 /* CropHistoryTableViewCell.m */; };
+		EE43BF461A8E69E4002E6774 /* DSC_9465.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EE43BF451A8E69E4002E6774 /* DSC_9465.jpg */; };
+		EE43BF481A8E6A54002E6774 /* DSC_9460.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EE43BF471A8E6A54002E6774 /* DSC_9460.jpg */; };
+		EE43BF4A1A8E6A5A002E6774 /* DSC_9457.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EE43BF491A8E6A5A002E6774 /* DSC_9457.jpg */; };
+		EE43BF531A92A7D8002E6774 /* Crashlytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EE43BF521A92A7D8002E6774 /* Crashlytics.framework */; };
 		EE81281B1A85217200A693BD /* EditCropViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EE81281A1A85217200A693BD /* EditCropViewController.m */; };
 		EE81281E1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = EE81281D1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.m */; };
 		EE8128211A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = EE8128201A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m */; };
@@ -70,8 +73,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		EE17B8E81A82A518000AA80F /* CropDatePickerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropDatePickerViewController.h; sourceTree = "<group>"; };
-		EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropDatePickerViewController.m; sourceTree = "<group>"; };
 		EE17B8EB1A83E8FD000AA80F /* CropHeaderTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropHeaderTableViewCell.h; sourceTree = "<group>"; };
 		EE17B8EC1A83E8FD000AA80F /* CropHeaderTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropHeaderTableViewCell.m; sourceTree = "<group>"; };
 		EE207B3B1A87C0E100B3B8F8 /* Crop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Crop.h; sourceTree = "<group>"; };
@@ -84,6 +85,10 @@
 		EE416A201A8A7D8200B83C64 /* CropHistoryTableTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropHistoryTableTableViewController.m; sourceTree = "<group>"; };
 		EE416A221A8A7D9D00B83C64 /* CropHistoryTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CropHistoryTableViewCell.h; sourceTree = "<group>"; };
 		EE416A231A8A7D9D00B83C64 /* CropHistoryTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CropHistoryTableViewCell.m; sourceTree = "<group>"; };
+		EE43BF451A8E69E4002E6774 /* DSC_9465.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = DSC_9465.jpg; sourceTree = "<group>"; };
+		EE43BF471A8E6A54002E6774 /* DSC_9460.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = DSC_9460.jpg; sourceTree = "<group>"; };
+		EE43BF491A8E6A5A002E6774 /* DSC_9457.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = DSC_9457.jpg; sourceTree = "<group>"; };
+		EE43BF521A92A7D8002E6774 /* Crashlytics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Crashlytics.framework; sourceTree = "<group>"; };
 		EE8128191A85217200A693BD /* EditCropViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditCropViewController.h; sourceTree = "<group>"; };
 		EE81281A1A85217200A693BD /* EditCropViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EditCropViewController.m; sourceTree = "<group>"; };
 		EE81281C1A859BAE00A693BD /* TPKeyboardAvoidingScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPKeyboardAvoidingScrollView.h; sourceTree = "<group>"; };
@@ -165,6 +170,7 @@
 				EEC88B301A79DB69008E9519 /* MobileCoreServices.framework in Frameworks */,
 				EEC88B2E1A79DB5F008E9519 /* CoreLocation.framework in Frameworks */,
 				EEC88B2C1A79DB52008E9519 /* CoreGraphics.framework in Frameworks */,
+				EE43BF531A92A7D8002E6774 /* Crashlytics.framework in Frameworks */,
 				EEC88B2A1A79DB46008E9519 /* CFNetwork.framework in Frameworks */,
 				EEC88B281A79DB3D008E9519 /* AudioToolbox.framework in Frameworks */,
 				EEC88B221A79DAA4008E9519 /* Parse.framework in Frameworks */,
@@ -191,6 +197,7 @@
 				EECAE5801A816E5200C6A731 /* UIKit.framework */,
 				EEC88B3B1A79DBAA008E9519 /* libsqlite3.dylib */,
 				EEC88B391A79DB9F008E9519 /* libz.dylib */,
+				EE43BF521A92A7D8002E6774 /* Crashlytics.framework */,
 				EEC88B371A79DB91008E9519 /* SystemConfiguration.framework */,
 				EEC88B351A79DB84008E9519 /* StoreKit.framework */,
 				EEC88B331A79DB7D008E9519 /* Security.framework */,
@@ -218,6 +225,9 @@
 		EEC88AEF1A79D872008E9519 /* henge */ = {
 			isa = PBXGroup;
 			children = (
+				EE43BF471A8E6A54002E6774 /* DSC_9460.jpg */,
+				EE43BF491A8E6A5A002E6774 /* DSC_9457.jpg */,
+				EE43BF451A8E69E4002E6774 /* DSC_9465.jpg */,
 				EEBF0E931A8BF1A900135981 /* screenshot.png */,
 				EE81281F1A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.h */,
 				EE8128201A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m */,
@@ -257,8 +267,6 @@
 				EECAE5831A81792800C6A731 /* CropTableViewCell.m */,
 				EEAB42181A8281CC00F383E5 /* CropDetailViewController.h */,
 				EEAB42191A8281CC00F383E5 /* CropDetailViewController.m */,
-				EE17B8E81A82A518000AA80F /* CropDatePickerViewController.h */,
-				EE17B8E91A82A518000AA80F /* CropDatePickerViewController.m */,
 				EE17B8EB1A83E8FD000AA80F /* CropHeaderTableViewCell.h */,
 				EE17B8EC1A83E8FD000AA80F /* CropHeaderTableViewCell.m */,
 				EE8128191A85217200A693BD /* EditCropViewController.h */,
@@ -327,6 +335,7 @@
 				EEC88AE91A79D872008E9519 /* Sources */,
 				EEC88AEA1A79D872008E9519 /* Frameworks */,
 				EEC88AEB1A79D872008E9519 /* Resources */,
+				EE43BF4B1A922FFA002E6774 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -366,6 +375,7 @@
 				TargetAttributes = {
 					EEC88AEC1A79D872008E9519 = {
 						CreatedOnToolsVersion = 6.1.1;
+						DevelopmentTeam = U3Z59VXPUB;
 					};
 					EEC88B0B1A79D872008E9519 = {
 						CreatedOnToolsVersion = 6.1.1;
@@ -401,8 +411,11 @@
 				EEBF0E941A8BF1A900135981 /* screenshot.png in Resources */,
 				EEC88B021A79D872008E9519 /* Main.storyboard in Resources */,
 				EEC88B071A79D872008E9519 /* LaunchScreen.xib in Resources */,
+				EE43BF4A1A8E6A5A002E6774 /* DSC_9457.jpg in Resources */,
 				EEC88B041A79D872008E9519 /* Images.xcassets in Resources */,
 				EED2FDDB1A8951ED009D4B0F /* DSC_9381.jpg in Resources */,
+				EE43BF461A8E69E4002E6774 /* DSC_9465.jpg in Resources */,
+				EE43BF481A8E6A54002E6774 /* DSC_9460.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -414,6 +427,22 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		EE43BF4B1A922FFA002E6774 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "./Crashlytics.framework/run a54e32536dedad76baaa01144f6f44df94bd3f97 d9b3f8edda794e1869c48dd6fdcf051ec6e94804366545ac6300a3d2398468b1";
+			shellScript = "";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		EEC88AE91A79D872008E9519 /* Sources */ = {
@@ -435,7 +464,6 @@
 				EED2FDDE1A896A26009D4B0F /* BotanicaTableViewCell.m in Sources */,
 				EE8128211A859BC300A693BD /* UIScrollView+TPKeyboardAvoidingAdditions.m in Sources */,
 				EEC88AF61A79D872008E9519 /* AppDelegate.m in Sources */,
-				EE17B8EA1A82A518000AA80F /* CropDatePickerViewController.m in Sources */,
 				EE416A241A8A7D9D00B83C64 /* CropHistoryTableViewCell.m in Sources */,
 				EEA54AC41A7B0A5700B33EB5 /* AlmanacViewController.m in Sources */,
 				EED2FDD91A890900009D4B0F /* EditCropGrowingNotesViewController.m in Sources */,
@@ -504,7 +532,8 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Kunzelman (4XQSPMCMH2)";
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -545,7 +574,8 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: river.io llc (U3Z59VXPUB)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: river.io llc (U3Z59VXPUB)";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -558,6 +588,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -567,13 +598,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Kunzelman (4XQSPMCMH2)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Kunzelman (4XQSPMCMH2)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/henge",
+					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = henge/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Debug;
 		};
@@ -581,13 +616,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: river.io llc (U3Z59VXPUB)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: river.io llc (U3Z59VXPUB)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/henge",
+					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = henge/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Release;
 		};

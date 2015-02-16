@@ -12,7 +12,6 @@
 #import "AppDelegate.h"
 #import "Action.h"
 #import "Observation.h"
-#import "CropDatePickerViewController.h"
 #import "EditCropViewController.h"
 #import "CropHistoryViewController.h"
 #import "CropObservationNotesViewController.h"
@@ -29,7 +28,8 @@
 @implementation CropDetailViewController
 
 ///Initialize the view. Set dateformatter, textfield delegates, and reference to app delegate
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.fancyDateFormatter = [[NSDateFormatter alloc]init];
@@ -37,6 +37,9 @@
     self.appDelegate = (AppDelegate *)[[UIApplication sharedApplication]delegate];
     
     [_cropNameLabel setDelegate:self];
+    
+    _seedDatePickerViewLeftConstraint.constant = -320;
+    _transplantDatePickerViewRightConstraint.constant = -320;
     
 }
 
@@ -63,50 +66,6 @@
     [self configureView];
 }
 
-///handle the datepicked by the datepicker and update observation for seeded or transplant
--(void)datePicked:(NSDate *)date
-{
-    if (self.pickingTransplantDate)
-    {
-        _cropInView.transplantedDate = date;
-       
-        if (!_cropInView.seededDate)
-        {
-            //default transplant age is 5 weeks
-            _cropInView.seededDate =[date dateBySubtractingDays:35];
-        }
-        
-        Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_appDelegate.managedObjectContext];
-        
-        observation.vigor = @0;
-        observation.diseasePests = @0;
-        observation.ripeness = @0;
-        observation.crop = _cropInView;
-        observation.timestamp =  _cropInView.transplantedDate;
-        observation.actionDescription = @"Transplanted";
-    }
-    else
-    {
-        _cropInView.seededDate = date;
-        
-        Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_appDelegate.managedObjectContext];
-        observation.timestamp = _cropInView.seededDate;
-        observation.vigor = @0;
-        observation.diseasePests = @0;
-        observation.ripeness = @0;
-        observation.crop = _cropInView;
-        observation.actionDescription = @"Seeded";
-
-  
-    }
-    
-    //reset the year of the crop
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"yyyy"];
-    _cropInView.yearGrown = [formatter stringFromDate:date];
-
-    [_cropInView.managedObjectContext save:nil];
-}
 ///update the view from the cropInView property.
 -(void)configureView
 {
@@ -208,6 +167,84 @@
         return observation;
     }
 }
+
+-(Observation *)getSeededObservationForCrop:(Crop *)crop
+{
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    
+    // Edit the entity name as appropriate.
+    NSEntityDescription *entity = [NSEntityDescription entityForName:@"Observation" inManagedObjectContext:crop.managedObjectContext];
+    [fetchRequest setEntity:entity];
+    
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"((actionDescription == %@) AND (crop == %@))",@"Seeded",_cropInView];
+    [fetchRequest setPredicate:pred];
+    
+    NSSortDescriptor *sortDescriptor1 = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
+    
+    NSArray *sortDescriptors = @[sortDescriptor1];
+    
+    [fetchRequest setSortDescriptors:sortDescriptors];
+    
+    NSArray *results = [crop.managedObjectContext executeFetchRequest:fetchRequest error:nil];
+    
+    if ([results count] > 0)
+    {
+        Observation *observation = [results objectAtIndex:0];
+        
+        return observation;
+    }
+    else
+    {
+        Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:crop.managedObjectContext];
+        
+        observation.vigor = @0;
+        observation.diseasePests = @0;
+        observation.ripeness = @0;
+        observation.timestamp = [NSDate date];
+        observation.crop = _cropInView;
+        
+        return observation;
+    }
+}
+
+-(Observation *)getTransplantedObservationForCrop:(Crop *)crop
+{
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    
+    // Edit the entity name as appropriate.
+    NSEntityDescription *entity = [NSEntityDescription entityForName:@"Observation" inManagedObjectContext:crop.managedObjectContext];
+    [fetchRequest setEntity:entity];
+    
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"((actionDescription == %@) AND (crop = %@))",@"Transplanted",_cropInView];
+    [fetchRequest setPredicate:pred];
+    
+    NSSortDescriptor *sortDescriptor1 = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
+    
+    NSArray *sortDescriptors = @[sortDescriptor1];
+    
+    [fetchRequest setSortDescriptors:sortDescriptors];
+    
+    NSArray *results = [crop.managedObjectContext executeFetchRequest:fetchRequest error:nil];
+    
+    if ([results count] > 0)
+    {
+        Observation *observation = [results objectAtIndex:0];
+        return observation;
+    }
+    else
+    {
+        Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:crop.managedObjectContext];
+        
+        observation.vigor = @0;
+        observation.diseasePests = @0;
+        observation.ripeness = @0;
+        observation.timestamp = [NSDate date];
+        observation.crop = _cropInView;
+        
+        return observation;
+    }
+}
+
 ///Creates a fuzzy date for when a crop will be ready for harvest like Early July or Late August.
 -(NSString *)getHarvestStringForCrop:(Crop *)crop
 {
@@ -254,18 +291,18 @@
     // Get the new view controller using [segue destinationViewController].
     // Pass the selected object to the new view controller.
     
-   if ([[segue identifier] isEqualToString:@"seededDatePopover"])
-    {
-        CropDatePickerViewController *destinationViewController = [segue destinationViewController];
-        destinationViewController.delegate = self;
-         self.pickingTransplantDate = NO;
-    }
-    if ([[segue identifier] isEqualToString:@"transplantedDatePopover"])
-    {
-        CropDatePickerViewController *destinationViewController = [segue destinationViewController];
-        destinationViewController.delegate = self;
-        self.pickingTransplantDate = YES;
-    }
+//   if ([[segue identifier] isEqualToString:@"seededDatePopover"])
+//    {
+//        CropDatePickerViewController *destinationViewController = [segue destinationViewController];
+//        destinationViewController.delegate = self;
+//         self.pickingTransplantDate = NO;
+//    }
+//    if ([[segue identifier] isEqualToString:@"transplantedDatePopover"])
+//    {
+//        CropDatePickerViewController *destinationViewController = [segue destinationViewController];
+//        destinationViewController.delegate = self;
+//        self.pickingTransplantDate = YES;
+//    }
     if ([[segue identifier] isEqualToString:@"editCropData"])
     {
         EditCropViewController *destinationViewController = [segue destinationViewController];
@@ -365,10 +402,10 @@
 //Make a date in the 31st or 16th format
 -(NSString *)stringFromDate:(NSDate *)DateLocal
 {
-    
+
     NSDateFormatter *prefixDateFormatter = [[NSDateFormatter alloc] init];
     [prefixDateFormatter setFormatterBehavior:NSDateFormatterBehavior10_4];
-    [prefixDateFormatter setDateFormat:@"MMMM d."];//June 13th, 2013
+    [prefixDateFormatter setDateFormat:@"MMMM d."];//June 13th
     NSString * prefixDateString = [prefixDateFormatter stringFromDate:DateLocal];
     NSDateFormatter *monthDayFormatter = [[NSDateFormatter alloc] init];
     [monthDayFormatter setFormatterBehavior:NSDateFormatterBehavior10_4];
@@ -395,14 +432,66 @@
     observation.timestamp = [NSDate date];
     observation.actionDescription = @"Watered";
     
-    
     [_appDelegate.managedObjectContext save:nil];
+    
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (IBAction)seededButtonAction:(id)sender
 {
+    [self animateSeedDatePickerView];
 }
 
+
+-(void)animateSeedDatePickerView
+{
+    if (_cropInView.seededDate)
+    {
+        _seedDatePicker.date = _cropInView.seededDate;
+    }
+    
+    [UIView animateWithDuration:.1
+                     animations:^{
+                         if (_seedDatePickerViewLeftConstraint.constant == 0)
+                         {
+                             _seedDatePickerViewLeftConstraint.constant = -320;
+                         }
+                         else
+                         {
+                             _seedDatePickerViewLeftConstraint.constant = 0;
+                         }
+                         
+                         [self.view layoutIfNeeded];
+                     }
+                     completion:^ (BOOL finished)
+     {
+     }];
+}
+
+-(void)animateTransplantDatePickerView
+{
+    if (_cropInView.transplantedDate)
+    {
+        _transplantDatePicker.date = _cropInView.transplantedDate;
+    }
+    
+    [UIView animateWithDuration:.1
+                     animations:^{
+                         if (_transplantDatePickerViewRightConstraint.constant == 0)
+                         {
+                             _transplantDatePickerViewRightConstraint.constant = -320;
+                         }
+                         else
+                         {
+                             _transplantDatePickerViewRightConstraint.constant = 0;
+                         }
+                         
+                         [self.view layoutIfNeeded];
+                     }
+                     completion:^ (BOOL finished)
+     {
+     }];
+}
 - (IBAction)amendButtonAction:(id)sender
 {
     Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_appDelegate.managedObjectContext];
@@ -414,6 +503,7 @@
     observation.actionDescription = @"Ammended";
     
     [_appDelegate.managedObjectContext save:nil];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (IBAction)harvestButtonAction:(id)sender
@@ -427,6 +517,7 @@
     observation.actionDescription = @"Harvest";
     
     [_appDelegate.managedObjectContext save:nil];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark - text field delegate methods
@@ -447,5 +538,57 @@
         return NO;
     }
     return YES;
+}
+- (IBAction)seedDatePickerChangedAction:(id)sender
+{
+    _cropInView.seededDate = _seedDatePicker.date;
+    
+    Observation *observation = [self getSeededObservationForCrop:_cropInView];
+    observation.timestamp = _cropInView.seededDate;
+    observation.vigor = @0;
+    observation.diseasePests = @0;
+    observation.ripeness = @0;
+    observation.crop = _cropInView;
+    observation.actionDescription = @"Seeded";
+
+
+    //reset the year of the crop
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy"];
+    
+    _cropInView.yearGrown = [formatter stringFromDate:_seedDatePicker.date];
+
+    [_cropInView.managedObjectContext save:nil];
+    
+    [self configureView];
+    [self animateSeedDatePickerView];
+    
+}
+- (IBAction)transplantDateAction:(id)sender
+{
+    _cropInView.transplantedDate = _seedDatePicker.date;
+    if (!_cropInView.seededDate)
+    {
+        //default transplant age is 5 weeks
+        _cropInView.seededDate =[_seedDatePicker.date dateBySubtractingDays:35];
+    }
+    
+    Observation *observation = [NSEntityDescription insertNewObjectForEntityForName:@"Observation" inManagedObjectContext:_appDelegate.managedObjectContext];
+    
+    observation.vigor = @0;
+    observation.diseasePests = @0;
+    observation.ripeness = @0;
+    observation.crop = _cropInView;
+    observation.timestamp =  _cropInView.transplantedDate;
+    observation.actionDescription = @"Transplanted";
+    
+    [_appDelegate.managedObjectContext save:nil];
+    [self configureView];
+    [self animateTransplantDatePickerView];
+}
+
+- (IBAction)transplantButtonAction:(id)sender
+{
+    [self animateTransplantDatePickerView];
 }
 @end
