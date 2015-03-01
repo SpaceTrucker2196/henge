@@ -29,13 +29,15 @@
     // [Optional] Track statistics around application opens.
     [PFAnalytics trackAppOpenedWithLaunchOptions:launchOptions];
     
+    //crash reporting
+    [Crashlytics startWithAPIKey:@"a54e32536dedad76baaa01144f6f44df94bd3f97"];
     
 //    UINavigationController *navigationController = (UINavigationController *)self.window.rootViewController;
 //    MasterViewController *controller = (MasterViewController *)navigationController.topViewController;
 //    controller.managedObjectContext = self.managedObjectContext;
     
     
-    [Crashlytics startWithAPIKey:@"a54e32536dedad76baaa01144f6f44df94bd3f97"];
+    
     
     return YES;
 }

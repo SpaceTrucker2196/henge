@@ -97,7 +97,7 @@
                 NSInteger daysLeft = [[NSDate date]daysBeforeDate:seasonDate];
                 NSInteger totalDays = [seasonDate daysBeforeDate:seasonEndDate];
                 
-                float percentDone = (daysLeft / totalDays);
+                float percentDone = 1 - (daysLeft / totalDays);
                 
                 _springProgressView.progress = percentDone;
                 
@@ -111,7 +111,7 @@
                 float daysLeft = [[NSDate date]daysBeforeDate:seasonEndDate];
                 float totalDays = [seasonDate daysBeforeDate:seasonEndDate];
                 
-                float percentDone = (daysLeft / totalDays);
+                float percentDone = 1 - (daysLeft / totalDays);
                 
                 _summerProgressView.progress = percentDone;
 
@@ -124,7 +124,7 @@
                 float daysLeft = [[NSDate date]daysBeforeDate:seasonEndDate];
                 float totalDays = [seasonDate daysBeforeDate:seasonEndDate];
                 
-                float percentDone = (daysLeft / totalDays);
+                float percentDone = 1 - (daysLeft / totalDays);
                 
                 _fallProgressView.progress = percentDone;
 
@@ -136,7 +136,7 @@
                 float daysLeft = [[NSDate date]daysBeforeDate:seasonEndDate];
                 float totalDays = [seasonDate daysBeforeDate:seasonEndDate];
                 
-                float percentDone = (daysLeft / totalDays);
+                float percentDone = 1 - (daysLeft / totalDays);
                 
                 _winterProgressView.progress = percentDone;
             }
