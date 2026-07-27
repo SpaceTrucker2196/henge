@@ -275,27 +275,39 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// - Parameter roughness: displacement amplitude. Zero yields exact boxes,
     ///   which is what the shadow-agreement test needs so that the rendered
     ///   silhouette and the analytic outline describe the same solid.
+    /// The plain the monument stands on. Nil renders a flat world, which is
+    /// what the shadow-agreement test wants — a sloping receiver would move the
+    /// measured shadow for reasons that have nothing to do with the renderer.
+    public var terrain: TerrainModel?
+
     public func load(scene: MonumentScene, subdivisions: Int = 18,
                      roughness: Double = 0.06, rounding: Double = 0.13) throws {
         var items: [DrawItem] = []
 
         for stone in scene.stones {
-            let mesh = StoneMeshBuilder.build(stone, subdivisions: subdivisions,
+            // Chalk discs are flat and small; they do not need the tessellation
+            // a seven-metre sarsen does.
+            let detail = stone.material == .chalk ? 5 : subdivisions
+            let mesh = StoneMeshBuilder.build(stone, subdivisions: detail,
                                               roughness: roughness, rounding: rounding)
-            if let item = try makeDrawItem(mesh: mesh, albedo: SurfaceMaterial.sarsen,
-                                           label: stone.id) {
+            if let item = try makeDrawItem(mesh: mesh,
+                                           albedo: SurfaceMaterial.albedo(for: stone.material),
+                                           label: stone.id,
+                                           // A disc flush in the turf casting a
+                                           // shadow would be a hole, not a stone.
+                                           castsShadow: stone.material != .chalk) {
                 items.append(item)
             }
         }
 
-        // The plain.
+        // Salisbury Plain itself, displaced by the surveyed heightfield.
         //
-        // Reaching out as far as the terrain data does. At 400 m the ground
-        // simply stopped and sky showed beyond it — a visible edge of the
-        // world a few hundred metres out, which reads as the scene being open
-        // rather than as a horizon. Still flat: the heightfield is loaded and
-        // measured but not yet displaced into this mesh, which is M2's first job.
-        let ground = Self.groundPlane(halfExtent: 15_000, divisions: 96)
+        // Reaching as far as the data does, so there is no edge of the world a
+        // few hundred metres out. Resolution is spent where it is seen: the
+        // grid is denser near the monument and coarsens outward, because the
+        // ridge four kilometres away needs far fewer triangles per metre than
+        // the turf underfoot.
+        let ground = Self.groundMesh(terrain: terrain, divisions: 220)
         if let item = try makeDrawItem(mesh: ground, albedo: SurfaceMaterial.turf,
                                        label: "ground", castsShadow: false) {
             items.append(item)
@@ -334,14 +346,25 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                         castsShadow: castsShadow)
     }
 
-    static func groundPlane(halfExtent: Float, divisions: Int) -> Mesh {
+    /// Ground mesh, optionally displaced by the terrain.
+    ///
+    /// Vertices are placed on a grid warped by a cubic, so spacing is fine near
+    /// the monument and stretches toward the horizon. A uniform grid over 30 km
+    /// would either be too coarse underfoot or ruinously dense at the edges.
+    static func groundMesh(terrain: TerrainModel?, divisions: Int) -> Mesh {
         var mesh = Mesh()
-        let step = halfExtent * 2 / Float(divisions)
+        let extent = Float(terrain?.extent ?? 15_000)
+
+        func coordinate(_ i: Int) -> Float {
+            let t = Float(i) / Float(divisions) * 2 - 1     // −1…1
+            return t * abs(t) * abs(t) * extent             // cubic: dense in the middle
+        }
+
         for i in 0...divisions {
             for j in 0...divisions {
-                let x = -halfExtent + Float(i) * step
-                let z = -halfExtent + Float(j) * step
-                mesh.positions.append(SIMD3(x, 0, z))
+                let x = coordinate(i), z = coordinate(j)
+                let y = terrain.map { Float($0.groundHeight(east: Double(x), south: Double(z))) } ?? 0
+                mesh.positions.append(SIMD3(x, y, z))
                 mesh.normals.append(SIMD3(0, 1, 0))
             }
         }
@@ -352,6 +375,26 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 let c = UInt32((i + 1) * (divisions + 1) + j + 1)
                 let d = UInt32(i * (divisions + 1) + j + 1)
                 mesh.indices.append(contentsOf: [a, b, c, a, c, d])
+            }
+        }
+
+        // Real normals from the displaced surface, or the lighting on the plain
+        // is uniformly flat and the landform disappears.
+        if terrain != nil {
+            var accumulated = [SIMD3<Float>](repeating: .zero, count: mesh.positions.count)
+            for triangle in stride(from: 0, to: mesh.indices.count, by: 3) {
+                let i0 = Int(mesh.indices[triangle])
+                let i1 = Int(mesh.indices[triangle + 1])
+                let i2 = Int(mesh.indices[triangle + 2])
+                let normal = cross(mesh.positions[i1] - mesh.positions[i0],
+                                   mesh.positions[i2] - mesh.positions[i0])
+                accumulated[i0] += normal
+                accumulated[i1] += normal
+                accumulated[i2] += normal
+            }
+            for i in accumulated.indices {
+                let length = simd_length(accumulated[i])
+                mesh.normals[i] = length > 1e-9 ? accumulated[i] / length : SIMD3(0, 1, 0)
             }
         }
         return mesh

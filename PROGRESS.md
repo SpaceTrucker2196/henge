@@ -1,5 +1,52 @@
 # henge — progress
 
+In-flight state. Newest first.
+
+## 2026-07-27 (M2) — the whole monument, standing on real ground
+
+The plain is now the plain: `TerrainModel` displaces the ground mesh, on a grid
+warped by a cubic so resolution is spent underfoot rather than on the horizon.
+The monument stands at its surveyed 101 m with Stonehenge Bottom falling away
+north, and the ground reaches as far as the data does.
+
+All of it is raised: 30 sarsen uprights with a continuous, level lintel ring;
+five trilithons in a horseshoe opening north-east; a 40-stone bluestone circle
+and a 19-stone inner horseshoe; the Altar Stone; the Slaughter Stone and its
+portal partner; four Station Stones; 56 Aubrey holes as chalk discs. Sarsen,
+bluestone and chalk are distinct materials. Both states are generated from the
+same rules, so the ruin is a filter over the complete monument rather than a
+second model that could drift from it.
+
+Four camera stations — aerial, Altar Stone, Heel Stone, Avenue — at a standing
+eye height taken from the terrain, plus drag and pinch. On the ground, drag
+turns your head and pinch narrows the field of view, because you cannot walk
+backwards out of a stone circle to see more of it.
+
+### Two placement bugs the tests caught before the eye did
+
+- A trilithon upright was standing **inside** a bluestone: the horseshoe was at
+  11.2 m and the bluestone circle at 11.6 m, 0.47 m apart. Both radii adjusted.
+- The Station Stone rectangle came out **18 m across instead of 33 m**. The
+  offsets had been picked because ±12° looked symmetrical; the figure is only
+  the surveyed 80 × 33 m if the corners sit at ±22.3° on an 87 m circle. That
+  one matters: the rectangle's proportions are the lunar alignment.
+
+`testNoTwoStonesStandInTheSamePlace` and `testTheStationStonesFormARectangle`
+now hold both, the second by checking equal diagonals rather than equal sides —
+a rhombus has equal sides too.
+
+### Why the pillars looked unclosed
+
+Reported twice, and the mesh was watertight both times. The cause was the
+parameterisation: sweeping a UV sphere onto a box spends nearly all its
+vertices around the long axis and leaves the small top face covered by a ring
+or two, so the top came out a coarse faceted bevel that reads as the rim of an
+open tube. The stone is now a **welded box grid** — six face grids sharing
+vertices by position key, rounded and displaced by functions of position alone
+so shared vertices cannot disagree. Even coverage, closed top, same watertight
+and opacity guarantees.
+
+
 In-flight state. Newest first. Each entry: date, what changed, what's next, and
 anything a cold agent must know that isn't in a doc yet.
 

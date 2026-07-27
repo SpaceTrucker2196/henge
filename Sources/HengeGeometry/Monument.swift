@@ -98,6 +98,16 @@ public enum Monument {
 /// circle reads as quarried rock rather than a repeated asset — and it is
 /// reproducible, which matters because the shadow tests depend on a stone
 /// being in exactly the same place every run.
+/// What a stone is made of. Drives its material in the renderer, and matters
+/// to the archaeology: sarsen came from the Marlborough Downs some 25 km north,
+/// the bluestones from the Preseli Hills in Wales, 250 km away.
+public enum StoneMaterial: Sendable, Hashable {
+    case sarsen
+    case bluestone
+    /// Chalk fill — the Aubrey holes, rendered as pale discs in the turf.
+    case chalk
+}
+
 public struct Stone: Sendable, Hashable {
 
     public let id: String
@@ -112,9 +122,11 @@ public struct Stone: Sendable, Hashable {
     public let lean: Angle
     /// Seed for the displacement noise that gives this stone its surface.
     public let seed: UInt64
+    public let material: StoneMaterial
 
     public init(id: String, position: SIMD3<Double>, height: Double, width: Double,
                 thickness: Double, bearing: Angle = .zero, lean: Angle = .zero,
+                material: StoneMaterial = .sarsen,
                 seed: UInt64? = nil) {
         self.id = id
         self.position = position
@@ -123,6 +135,7 @@ public struct Stone: Sendable, Hashable {
         self.thickness = thickness
         self.bearing = bearing
         self.lean = lean
+        self.material = material
         self.seed = seed ?? Stone.deterministicSeed(for: id)
     }
 

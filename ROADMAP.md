@@ -9,12 +9,15 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       scrubber to 100,000×. **The shadow-agreement test landed here** — it is
       the gate that makes everything after it trustworthy.
 
-- [ ] **M2 — The Stones (L).** The full monument in both states: 30 sarsen
-      uprights and their lintel ring, five trilithons, bluestone circle and
-      horseshoe, Altar Stone, Slaughter Stone, Station Stones, Aubrey holes,
-      ditch, bank and Avenue. PBR materials with lichen and weathering. Camera
-      presets and the 1.7 m ground walk. PCSS penumbra widening to match the
-      sun's 0.53°, at which point the shadow tolerance is **re-measured**.
+- [x] **M2 — The Stones (L).** *Mostly landed 2026-07-27.* The full monument in
+      both states: 30 sarsen uprights and a continuous lintel ring, five
+      trilithons, bluestone circle and horseshoe, Altar Stone, Slaughter Stone
+      and portal, four Station Stones, 56 Aubrey holes. Terrain displaced into
+      the ground from the surveyed heightfield. Sarsen / bluestone / chalk
+      materials. Four camera stations at 1.7 m eye height, drag and pinch.
+      **Still outstanding:** the ditch, bank and Avenue earthworks; lichen and
+      weathering maps; PCSS penumbra widening (and with it the re-measured
+      shadow tolerance).
 
 - [ ] **M3 — The Night (L).** Moon with correct phase geometry, earthshine and
       apparent size; the 18.61-year nodal cycle so standstills emerge rather

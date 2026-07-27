@@ -40,6 +40,7 @@ public struct HengeSceneView: PlatformViewRepresentable {
 
         do {
             let renderer = try HengeRenderer(state: model.sceneState)
+            renderer.terrain = SkyModel.terrain
             try renderer.load(scene: model.scene)
             context.coordinator.renderer = renderer
             context.coordinator.loadedState = model.monumentState

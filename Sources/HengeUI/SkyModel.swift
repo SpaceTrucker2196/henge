@@ -30,6 +30,31 @@ public final class SkyModel {
     public var cameraAzimuth: Double
     public var cameraElevation: Double
     public var cameraDistance: Double
+    public var station: Station
+
+    /// Where a standing viewer is looking, relative to the station's own
+    /// bearing, and how far up or down.
+    public var lookBearingOffset: Double = 0
+    public var lookPitch: Double = 0
+    /// Field of view for the ground stations, in degrees. Pinching narrows it,
+    /// which is what zoom means when you cannot walk closer.
+    public var fieldOfView: Double = 62
+
+    /// Where the visitor is standing.
+    ///
+    /// The preset stations are the views the monument was built to be seen
+    /// from; the free camera is for looking at it as an object.
+    public enum Station: String, Sendable, CaseIterable, Identifiable {
+        case aerial = "Aerial"
+        case altarStone = "Altar Stone"
+        case heelStone = "Heel Stone"
+        case avenue = "Avenue"
+
+        public var id: String { rawValue }
+
+        /// Eye height of a standing adult, for the ground-level stations.
+        public static let eyeHeight = 1.7
+    }
 
     public init(time: JulianDay = JulianDay(Date()),
                 site: GeographicSite = .stonehenge,
@@ -43,15 +68,26 @@ public final class SkyModel {
         // the monument was built to be seen from.
         self.cameraAzimuth = 229.9
         self.cameraElevation = 12
-        self.cameraDistance = 58
+        self.cameraDistance = 92
+        self.station = .aerial
     }
 
     private func clampRate() {
         rate = min(max(rate, 1), 100_000)
     }
 
+    /// The whole monument, in the chosen state.
     public var scene: MonumentScene {
-        MonumentScene.milestoneOne(state: monumentState)
+        MonumentScene.complete(state: monumentState)
+    }
+
+    /// Salisbury Plain. Loaded once — a 1.18 MB heightfield is not something to
+    /// re-read on every view update.
+    public static let terrain: TerrainModel? = try? TerrainModel.salisburyPlain()
+
+    /// Where the ground is under a point, so the camera can stand on it.
+    public func groundHeight(east: Double, south: Double) -> Double {
+        Self.terrain?.groundHeight(east: east, south: south) ?? 0
     }
 
     public var sun: HorizontalCoordinate {
@@ -59,10 +95,49 @@ public final class SkyModel {
     }
 
     public var camera: Camera {
-        Camera.orbiting(distance: Float(cameraDistance),
-                        azimuthDegrees: Float(cameraAzimuth),
-                        elevationDegrees: Float(cameraElevation),
-                        target: SIMD3<Float>(0, 3, 0))
+        let axis = Monument.axisAzimuth
+        let eye = Station.eyeHeight
+
+        /// A ground-level view from a point on the plain, looking along a bearing.
+        func standing(at position: SIMD3<Double>, looking bearing: HengeAstro.Angle) -> Camera {
+            let ground = groundHeight(east: position.x, south: position.z)
+            let from = SIMD3<Float>(Float(position.x), Float(ground + eye), Float(position.z))
+            // Look level, not at a point — a person on the plain looks at the
+            // horizon, and aiming at the circle's centre would tip the sunrise
+            // out of frame at exactly the moment it matters.
+            let heading = (bearing + HengeAstro.Angle(degrees: lookBearingOffset)).normalized
+            let forward = WorldAxes.direction(azimuth: heading)
+            let rise = tan(HengeAstro.Angle(degrees: lookPitch).radians) * 60
+            let to = from + SIMD3<Float>(Float(forward.x * 60),
+                                         Float(rise),
+                                         Float(forward.z * 60))
+            return Camera(position: from, target: to,
+                          fieldOfView: Float(fieldOfView) * .pi / 180)
+        }
+
+        switch station {
+        case .aerial:
+            return Camera.orbiting(distance: Float(cameraDistance),
+                                   azimuthDegrees: Float(cameraAzimuth),
+                                   elevationDegrees: Float(cameraElevation),
+                                   target: SIMD3<Float>(0, 3, 0))
+
+        case .altarStone:
+            // The view the monument is about: from the Altar Stone, out
+            // through the Great Trilithon and down the Avenue to the north-east.
+            let apex = WorldAxes.direction(azimuth: (axis + HengeAstro.Angle(degrees: 180)).normalized)
+            return standing(at: apex * 5.4, looking: axis)
+
+        case .heelStone:
+            // Standing at the Heel Stone looking back into the circle.
+            return standing(at: WorldAxes.direction(azimuth: axis) * (Monument.heelStoneDistance + 4),
+                            looking: (axis + HengeAstro.Angle(degrees: 180)).normalized)
+
+        case .avenue:
+            // Coming up the Avenue, as anyone arriving would have.
+            return standing(at: WorldAxes.direction(azimuth: axis) * 190,
+                            looking: (axis + HengeAstro.Angle(degrees: 180)).normalized)
+        }
     }
 
     public var sceneState: SceneState {
@@ -111,6 +186,45 @@ public final class SkyModel {
     public var axisDeviation: HengeAstro.Angle? {
         guard let azimuth = sunriseAzimuth else { return nil }
         return azimuth.separation(to: Monument.axisAzimuth)
+    }
+
+    // ── gestures ────────────────────────────────────────────────────────────
+
+    /// Drag. From the air this orbits the monument; on the ground it turns your
+    /// head, because walking backwards through a stone circle to get a wider
+    /// view is not a thing a person can do.
+    public func drag(by translation: SIMD2<Double>) {
+        if station == .aerial {
+            cameraAzimuth = (cameraAzimuth - translation.x * 0.35)
+                .truncatingRemainder(dividingBy: 360)
+            if cameraAzimuth < 0 { cameraAzimuth += 360 }
+            cameraElevation = min(max(cameraElevation + translation.y * 0.22, -2), 85)
+        } else {
+            lookBearingOffset -= translation.x * 0.22
+            // Stop short of straight up and straight down: the look-at basis
+            // degenerates there and the horizon rolls over.
+            lookPitch = min(max(lookPitch + translation.y * 0.18, -35), 70)
+        }
+    }
+
+    /// Pinch. From the air it changes range; on the ground it changes the field
+    /// of view, which is the honest equivalent — you cannot move the ground.
+    public func zoom(by scale: Double) {
+        guard scale > 0 else { return }
+        if station == .aerial {
+            cameraDistance = min(max(cameraDistance / scale, 14), 420)
+        } else {
+            fieldOfView = min(max(fieldOfView / scale, 24), 96)
+        }
+    }
+
+    /// Put the view back where the station intends it to point.
+    public func recentre() {
+        lookBearingOffset = 0
+        lookPitch = 0
+        fieldOfView = 62
+        cameraElevation = 12
+        cameraDistance = 92
     }
 
     // ── playback ────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import Foundation
 import simd
+import HengeGeometry
 
 /// Layouts shared with `Shaders/Henge.metal`.
 ///
@@ -89,4 +90,14 @@ public enum SurfaceMaterial {
     public static let bluestone = SIMD4<Float>(0.34, 0.36, 0.41, 0.80)
     /// Chalk grassland.
     public static let turf = SIMD4<Float>(0.28, 0.32, 0.18, 0.95)
+    /// Weathered chalk, for the Aubrey holes.
+    public static let chalk = SIMD4<Float>(0.74, 0.72, 0.66, 0.92)
+
+    public static func albedo(for material: StoneMaterial) -> SIMD4<Float> {
+        switch material {
+        case .sarsen: sarsen
+        case .bluestone: bluestone
+        case .chalk: chalk
+        }
+    }
 }

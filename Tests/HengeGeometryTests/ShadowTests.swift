@@ -482,3 +482,145 @@ final class SolidityTests: XCTestCase {
                       "triangles \(inward.prefix(8)) face inward — each is a hole")
     }
 }
+
+/// The whole monument, checked against the plan.
+///
+/// Every ring is generated from a radius and a count, so these tests are really
+/// checking that the generators agree with the surveyed dimensions in
+/// `Monument` — the place a correction would be made.
+final class CompleteMonumentTests: XCTestCase {
+
+    func testTheCircleHasThirtyUprightsAndThirtyLintels() {
+        let scene = MonumentScene.complete(state: .asItWas)
+        let uprights = scene.stones.filter { $0.id.hasPrefix("sarsen-upright") }
+        let lintels = scene.stones.filter { $0.id.hasPrefix("sarsen-lintel") }
+
+        XCTAssertEqual(uprights.count, Monument.sarsenUprightCount)
+        XCTAssertEqual(lintels.count, Monument.sarsenUprightCount,
+                       "the lintel ring is continuous")
+
+        // Every upright stands on the ring, at the surveyed radius.
+        let radius = Monument.sarsenCircleDiameter / 2
+        for upright in uprights {
+            let distance = simd_length(SIMD2(upright.position.x, upright.position.z))
+            XCTAssertEqual(distance, radius, accuracy: 0.01, upright.id)
+        }
+    }
+
+    /// The lintel ring ran dead level although the ground slopes. Sockets were
+    /// packed to compensate, so every lintel shares a height.
+    func testTheLintelRingIsLevel() {
+        let lintels = MonumentScene.sarsenCircle().filter { $0.id.hasPrefix("sarsen-lintel") }
+        let heights = Set(lintels.map { ($0.position.y * 1000).rounded() })
+        XCTAssertEqual(heights.count, 1, "the lintel ring must be level")
+    }
+
+    /// Lintels must overlap their neighbours or the ring has gaps in it.
+    func testLintelsSpanTheGapsBetweenUprights() {
+        let radius = Monument.sarsenCircleDiameter / 2
+        let chord = 2 * radius * sin(.pi / Double(Monument.sarsenUprightCount))
+        let lintel = try! XCTUnwrap(MonumentScene.sarsenCircle()
+            .first { $0.id == "sarsen-lintel-0" })
+        XCTAssertGreaterThan(lintel.width, chord,
+                             "a lintel shorter than the gap leaves a hole in the ring")
+    }
+
+    func testTheHorseshoeIsGradedAndOpensNorthEast() {
+        let scene = MonumentScene.complete(state: .asItWas)
+        let great = try! XCTUnwrap(scene.stone(id: "great-upright-left"))
+        let outer = try! XCTUnwrap(scene.stone(id: "northWestOuter-upright-left"))
+
+        XCTAssertGreaterThan(great.height, outer.height,
+                             "the Great Trilithon is the tallest, at the apex")
+
+        // The apex lies to the south-west; the opening faces the sunrise.
+        let apexBearing = WorldAxes.azimuth(of: normalize(
+            SIMD3(great.position.x, 0, great.position.z)))
+        let expected = (Monument.axisAzimuth + Angle(degrees: 180)).normalized
+        XCTAssertLessThan(apexBearing.separation(to: expected).degrees, 12)
+    }
+
+    /// Bluestones sit between the sarsen circle and the trilithons, and are
+    /// made of something else — which the renderer needs in order to colour
+    /// them, and the lore panels will need in order to explain the journey.
+    func testBluestonesLieInsideTheSarsenCircle() {
+        let scene = MonumentScene.complete(state: .asItWas)
+        XCTAssertFalse(scene.bluestones.isEmpty)
+
+        let sarsenRadius = Monument.sarsenCircleDiameter / 2
+        for stone in scene.bluestones where stone.id.hasPrefix("bluestone-circle") {
+            let distance = simd_length(SIMD2(stone.position.x, stone.position.z))
+            XCTAssertLessThan(distance, sarsenRadius, stone.id)
+            XCTAssertEqual(stone.material, .bluestone)
+        }
+    }
+
+    /// The Station Stones form a rectangle. That it *is* a rectangle only works
+    /// at this latitude, which is the single best argument that the builders
+    /// were watching the moon — so it is worth a test rather than a comment.
+    func testTheStationStonesFormARectangle() {
+        let stones = MonumentScene.stationStones(state: .asItWas)
+        XCTAssertEqual(stones.count, 4)
+
+        func at(_ name: String) -> SIMD2<Double> {
+            let s = stones.first { $0.id.hasSuffix(name) }!
+            return SIMD2(s.position.x, s.position.z)
+        }
+        let (a, b, c, d) = (at("91"), at("92"), at("93"), at("94"))
+
+        // Opposite sides equal, and the diagonals equal — that is a rectangle.
+        XCTAssertEqual(simd_distance(a, b), simd_distance(c, d), accuracy: 0.5)
+        XCTAssertEqual(simd_distance(b, c), simd_distance(d, a), accuracy: 0.5)
+        XCTAssertEqual(simd_distance(a, c), simd_distance(b, d), accuracy: 0.5,
+                       "equal diagonals are what make it a rectangle rather than a rhombus")
+
+        // And it is oblong, not square — roughly 80 by 33 metres.
+        let long = max(simd_distance(a, b), simd_distance(b, c))
+        let short = min(simd_distance(a, b), simd_distance(b, c))
+        XCTAssertEqual(long, 80, accuracy: 12)
+        XCTAssertEqual(short, 33, accuracy: 12)
+    }
+
+    func testAllFiftySixAubreyHolesLieOnTheirCircle() {
+        let holes = MonumentScene.aubreyHoles()
+        XCTAssertEqual(holes.count, 56)
+        let radius = Monument.aubreyCircleDiameter / 2
+        for hole in holes {
+            XCTAssertEqual(simd_length(SIMD2(hole.position.x, hole.position.z)),
+                           radius, accuracy: 0.01)
+            XCTAssertEqual(hole.material, .chalk)
+        }
+    }
+
+    /// The two states are distinct and labelled, never blended (invariant 8).
+    func testTheRuinRaisesFewerStonesThanTheCompletedMonument() {
+        let complete = MonumentScene.complete(state: .asItWas)
+        let ruin = MonumentScene.complete(state: .asItStands)
+
+        XCTAssertGreaterThan(complete.stones.count, ruin.stones.count)
+        XCTAssertNil(ruin.stone(id: "great-upright-right"),
+                     "only stone 56 of the Great Trilithon still stands")
+        XCTAssertNotNil(ruin.stone(id: "great-upright-left"))
+        XCTAssertNotNil(ruin.stone(id: "heel-stone"))
+        XCTAssertEqual(MonumentScene.stationStones(state: .asItStands).count, 2,
+                       "two Station Stones survive")
+    }
+
+    /// Nothing may occupy the same ground as something else: two stones sharing
+    /// a socket would be a placement error, and it is easy to make one when
+    /// every ring is generated from a formula.
+    func testNoTwoStonesStandInTheSamePlace() {
+        let scene = MonumentScene.complete(state: .asItWas)
+        let upright = scene.stones.filter { $0.height > 1.5 }
+
+        for i in upright.indices {
+            for j in (i + 1)..<upright.count {
+                let a = upright[i], b = upright[j]
+                let separation = simd_distance(SIMD2(a.position.x, a.position.z),
+                                               SIMD2(b.position.x, b.position.z))
+                XCTAssertGreaterThan(separation, 0.55,
+                                     "\(a.id) and \(b.id) are standing in each other")
+            }
+        }
+    }
+}

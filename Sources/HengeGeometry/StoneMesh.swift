@@ -53,7 +53,7 @@ public enum StoneMeshBuilder {
     }
 
     /// - Parameters:
-    ///   - subdivisions: drives ring and segment counts; 12 is ample here.
+    ///   - subdivisions: grid divisions per box face.
     ///   - roughness: radial displacement as a fraction of the smallest
     ///     half-extent. Zero gives the exact rounded box.
     ///   - rounding: 0 is a hard box, 1 an inscribed ellipsoid. Real sarsens
@@ -62,117 +62,95 @@ public enum StoneMeshBuilder {
     public static func build(_ stone: Stone, subdivisions: Int = 12,
                              roughness: Double = 0.06,
                              rounding: Double = 0.13) -> Mesh {
-        let rings = max(6, subdivisions * 2)
-        let segments = max(8, subdivisions * 3)
+        let n = max(2, subdivisions)
 
         // Megaliths sit in a socket, and a leaning one must: tipping a body
-        // about the centre of its base lifts the far edge clear of the ground,
-        // which reads as a stone hovering over its own shadow. The Heel Stone
-        // leans 27°, so this is not a small effect.
+        // about the centre of its base lifts the far edge clear of the ground.
         let halfThickness = stone.thickness / 2
         let sink = halfThickness * abs(sin(stone.lean.radians)) + 0.15
 
         let half = SIMD3<Double>(stone.width / 2,
                                  (stone.height + sink) / 2,
                                  stone.thickness / 2)
-        // Local origin sits at ground level, so the body straddles it.
         let centre = SIMD3<Double>(0, half.y - sink, 0)
-        // Displacement is scaled by the narrowest dimension so a slender stone
-        // does not get lumps wider than itself.
         let smallestHalf = min(half.x, min(half.y, half.z))
 
         var noise = ValueNoise(seed: stone.seed)
 
-        /// Surface point in the stone's own space, for a unit direction.
-        func surface(_ direction: SIMD3<Double>) -> SIMD3<Double> {
-            let d = simd_normalize(direction)
+        /// Shape a point on the box surface: round the corners, then weather it.
+        ///
+        /// Both steps are functions of the point alone, never of the face it
+        /// came from — which is what lets vertices shared between faces be
+        /// welded and still land in the same place.
+        func shape(_ boxPoint: SIMD3<Double>) -> SIMD3<Double> {
+            let d = simd_normalize(boxPoint)
 
-            // Where the ray leaves the box, and where it leaves the ellipsoid
-            // inscribed in that same box. Blending the two knocks the corners
-            // off without shortening the stone.
-            //
-            // The ellipsoid has to be scaled per axis. A sphere of the smallest
-            // half-extent looks like the same idea and is not: on a stone three
-            // times taller than it is thick it pulls the ends in by a third of
-            // a metre, and the base lifts off the ground.
-            let boxScale = max(abs(d.x) / half.x, max(abs(d.y) / half.y, abs(d.z) / half.z))
-            let box = d / boxScale
+            // The ellipsoid inscribed in the same box. Scaled per axis: a
+            // sphere of the smallest half-extent looks like the same idea and
+            // shortens the stone along its long axis instead.
             let ellipsoidScale = sqrt(pow(d.x / half.x, 2)
                                       + pow(d.y / half.y, 2)
                                       + pow(d.z / half.z, 2))
-            let ellipsoid = d / ellipsoidScale
-            var point = simd_mix(box, ellipsoid, SIMD3(repeating: rounding))
+            var point = simd_mix(boxPoint, d / ellipsoidScale, SIMD3(repeating: rounding))
 
             if roughness > 0 {
-                // Displaced along the direction, so the amount depends only on
-                // where a vertex sits — not on which face claimed it. That is
-                // what stops a welded surface tearing at its edges.
                 var amount = noise.fbm(d * 2.4) * roughness * smallestHalf * 2
-
-                // Fade the displacement out toward the waterline, and over a
-                // generous band.
-                //
-                // The naive reason is that a lumpy surface crossing a flat
-                // ground plane meets it in a comb rather than a line. The real
-                // reason is harsher: near sunrise and sunset the sun sits a few
-                // degrees up, and a shadow is stretched by 1/tan(altitude). At
-                // 7° that is a factor of eight — so a three-centimetre bump at
-                // the base throws a quarter-metre spike across the turf, and
-                // the low-sun moments this app exists for are exactly when it
-                // shows.
-                let heightAboveGround = point.y + centre.y
-                let fade = smoothstep(0.0, 1.6, heightAboveGround)
-                amount *= fade
-
+                // Fade out toward the waterline. A shadow is stretched by
+                // 1/tan(altitude), and at the low sun this app exists for that
+                // is a factor of eight or nine — so a three-centimetre bump at
+                // the base throws a quarter-metre spike across the turf.
+                amount *= smoothstep(0.0, 1.6, point.y + centre.y)
                 point += d * amount
             }
             return point + centre
         }
 
+        // Six face grids, welded where they meet.
+        //
+        // The previous version swept a UV sphere onto the box, which spent
+        // nearly all its vertices around the long axis and left the small top
+        // face covered by a ring or two. The top came out a coarse faceted
+        // bevel that reads as the rim of an open tube rather than the end of a
+        // solid — the reason the pillars looked unclosed. A box grid spends its
+        // vertices evenly over the actual surface instead.
         var positions: [SIMD3<Float>] = []
         var indices: [UInt32] = []
+        var welded: [WeldKey: UInt32] = [:]
 
-        // One vertex per position: poles are single vertices and the longitude
-        // seam reuses column zero, so there is no crack anywhere on the solid.
-        positions.append(SIMD3<Float>(surface(SIMD3(0, 1, 0))))
-        let northPole: UInt32 = 0
+        func vertex(_ boxPoint: SIMD3<Double>) -> UInt32 {
+            // Key on the *box* point, before shaping: it is exact on shared
+            // edges, where a shaped position might differ in the last bit.
+            let key = WeldKey(boxPoint)
+            if let existing = welded[key] { return existing }
+            let index = UInt32(positions.count)
+            welded[key] = index
+            positions.append(SIMD3<Float>(shape(boxPoint)))
+            return index
+        }
 
-        for ring in 1..<rings {
-            let phi = Double(ring) * .pi / Double(rings)
-            for segment in 0..<segments {
-                let theta = Double(segment) * 2 * .pi / Double(segments)
-                let direction = SIMD3(sin(phi) * sin(theta), cos(phi), sin(phi) * cos(theta))
-                positions.append(SIMD3<Float>(surface(direction)))
+        typealias V3 = SIMD3<Double>
+        let faces: [(origin: V3, u: V3, v: V3)] = [
+            (V3(-half.x, -half.y, -half.z), V3(2 * half.x, 0, 0), V3(0, 2 * half.y, 0)),
+            (V3(half.x, -half.y, half.z), V3(-2 * half.x, 0, 0), V3(0, 2 * half.y, 0)),
+            (V3(-half.x, -half.y, half.z), V3(0, 0, -2 * half.z), V3(0, 2 * half.y, 0)),
+            (V3(half.x, -half.y, -half.z), V3(0, 0, 2 * half.z), V3(0, 2 * half.y, 0)),
+            (V3(-half.x, half.y, -half.z), V3(2 * half.x, 0, 0), V3(0, 0, 2 * half.z)),
+            (V3(-half.x, -half.y, half.z), V3(2 * half.x, 0, 0), V3(0, 0, -2 * half.z))
+        ]
+
+        for face in faces {
+            for i in 0..<n {
+                for j in 0..<n {
+                    let s0 = Double(i) / Double(n), s1 = Double(i + 1) / Double(n)
+                    let t0 = Double(j) / Double(n), t1 = Double(j + 1) / Double(n)
+
+                    let a = vertex(face.origin + face.u * s0 + face.v * t0)
+                    let b = vertex(face.origin + face.u * s1 + face.v * t0)
+                    let c = vertex(face.origin + face.u * s1 + face.v * t1)
+                    let d = vertex(face.origin + face.u * s0 + face.v * t1)
+                    indices.append(contentsOf: [a, b, c, a, c, d])
+                }
             }
-        }
-
-        positions.append(SIMD3<Float>(surface(SIMD3(0, -1, 0))))
-        let southPole = UInt32(positions.count - 1)
-
-        func index(ring: Int, segment: Int) -> UInt32 {
-            UInt32(1 + (ring - 1) * segments + (segment % segments))
-        }
-
-        for segment in 0..<segments {
-            indices.append(contentsOf: [northPole,
-                                        index(ring: 1, segment: segment + 1),
-                                        index(ring: 1, segment: segment)])
-        }
-
-        for ring in 1..<(rings - 1) {
-            for segment in 0..<segments {
-                let a = index(ring: ring, segment: segment)
-                let b = index(ring: ring, segment: segment + 1)
-                let c = index(ring: ring + 1, segment: segment + 1)
-                let d = index(ring: ring + 1, segment: segment)
-                indices.append(contentsOf: [a, b, c, a, c, d])
-            }
-        }
-
-        for segment in 0..<segments {
-            indices.append(contentsOf: [southPole,
-                                        index(ring: rings - 1, segment: segment),
-                                        index(ring: rings - 1, segment: segment + 1)])
         }
 
         var mesh = Mesh(positions: positions,
@@ -182,6 +160,17 @@ public enum StoneMeshBuilder {
         smoothNormals(&mesh, centre: SIMD3<Float>(centre))
         transform(&mesh, stone: stone)
         return mesh
+    }
+
+    /// Position key for welding. Quantised to a tenth of a millimetre, which is
+    /// far finer than any stone and far coarser than floating-point noise.
+    struct WeldKey: Hashable {
+        let x: Int64, y: Int64, z: Int64
+        init(_ p: SIMD3<Double>) {
+            x = Int64((p.x * 10_000).rounded())
+            y = Int64((p.y * 10_000).rounded())
+            z = Int64((p.z * 10_000).rounded())
+        }
     }
 
     /// Area-weighted vertex normals over the finished surface.

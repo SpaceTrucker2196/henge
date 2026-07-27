@@ -11,6 +11,10 @@ public struct RootView: View {
 
     @State private var model = SkyModel()
     @State private var lastTick = Date()
+    /// Gestures report a running total, so the previous value is kept to turn
+    /// that into a per-frame delta. Without it a slow drag accelerates.
+    @State private var lastDrag: CGSize = .zero
+    @State private var lastZoom: CGFloat = 1
 
     public init() {}
 
@@ -18,6 +22,26 @@ public struct RootView: View {
         ZStack(alignment: .bottom) {
             HengeSceneView(model: model)
                 .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            model.drag(by: SIMD2(Double(value.translation.width - lastDrag.width),
+                                                 Double(value.translation.height - lastDrag.height)))
+                            lastDrag = value.translation
+                        }
+                        .onEnded { _ in lastDrag = .zero }
+                )
+                .simultaneousGesture(
+                    MagnifyGesture()
+                        .onChanged { value in
+                            model.zoom(by: Double(value.magnification / lastZoom))
+                            lastZoom = value.magnification
+                        }
+                        .onEnded { _ in lastZoom = 1 }
+                )
+                .accessibilityLabel("The monument")
+                .accessibilityHint("Drag to look around, pinch to zoom")
 
             controls
                 .padding(18)
@@ -72,6 +96,21 @@ public struct RootView: View {
 
     private var controls: some View {
         VStack(spacing: 14) {
+            Picker("Station", selection: $model.station) {
+                ForEach(SkyModel.Station.allCases) { station in
+                    Text(station.rawValue).tag(station)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel("Where you are standing")
+
+            Toggle("As it stands", isOn: Binding(
+                get: { model.monumentState == .asItStands },
+                set: { model.monumentState = $0 ? .asItStands : .asItWas }
+            ))
+            .toggleStyle(.button)
+            .accessibilityHint("Switch between the completed monument and the ruin")
+
             HStack(spacing: 14) {
                 Button {
                     model.isPlaying.toggle()
@@ -82,6 +121,7 @@ public struct RootView: View {
                 .accessibilityLabel(model.isPlaying ? "Pause time" : "Run time forward")
 
                 Button("Now") { model.time = JulianDay(Date()) }
+                Button("Recentre") { model.recentre() }
 
                 Button("−1 day") { model.jump(toDaysFromNow: -1) }
                 Button("+1 day") { model.jump(toDaysFromNow: 1) }
@@ -98,12 +138,18 @@ public struct RootView: View {
                 ), in: 0...5)
             }
 
-            labelled("Bearing", String(format: "%.0f°", model.cameraAzimuth)) {
-                Slider(value: $model.cameraAzimuth, in: 0...360)
-            }
+            if model.station == .aerial {
+                labelled("Bearing", String(format: "%.0f°", model.cameraAzimuth)) {
+                    Slider(value: $model.cameraAzimuth, in: 0...360)
+                }
 
-            labelled("Height", String(format: "%.0f°", model.cameraElevation)) {
-                Slider(value: $model.cameraElevation, in: -2...80)
+                labelled("Height", String(format: "%.0f°", model.cameraElevation)) {
+                    Slider(value: $model.cameraElevation, in: -2...80)
+                }
+
+                labelled("Range", String(format: "%.0f m", model.cameraDistance)) {
+                    Slider(value: $model.cameraDistance, in: 25...260)
+                }
             }
         }
         .frame(maxWidth: 460)
