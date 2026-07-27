@@ -71,6 +71,8 @@ public struct RootView: View {
             Divider().frame(width: 190).padding(.vertical, 6)
 
             row("Sundial", model.formattedSolarTime)
+            row("Sun over", model.viewpoint == .here
+                ? SkyModel.deviceSite.name : "Stonehenge")
             row("Sun altitude", String(format: "%.3f°", model.sun.altitude.degrees))
             row("Sun azimuth", String(format: "%.3f°", model.sun.azimuth.degrees))
             if let sunrise = model.sunriseAzimuth {
@@ -103,6 +105,16 @@ public struct RootView: View {
 
     private var controls: some View {
         VStack(spacing: 14) {
+            Picker("Sun", selection: $model.viewpoint) {
+                ForEach(SkyModel.Viewpoint.allCases) { viewpoint in
+                    Text(viewpoint.rawValue).tag(viewpoint)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel("Whose sun to show")
+            .accessibilityHint("Here uses this device's time zone, so solar noon "
+                               + "falls when the sun is overhead where you are")
+
             Picker("Station", selection: $model.station) {
                 ForEach(SkyModel.Station.allCases) { station in
                     Text(station.rawValue).tag(station)

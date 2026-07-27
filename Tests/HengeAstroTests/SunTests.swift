@@ -323,3 +323,35 @@ final class LocalTimeTests: XCTestCase {
         }
     }
 }
+
+/// A sundial only agrees with the clock in your pocket if it stands at your
+/// longitude. These pin the relationship the "Here" viewpoint depends on.
+final class LongitudeAndClockTests: XCTestCase {
+
+    /// A site on a zone's central meridian keeps solar time that matches its
+    /// standard clock, to within the equation of time.
+    func testSolarNoonOnACentralMeridianMatchesStandardNoon() {
+        // UTC+1's central meridian is 15° east.
+        let site = GeographicSite(latitude: Angle(degrees: 51.18),
+                                  longitude: Angle(degrees: 15))
+        // Standard noon there is 11:00 UT.
+        let moment = JulianDay(CalendarDate(year: 2026, month: 4, day: 16, hour: 11))
+        let solar = Sun.apparentSolarTime(at: moment, site: site)
+
+        // Mid-April: the equation of time is within a minute of zero.
+        XCTAssertEqual(solar, 12.0, accuracy: 0.05,
+                       "on a zone's own meridian, the sundial keeps the zone's time")
+    }
+
+    /// Fifteen degrees of longitude is one hour of sun, which is the entire
+    /// basis of deriving a longitude from a time zone.
+    func testFifteenDegreesIsOneHour() {
+        let moment = JulianDay(CalendarDate(year: 2026, month: 4, day: 16, hour: 12))
+        let west = GeographicSite(latitude: Angle(degrees: 51.18), longitude: Angle(degrees: 0))
+        let east = GeographicSite(latitude: Angle(degrees: 51.18), longitude: Angle(degrees: 15))
+
+        let difference = Sun.apparentSolarTime(at: moment, site: east)
+            - Sun.apparentSolarTime(at: moment, site: west)
+        XCTAssertEqual(difference, 1.0, accuracy: 1e-6)
+    }
+}

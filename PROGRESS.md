@@ -1,5 +1,29 @@
 # henge — progress
 
+## 2026-07-27 — the sun over *here*, not only over Wiltshire
+
+A sundial only agrees with the clock in your pocket if it stands at your
+longitude. The app now defaults to showing the sun where the device is: solar
+noon falls when the sun is actually overhead for you, and the stones light and
+shadow accordingly. A picker switches to Wiltshire for the monument's own sky.
+
+Longitude comes from the device's time zone — the *standard* offset, daylight
+saving removed first, at 15° per hour. Deliberately approximate and labelled as
+such: a zone can be 7.5° wide, which is half an hour of solar time, and plenty
+are drawn far from their meridian for political reasons. The alternative is
+asking for location, and a monument that works in a field with no signal should
+not need permission to say where the sun is.
+
+Latitude stays Stonehenge's. The monument's geometry is latitude-specific — the
+Station Stone rectangle is only a rectangle at 51.18° — so moving it would
+quietly break the thing the app exists to demonstrate.
+
+Verified on a device in America/Phoenix: 13:56:49 MST, sundial 13:50:16. The
+six and a half minutes between them is the equation of time, with no longitude
+term because Phoenix sits on its zone's own meridian. Wiltshire at the same
+instant was in twilight.
+
+
 ## 2026-07-27 (last) — the front of every stone was being culled
 
 "As if the surface facing the camera is transparent" was the exact

@@ -21,7 +21,23 @@ public final class SkyModel {
         didSet { clampRate() }
     }
 
-    public var site: GeographicSite
+    /// Whose sky is overhead.
+    public var viewpoint: Viewpoint
+
+    /// Whose sun this is.
+    ///
+    /// The monument is a sundial, and a sundial only agrees with the clock in
+    /// your pocket if it stands at your longitude. Reading the device's own
+    /// zone makes the stones keep *your* time: solar noon lands when the sun
+    /// is actually overhead where you are.
+    public enum Viewpoint: String, Sendable, CaseIterable, Identifiable {
+        /// The sun as it is here, from the device's time zone.
+        case here = "Here"
+        /// The sun over Salisbury Plain.
+        case stonehenge = "Wiltshire"
+
+        public var id: String { rawValue }
+    }
     public var monumentState: Monument.State
     /// Time-lapse multiplier. 1 is real time; 100,000 sweeps a year in minutes.
     public var rate: Double
@@ -57,10 +73,10 @@ public final class SkyModel {
     }
 
     public init(time: JulianDay = JulianDay(Date()),
-                site: GeographicSite = .stonehenge,
+                viewpoint: Viewpoint = .here,
                 monumentState: Monument.State = .asItWas) {
         self.time = time
-        self.site = site
+        self.viewpoint = viewpoint
         self.monumentState = monumentState
         self.rate = 1
         self.isPlaying = false
@@ -77,6 +93,41 @@ public final class SkyModel {
     }
 
     /// The whole monument, in the chosen state.
+    public var site: GeographicSite {
+        switch viewpoint {
+        case .stonehenge: .stonehenge
+        case .here: Self.deviceSite
+        }
+    }
+
+    /// The site implied by the device's time zone.
+    ///
+    /// Longitude from the zone's *standard* offset at 15° per hour — daylight
+    /// saving removed first, since it shifts the clock and not the Earth.
+    ///
+    /// This is deliberately approximate and says so: a time zone can be 7.5°
+    /// wide, which is half an hour of solar time, and some are drawn far from
+    /// their meridian for political reasons. The alternative is asking for the
+    /// user's location, and a monument that works in a field with no signal
+    /// should not need permission to tell you where the sun is. Latitude stays
+    /// Stonehenge's, because the monument's geometry — the Station Stone
+    /// rectangle above all — is only a rectangle at 51.18°.
+    public static let deviceSite: GeographicSite = {
+        let zone = TimeZone.current
+        let now = Date()
+        let standardOffset = Double(zone.secondsFromGMT(for: now))
+            - zone.daylightSavingTimeOffset(for: now)
+        return GeographicSite(latitude: GeographicSite.stonehenge.latitude,
+                              longitude: HengeAstro.Angle(degrees: standardOffset / 3600 * 15),
+                              elevation: GeographicSite.stonehenge.elevation,
+                              name: zone.identifier)
+    }()
+
+    /// Which civil zone the clock is read in.
+    public var civilTimeZone: TimeZone {
+        viewpoint == .here ? .current : Self.siteTimeZone
+    }
+
     public var scene: MonumentScene {
         MonumentScene.complete(state: monumentState)
     }
@@ -177,13 +228,14 @@ public final class SkyModel {
 
         let moment = Date(timeIntervalSince1970: (time.value - 2440587.5) * 86400)
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = Self.siteTimeZone
+        calendar.timeZone = civilTimeZone
         let parts = calendar.dateComponents([.hour, .minute, .second], from: moment)
 
-        let isSummer = Self.siteTimeZone.isDaylightSavingTime(for: moment)
+        let zone = civilTimeZone
+        let label = zone.abbreviation(for: moment)
+            ?? (zone.isDaylightSavingTime(for: moment) ? "DST" : "STD")
         return String(format: "%02d:%02d:%02d %@",
-                      parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0,
-                      isSummer ? "BST" : "GMT")
+                      parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0, label)
     }
 
     /// Local apparent solar time — the clock the monument itself keeps.
