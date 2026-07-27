@@ -43,22 +43,33 @@ public enum StoneMeshBuilder {
         let ht = stone.thickness / 2
         let h = stone.height
 
+        // Megaliths sit in a socket, and a leaning one has to: tipping a box
+        // about the centre of its base lifts the opposite edge clear of the
+        // ground, which on screen reads as a stone hovering over its own
+        // shadow. Sink the mesh far enough that the raised edge still meets
+        // the turf. The Heel Stone leans 27°, so this is not a small effect.
+        let sink = ht * abs(sin(stone.lean.radians)) + 0.15
+
         var noise = ValueNoise(seed: stone.seed)
 
         // Six faces of a box, each a subdivided grid in local space where the
         // stone stands at the origin, base at y = 0.
+        // Each face carries its outward normal explicitly rather than deriving
+        // one from cross(u, v). The parameterisations do not share a handedness,
+        // so that cross product points inward on half of them — which is
+        // precisely the bug that made the stones render black on an iPad.
         typealias V3 = SIMD3<Double>
-        let faces: [(origin: V3, u: V3, v: V3)] = [
-            (V3(-hw, 0, -ht), V3(2 * hw, 0, 0), V3(0, h, 0)),        // front
-            (V3(hw, 0, ht), V3(-2 * hw, 0, 0), V3(0, h, 0)),         // back
-            (V3(-hw, 0, ht), V3(0, 0, -2 * ht), V3(0, h, 0)),        // left
-            (V3(hw, 0, -ht), V3(0, 0, 2 * ht), V3(0, h, 0)),         // right
-            (V3(-hw, h, -ht), V3(2 * hw, 0, 0), V3(0, 0, 2 * ht)),   // top
-            (V3(-hw, 0, ht), V3(2 * hw, 0, 0), V3(0, 0, -2 * ht))    // bottom
+        let faces: [(origin: V3, u: V3, v: V3, normal: V3)] = [
+            (V3(-hw, -sink, -ht), V3(2 * hw, 0, 0), V3(0, h + sink, 0), V3(0, 0, -1)),
+            (V3(hw, -sink, ht), V3(-2 * hw, 0, 0), V3(0, h + sink, 0), V3(0, 0, 1)),
+            (V3(-hw, -sink, ht), V3(0, 0, -2 * ht), V3(0, h + sink, 0), V3(-1, 0, 0)),
+            (V3(hw, -sink, -ht), V3(0, 0, 2 * ht), V3(0, h + sink, 0), V3(1, 0, 0)),
+            (V3(-hw, h, -ht), V3(2 * hw, 0, 0), V3(0, 0, 2 * ht), V3(0, 1, 0)),
+            (V3(-hw, -sink, ht), V3(2 * hw, 0, 0), V3(0, 0, -2 * ht), V3(0, -1, 0))
         ]
 
         for face in faces {
-            let faceNormal = normalize(cross(face.u, face.v))
+            let faceNormal = face.normal
             var positions: [SIMD3<Float>] = []
             var normals: [SIMD3<Float>] = []
             var indices: [UInt32] = []
@@ -73,7 +84,7 @@ public enum StoneMeshBuilder {
                     // Displace along the face normal. Taper the displacement to
                     // zero at the base so stones sit flush in the ground rather
                     // than hovering on a lumpy footing.
-                    let groundFade = min(1.0, p.y / 0.4)
+                    let groundFade = min(1.0, max(0, p.y) / 0.4)
                     let amount = noise.fbm(p * 1.7) * roughness * stone.width * groundFade
                     p += faceNormal * amount
 
@@ -95,60 +106,73 @@ public enum StoneMeshBuilder {
             mesh.append(Mesh(positions: positions, normals: normals, indices: indices))
         }
 
-        recomputeNormals(&mesh)
+        // The flat face normals, kept before smoothing: they are exact by
+        // construction and are the reference for which way is "out".
+        let reference = mesh.normals
+        recomputeNormals(&mesh, reference: reference)
         transform(&mesh, stone: stone)
         return mesh
     }
 
     /// Smooth normals from the displaced surface, so the lighting follows the
     /// rock rather than the box it started as.
-    static func recomputeNormals(_ mesh: inout Mesh) {
+    ///
+    /// The winding of a triangle only tells you which way it faces up to a
+    /// sign, and the six box faces are not parameterised with a consistent
+    /// handedness — so a normal derived from the cross product alone points
+    /// *inward* on half of them. On screen that is unmistakable once seen: the
+    /// stones go black and pick up bright stripes where the two conventions
+    /// meet, while the ground, whose normal is trivially up, lights correctly.
+    ///
+    /// The exact face normals are known before displacement, so they are kept
+    /// as the reference and any smoothed normal that disagrees is flipped.
+    /// Winding is corrected to match, so back-face culling agrees too.
+    static func recomputeNormals(_ mesh: inout Mesh, reference: [SIMD3<Float>]) {
         var accumulated = [SIMD3<Float>](repeating: .zero, count: mesh.positions.count)
+
         for triangle in stride(from: 0, to: mesh.indices.count, by: 3) {
             let i0 = Int(mesh.indices[triangle])
             let i1 = Int(mesh.indices[triangle + 1])
             let i2 = Int(mesh.indices[triangle + 2])
             let e1 = mesh.positions[i1] - mesh.positions[i0]
             let e2 = mesh.positions[i2] - mesh.positions[i0]
-            let faceNormal = cross(e1, e2)
+            var faceNormal = cross(e1, e2)
+
+            // Orient against the pre-displacement normal, and rewind the
+            // triangle if it disagreed.
+            if dot(faceNormal, reference[i0]) < 0 {
+                faceNormal = -faceNormal
+                mesh.indices.swapAt(triangle + 1, triangle + 2)
+            }
+
             accumulated[i0] += faceNormal
             accumulated[i1] += faceNormal
             accumulated[i2] += faceNormal
         }
-        mesh.normals = accumulated.map { n in
+
+        mesh.normals = accumulated.enumerated().map { index, n in
             let len = length(n)
-            return len > 1e-6 ? n / len : SIMD3<Float>(0, 1, 0)
+            guard len > 1e-6 else { return reference[index] }
+            let smoothed = n / len
+            // A vertex on an edge averages two faces; if displacement has
+            // pushed the average past the reference, trust the reference.
+            return dot(smoothed, reference[index]) < 0 ? reference[index] : smoothed
         }
     }
 
-    /// Local space → world: lean, then bearing, then translate.
+    /// Local space → world, delegating to `Stone.toWorld` so the mesh and the
+    /// shadow solver cannot drift apart.
     static func transform(_ mesh: inout Mesh, stone: Stone) {
-        let cosLean = Float(cos(stone.lean.radians))
-        let sinLean = Float(sin(stone.lean.radians))
-        let cosBearing = Float(cos(stone.bearing.radians))
-        let sinBearing = Float(sin(stone.bearing.radians))
-        let origin = SIMD3<Float>(stone.position)
-
         for i in mesh.positions.indices {
-            let p = mesh.positions[i]
-            // Lean tips the stone in its own +Z, before the bearing rotation.
-            let leaned = SIMD3<Float>(p.x, p.y * cosLean - p.z * sinLean,
-                                      p.y * sinLean + p.z * cosLean)
-            let rotated = SIMD3<Float>(
-                leaned.x * cosBearing + leaned.z * sinBearing,
-                leaned.y,
-                leaned.x * sinBearing - leaned.z * cosBearing
-            )
-            mesh.positions[i] = rotated + origin
+            let local = SIMD3<Double>(mesh.positions[i])
+            mesh.positions[i] = SIMD3<Float>(stone.toWorld(local))
 
-            let n = mesh.normals[i]
-            let nLeaned = SIMD3<Float>(n.x, n.y * cosLean - n.z * sinLean,
-                                       n.y * sinLean + n.z * cosLean)
-            mesh.normals[i] = SIMD3<Float>(
-                nLeaned.x * cosBearing + nLeaned.z * sinBearing,
-                nLeaned.y,
-                nLeaned.x * sinBearing - nLeaned.z * cosBearing
-            )
+            let localNormal = SIMD3<Double>(mesh.normals[i])
+            let worldNormal = stone.directionToWorld(localNormal)
+            let len = simd_length(worldNormal)
+            mesh.normals[i] = len > 1e-9
+                ? SIMD3<Float>(worldNormal / len)
+                : mesh.normals[i]
         }
     }
 }

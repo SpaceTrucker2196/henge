@@ -136,32 +136,45 @@ public struct Stone: Sendable, Hashable {
         return hash
     }
 
-    /// The eight corners of the stone's bounding box in world space, base
-    /// first then top. The analytic shadow is cast from these.
-    public var corners: [SIMD3<Double>] {
-        let halfWidth = width / 2
-        let halfThickness = thickness / 2
+    /// Local space → world. **The** definition of where a stone's material is.
+    ///
+    /// Local axes: +X across the width, +Y up from the base, +Z through the
+    /// thickness. Applied in order: lean about local X, then bearing about
+    /// vertical, then translate.
+    ///
+    /// It lives here, once, because the mesh builder and the shadow solver must
+    /// agree exactly. They did not, and the disagreement was a rotation written
+    /// out twice with a sign difference — a matrix of determinant −1, which is a
+    /// mirror rather than a turn. It flipped the winding of every triangle in
+    /// every stone.
+    public func toWorld(_ local: SIMD3<Double>) -> SIMD3<Double> {
+        let cosL = cos(lean.radians), sinL = sin(lean.radians)
+        let leaned = SIMD3<Double>(local.x,
+                                   local.y * cosL - local.z * sinL,
+                                   local.y * sinL + local.z * cosL)
+
+        // Proper rotation about +Y: determinant +1, so handedness survives.
         let cosB = bearing.cosine, sinB = bearing.sine
+        let turned = SIMD3<Double>(leaned.x * cosB + leaned.z * sinB,
+                                   leaned.y,
+                                   -leaned.x * sinB + leaned.z * cosB)
+        return turned + position
+    }
 
-        // Lean tips the stone toward its bearing.
-        let topOffset = SIMD3<Double>(
-            sin(lean.radians) * sinB * height,
-            cos(lean.radians) * height,
-            -sin(lean.radians) * cosB * height
-        )
+    /// Rotate a direction without translating it — for normals.
+    public func directionToWorld(_ local: SIMD3<Double>) -> SIMD3<Double> {
+        toWorld(local) - position
+    }
 
+    /// The eight corners of the stone's bounding box in world space. The
+    /// analytic shadow is cast from these.
+    public var corners: [SIMD3<Double>] {
+        let hw = width / 2, ht = thickness / 2
         var result: [SIMD3<Double>] = []
-        for level in 0...1 {
-            for dw in [-halfWidth, halfWidth] {
-                for dt in [-halfThickness, halfThickness] {
-                    // Wide face runs perpendicular to the bearing.
-                    let offset = SIMD3<Double>(
-                        dw * cosB + dt * sinB,
-                        0,
-                        dw * sinB - dt * cosB
-                    )
-                    let base = position + offset
-                    result.append(level == 0 ? base : base + topOffset)
+        for y in [0.0, height] {
+            for x in [-hw, hw] {
+                for z in [-ht, ht] {
+                    result.append(toWorld(SIMD3(x, y, z)))
                 }
             }
         }
@@ -170,10 +183,6 @@ public struct Stone: Sendable, Hashable {
 
     /// Centre of the stone's top face — the point whose shadow is the tip.
     public var apex: SIMD3<Double> {
-        SIMD3(
-            position.x + sin(lean.radians) * bearing.sine * height,
-            position.y + cos(lean.radians) * height,
-            position.z - sin(lean.radians) * bearing.cosine * height
-        )
+        toWorld(SIMD3(0, height, 0))
     }
 }
