@@ -59,6 +59,28 @@ renderer for a difference of shape.
 
 61 tests green, both platforms warning-clean, run and looked at on an iPad.
 
+### Looking at bearing 320°
+
+Worth recording, because it looked like a bug and half of it was.
+
+**The half that is not:** 320° is within a tenth of a degree of the across-axis
+direction (319.9°), the line joining the two uprights. From there they occlude
+each other exactly and the lintel is seen end-on, so the trilithon collapses
+into a single pillar. Correct geometry; just the one bearing where a doorway
+stops looking like one.
+
+**The half that was:** a ragged comb where the stone met the turf. The obvious
+explanation — displacement noise crossing a flat ground plane — was wrong, or
+at least incomplete. The real cause is that a shadow is stretched by
+1/tan(altitude), and at the 6.5° sun in that frame that is a factor of nine: a
+three-centimetre bump at the waterline throws a quarter-metre spike across the
+ground. Low sun is precisely what this app is for, so it shows constantly.
+
+Fixed by fading the displacement to nothing over the lowest 1.6 m and raising
+the tessellation, and pinned by `WaterlineTests`. The lintel also now seats
+0.25 m into the uprights: two rounded surfaces meeting at the nominal height
+left a line of daylight along the joint.
+
 ### Next
 
 Terrain is loaded and measured but **not yet drawn** — the renderer still puts

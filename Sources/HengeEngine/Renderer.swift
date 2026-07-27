@@ -275,7 +275,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// - Parameter roughness: displacement amplitude. Zero yields exact boxes,
     ///   which is what the shadow-agreement test needs so that the rendered
     ///   silhouette and the analytic outline describe the same solid.
-    public func load(scene: MonumentScene, subdivisions: Int = 12,
+    public func load(scene: MonumentScene, subdivisions: Int = 18,
                      roughness: Double = 0.06, rounding: Double = 0.13) throws {
         var items: [DrawItem] = []
 

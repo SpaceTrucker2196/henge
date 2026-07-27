@@ -46,6 +46,12 @@ public struct Mesh: Sendable {
 /// stone rather than a rectangle.
 public enum StoneMeshBuilder {
 
+    /// Hermite fade, so the displacement dies smoothly rather than stepping.
+    static func smoothstep(_ edge0: Double, _ edge1: Double, _ x: Double) -> Double {
+        let t = min(max((x - edge0) / (edge1 - edge0), 0), 1)
+        return t * t * (3 - 2 * t)
+    }
+
     /// - Parameters:
     ///   - subdivisions: drives ring and segment counts; 12 is ample here.
     ///   - roughness: radial displacement as a fraction of the smallest
@@ -101,7 +107,23 @@ public enum StoneMeshBuilder {
                 // Displaced along the direction, so the amount depends only on
                 // where a vertex sits — not on which face claimed it. That is
                 // what stops a welded surface tearing at its edges.
-                let amount = noise.fbm(d * 2.4) * roughness * smallestHalf * 2
+                var amount = noise.fbm(d * 2.4) * roughness * smallestHalf * 2
+
+                // Fade the displacement out toward the waterline, and over a
+                // generous band.
+                //
+                // The naive reason is that a lumpy surface crossing a flat
+                // ground plane meets it in a comb rather than a line. The real
+                // reason is harsher: near sunrise and sunset the sun sits a few
+                // degrees up, and a shadow is stretched by 1/tan(altitude). At
+                // 7° that is a factor of eight — so a three-centimetre bump at
+                // the base throws a quarter-metre spike across the turf, and
+                // the low-sun moments this app exists for are exactly when it
+                // shows.
+                let heightAboveGround = point.y + centre.y
+                let fade = smoothstep(0.0, 1.6, heightAboveGround)
+                amount *= fade
+
                 point += d * amount
             }
             return point + centre

@@ -73,9 +73,14 @@ public struct MonumentScene: Sendable {
             return which == .great ? [left] : [left, right]
 
         case .asItWas:
+            // Seated a little into the uprights rather than balanced on them.
+            // The two surfaces are both rounded, so meeting them exactly at the
+            // nominal height leaves a notch of daylight along the joint — and a
+            // real lintel sits in a mortice anyway.
+            let seating = 0.25
             let lintel = Stone(
                 id: "\(which)-lintel",
-                position: SIMD3(centre.x, which.uprightHeight, centre.z),
+                position: SIMD3(centre.x, which.uprightHeight - seating, centre.z),
                 height: which.lintelHeight,
                 width: which.uprightWidth * 2 + which.gap,
                 thickness: which.uprightThickness,

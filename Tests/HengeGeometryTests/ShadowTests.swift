@@ -323,3 +323,53 @@ final class StoneOrientationTests: XCTestCase {
                           "the Heel Stone leans in toward the monument")
     }
 }
+
+/// Where the stone meets the ground.
+///
+/// Displacement noise crossing a flat ground plane leaves a ragged comb of
+/// spikes and notches at exactly the place the eye is drawn — the contact
+/// point. Visible immediately on a device at a low sun, and invisible in every
+/// test that only checked the mesh was well formed.
+final class WaterlineTests: XCTestCase {
+
+    func testDisplacementFadesOutAtGroundLevel() {
+        let stone = Stone(id: "waterline", position: .zero, height: 7.3,
+                          width: 2.4, thickness: 1.1)
+        let rough = StoneMeshBuilder.build(stone, subdivisions: 14, roughness: 0.06)
+        let smooth = StoneMeshBuilder.build(stone, subdivisions: 14, roughness: 0)
+
+        // Compare the horizontal footprint of the noisy stone against the clean
+        // one in a band around the ground plane. Near the waterline they should
+        // agree closely; higher up the noise is free to do as it likes.
+        func maxRadius(_ mesh: Mesh, from low: Float, to high: Float) -> Float {
+            var result: Float = 0
+            for p in mesh.positions where p.y >= low && p.y <= high {
+                result = max(result, simd_length(SIMD2(p.x, p.z)))
+            }
+            return result
+        }
+
+        let atWaterline = abs(maxRadius(rough, from: -0.05, to: 0.4)
+                              - maxRadius(smooth, from: -0.05, to: 0.4))
+        let higherUp = abs(maxRadius(rough, from: 3.0, to: 6.0)
+                           - maxRadius(smooth, from: 3.0, to: 6.0))
+
+        XCTAssertLessThan(atWaterline, 0.03,
+                          "the stone must meet the turf in a line, not a comb")
+        XCTAssertGreaterThan(higherUp, atWaterline,
+                             "and it should still be a rough stone above the ground")
+    }
+
+    /// A lintel balanced exactly on the nominal height of two rounded uprights
+    /// shows daylight along the joint. It should sit into them.
+    func testLintelSeatsIntoTheUprights() {
+        let stones = MonumentScene.trilithon(.great)
+        let uprights = stones.filter { $0.id.contains("upright") }
+        let lintel = try! XCTUnwrap(stones.first { $0.id.contains("lintel") })
+
+        XCTAssertLessThan(lintel.position.y, uprights[0].height,
+                          "the lintel must overlap the uprights, not balance on them")
+        XCTAssertGreaterThan(lintel.position.y, uprights[0].height - 0.6,
+                             "but it should not sink into them")
+    }
+}
