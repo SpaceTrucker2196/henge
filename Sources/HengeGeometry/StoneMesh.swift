@@ -27,136 +27,180 @@ public struct Mesh: Sendable {
 
 /// Turns a `Stone`'s dimensions into rock.
 ///
-/// A quarried sarsen is a boulder, not a brick: the approach is to subdivide a
-/// box and push every vertex along its normal by layered value noise, seeded
-/// from the stone's id. Deterministic on purpose — the shadow tests need the
-/// same stone in the same place on every run, and an artist's random would
-/// make the oracle flaky.
+/// The first version built six independent box faces and displaced each along
+/// its own normal. Three things were wrong with that, and all three showed the
+/// moment it ran on a device:
+///
+/// 1. **The faces were not welded.** Vertices sharing an edge existed twice and
+///    moved in different directions, so the stone split open along every edge —
+///    those were the bright seams.
+/// 2. **The edges were perfectly sharp.** Nothing on a weathered sarsen is, and
+///    a hard 90° edge reads as a concrete slab rather than a boulder. Solidity
+///    is carried by the silhouette more than by the shading.
+/// 3. **Normals came from triangle winding**, which is only defined up to a
+///    sign, so half the faces lit from the inside.
+///
+/// The shape is now one closed surface: a sphere swept onto a rounded box and
+/// pushed about by noise. Every vertex belongs to a single surface, so edges
+/// cannot come apart, normals are smooth across them, and the outline is a
+/// stone rather than a rectangle.
 public enum StoneMeshBuilder {
 
-    /// - Parameter subdivisions: per box face. 12 is enough to read as stone
-    ///   without drowning the vertex count; the tests use 2 for speed.
+    /// - Parameters:
+    ///   - subdivisions: drives ring and segment counts; 12 is ample here.
+    ///   - roughness: radial displacement as a fraction of the smallest
+    ///     half-extent. Zero gives the exact rounded box.
+    ///   - rounding: 0 is a hard box, 1 an inscribed ellipsoid. Real sarsens
+    ///     sit close to the box end — enough to lose the machined edge, not so
+    ///     much that they inflate into pillows.
     public static func build(_ stone: Stone, subdivisions: Int = 12,
-                             roughness: Double = 0.06) -> Mesh {
-        var mesh = Mesh()
-        let hw = stone.width / 2
-        let ht = stone.thickness / 2
-        let h = stone.height
+                             roughness: Double = 0.06,
+                             rounding: Double = 0.13) -> Mesh {
+        let rings = max(6, subdivisions * 2)
+        let segments = max(8, subdivisions * 3)
 
-        // Megaliths sit in a socket, and a leaning one has to: tipping a box
-        // about the centre of its base lifts the opposite edge clear of the
-        // ground, which on screen reads as a stone hovering over its own
-        // shadow. Sink the mesh far enough that the raised edge still meets
-        // the turf. The Heel Stone leans 27°, so this is not a small effect.
-        let sink = ht * abs(sin(stone.lean.radians)) + 0.15
+        // Megaliths sit in a socket, and a leaning one must: tipping a body
+        // about the centre of its base lifts the far edge clear of the ground,
+        // which reads as a stone hovering over its own shadow. The Heel Stone
+        // leans 27°, so this is not a small effect.
+        let halfThickness = stone.thickness / 2
+        let sink = halfThickness * abs(sin(stone.lean.radians)) + 0.15
+
+        let half = SIMD3<Double>(stone.width / 2,
+                                 (stone.height + sink) / 2,
+                                 stone.thickness / 2)
+        // Local origin sits at ground level, so the body straddles it.
+        let centre = SIMD3<Double>(0, half.y - sink, 0)
+        // Displacement is scaled by the narrowest dimension so a slender stone
+        // does not get lumps wider than itself.
+        let smallestHalf = min(half.x, min(half.y, half.z))
 
         var noise = ValueNoise(seed: stone.seed)
 
-        // Six faces of a box, each a subdivided grid in local space where the
-        // stone stands at the origin, base at y = 0.
-        // Each face carries its outward normal explicitly rather than deriving
-        // one from cross(u, v). The parameterisations do not share a handedness,
-        // so that cross product points inward on half of them — which is
-        // precisely the bug that made the stones render black on an iPad.
-        typealias V3 = SIMD3<Double>
-        let faces: [(origin: V3, u: V3, v: V3, normal: V3)] = [
-            (V3(-hw, -sink, -ht), V3(2 * hw, 0, 0), V3(0, h + sink, 0), V3(0, 0, -1)),
-            (V3(hw, -sink, ht), V3(-2 * hw, 0, 0), V3(0, h + sink, 0), V3(0, 0, 1)),
-            (V3(-hw, -sink, ht), V3(0, 0, -2 * ht), V3(0, h + sink, 0), V3(-1, 0, 0)),
-            (V3(hw, -sink, -ht), V3(0, 0, 2 * ht), V3(0, h + sink, 0), V3(1, 0, 0)),
-            (V3(-hw, h, -ht), V3(2 * hw, 0, 0), V3(0, 0, 2 * ht), V3(0, 1, 0)),
-            (V3(-hw, -sink, ht), V3(2 * hw, 0, 0), V3(0, 0, -2 * ht), V3(0, -1, 0))
-        ]
+        /// Surface point in the stone's own space, for a unit direction.
+        func surface(_ direction: SIMD3<Double>) -> SIMD3<Double> {
+            let d = simd_normalize(direction)
 
-        for face in faces {
-            let faceNormal = face.normal
-            var positions: [SIMD3<Float>] = []
-            var normals: [SIMD3<Float>] = []
-            var indices: [UInt32] = []
+            // Where the ray leaves the box, and where it leaves the ellipsoid
+            // inscribed in that same box. Blending the two knocks the corners
+            // off without shortening the stone.
+            //
+            // The ellipsoid has to be scaled per axis. A sphere of the smallest
+            // half-extent looks like the same idea and is not: on a stone three
+            // times taller than it is thick it pulls the ends in by a third of
+            // a metre, and the base lifts off the ground.
+            let boxScale = max(abs(d.x) / half.x, max(abs(d.y) / half.y, abs(d.z) / half.z))
+            let box = d / boxScale
+            let ellipsoidScale = sqrt(pow(d.x / half.x, 2)
+                                      + pow(d.y / half.y, 2)
+                                      + pow(d.z / half.z, 2))
+            let ellipsoid = d / ellipsoidScale
+            var point = simd_mix(box, ellipsoid, SIMD3(repeating: rounding))
 
-            let n = subdivisions
-            for i in 0...n {
-                for j in 0...n {
-                    let s = Double(i) / Double(n)
-                    let t = Double(j) / Double(n)
-                    var p = face.origin + face.u * s + face.v * t
-
-                    // Displace along the face normal. Taper the displacement to
-                    // zero at the base so stones sit flush in the ground rather
-                    // than hovering on a lumpy footing.
-                    let groundFade = min(1.0, max(0, p.y) / 0.4)
-                    let amount = noise.fbm(p * 1.7) * roughness * stone.width * groundFade
-                    p += faceNormal * amount
-
-                    positions.append(SIMD3<Float>(p))
-                    normals.append(SIMD3<Float>(faceNormal))
-                }
+            if roughness > 0 {
+                // Displaced along the direction, so the amount depends only on
+                // where a vertex sits — not on which face claimed it. That is
+                // what stops a welded surface tearing at its edges.
+                let amount = noise.fbm(d * 2.4) * roughness * smallestHalf * 2
+                point += d * amount
             }
-
-            for i in 0..<n {
-                for j in 0..<n {
-                    let a = UInt32(i * (n + 1) + j)
-                    let b = UInt32((i + 1) * (n + 1) + j)
-                    let c = UInt32((i + 1) * (n + 1) + j + 1)
-                    let d = UInt32(i * (n + 1) + j + 1)
-                    indices.append(contentsOf: [a, b, c, a, c, d])
-                }
-            }
-
-            mesh.append(Mesh(positions: positions, normals: normals, indices: indices))
+            return point + centre
         }
 
-        // The flat face normals, kept before smoothing: they are exact by
-        // construction and are the reference for which way is "out".
-        let reference = mesh.normals
-        recomputeNormals(&mesh, reference: reference)
+        var positions: [SIMD3<Float>] = []
+        var indices: [UInt32] = []
+
+        // One vertex per position: poles are single vertices and the longitude
+        // seam reuses column zero, so there is no crack anywhere on the solid.
+        positions.append(SIMD3<Float>(surface(SIMD3(0, 1, 0))))
+        let northPole: UInt32 = 0
+
+        for ring in 1..<rings {
+            let phi = Double(ring) * .pi / Double(rings)
+            for segment in 0..<segments {
+                let theta = Double(segment) * 2 * .pi / Double(segments)
+                let direction = SIMD3(sin(phi) * sin(theta), cos(phi), sin(phi) * cos(theta))
+                positions.append(SIMD3<Float>(surface(direction)))
+            }
+        }
+
+        positions.append(SIMD3<Float>(surface(SIMD3(0, -1, 0))))
+        let southPole = UInt32(positions.count - 1)
+
+        func index(ring: Int, segment: Int) -> UInt32 {
+            UInt32(1 + (ring - 1) * segments + (segment % segments))
+        }
+
+        for segment in 0..<segments {
+            indices.append(contentsOf: [northPole,
+                                        index(ring: 1, segment: segment + 1),
+                                        index(ring: 1, segment: segment)])
+        }
+
+        for ring in 1..<(rings - 1) {
+            for segment in 0..<segments {
+                let a = index(ring: ring, segment: segment)
+                let b = index(ring: ring, segment: segment + 1)
+                let c = index(ring: ring + 1, segment: segment + 1)
+                let d = index(ring: ring + 1, segment: segment)
+                indices.append(contentsOf: [a, b, c, a, c, d])
+            }
+        }
+
+        for segment in 0..<segments {
+            indices.append(contentsOf: [southPole,
+                                        index(ring: rings - 1, segment: segment),
+                                        index(ring: rings - 1, segment: segment + 1)])
+        }
+
+        var mesh = Mesh(positions: positions,
+                        normals: [SIMD3<Float>](repeating: .zero, count: positions.count),
+                        indices: indices)
+
+        smoothNormals(&mesh, centre: SIMD3<Float>(centre))
         transform(&mesh, stone: stone)
         return mesh
     }
 
-    /// Smooth normals from the displaced surface, so the lighting follows the
-    /// rock rather than the box it started as.
+    /// Area-weighted vertex normals over the finished surface.
     ///
-    /// The winding of a triangle only tells you which way it faces up to a
-    /// sign, and the six box faces are not parameterised with a consistent
-    /// handedness — so a normal derived from the cross product alone points
-    /// *inward* on half of them. On screen that is unmistakable once seen: the
-    /// stones go black and pick up bright stripes where the two conventions
-    /// meet, while the ground, whose normal is trivially up, lights correctly.
-    ///
-    /// The exact face normals are known before displacement, so they are kept
-    /// as the reference and any smoothed normal that disagrees is flipped.
-    /// Winding is corrected to match, so back-face culling agrees too.
-    static func recomputeNormals(_ mesh: inout Mesh, reference: [SIMD3<Float>]) {
+    /// The surface is closed and welded, so accumulating face normals gives
+    /// smooth shading across edges for nothing. Orientation is settled against
+    /// the outward direction from the body's centre rather than against the
+    /// winding, because winding alone cannot tell inside from outside — and
+    /// getting that wrong is what turned the stones black.
+    static func smoothNormals(_ mesh: inout Mesh, centre: SIMD3<Float>) {
         var accumulated = [SIMD3<Float>](repeating: .zero, count: mesh.positions.count)
 
         for triangle in stride(from: 0, to: mesh.indices.count, by: 3) {
             let i0 = Int(mesh.indices[triangle])
             let i1 = Int(mesh.indices[triangle + 1])
             let i2 = Int(mesh.indices[triangle + 2])
-            let e1 = mesh.positions[i1] - mesh.positions[i0]
-            let e2 = mesh.positions[i2] - mesh.positions[i0]
-            var faceNormal = cross(e1, e2)
+            let p0 = mesh.positions[i0], p1 = mesh.positions[i1], p2 = mesh.positions[i2]
 
-            // Orient against the pre-displacement normal, and rewind the
-            // triangle if it disagreed.
-            if dot(faceNormal, reference[i0]) < 0 {
+            var faceNormal = cross(p1 - p0, p2 - p0)
+            let outward = ((p0 + p1 + p2) / 3) - centre
+            if dot(faceNormal, outward) < 0 {
                 faceNormal = -faceNormal
                 mesh.indices.swapAt(triangle + 1, triangle + 2)
             }
-
+            // Deliberately not normalised: the cross product's length is twice
+            // the triangle's area, which is the weighting a smooth normal wants.
             accumulated[i0] += faceNormal
             accumulated[i1] += faceNormal
             accumulated[i2] += faceNormal
         }
 
-        mesh.normals = accumulated.enumerated().map { index, n in
-            let len = length(n)
-            guard len > 1e-6 else { return reference[index] }
-            let smoothed = n / len
-            // A vertex on an edge averages two faces; if displacement has
-            // pushed the average past the reference, trust the reference.
-            return dot(smoothed, reference[index]) < 0 ? reference[index] : smoothed
+        for i in accumulated.indices {
+            let length = simd_length(accumulated[i])
+            if length > 1e-9 {
+                mesh.normals[i] = accumulated[i] / length
+            } else {
+                let outward = mesh.positions[i] - centre
+                let outwardLength = simd_length(outward)
+                mesh.normals[i] = outwardLength > 1e-9
+                    ? outward / outwardLength : SIMD3<Float>(0, 1, 0)
+            }
         }
     }
 
@@ -169,9 +213,9 @@ public enum StoneMeshBuilder {
 
             let localNormal = SIMD3<Double>(mesh.normals[i])
             let worldNormal = stone.directionToWorld(localNormal)
-            let len = simd_length(worldNormal)
-            mesh.normals[i] = len > 1e-9
-                ? SIMD3<Float>(worldNormal / len)
+            let length = simd_length(worldNormal)
+            mesh.normals[i] = length > 1e-9
+                ? SIMD3<Float>(worldNormal / length)
                 : mesh.normals[i]
         }
     }

@@ -248,3 +248,78 @@ enum HengeGeometryTestSupport {
             && SIMD3<Double>(0, 1, 0).y > 0
     }
 }
+
+/// Which way a stone actually faces.
+///
+/// Nothing pinned this until an iPad render made it obvious that the trilithon
+/// read as a flat wall. The uprights were 10° off the axis, because the
+/// local-to-world rotation had been written as an angle twice and the two
+/// versions disagreed about the sign. `Stone.toWorld` now states its basis
+/// outright, and these tests hold it to it.
+final class StoneOrientationTests: XCTestCase {
+
+    /// `bearing` means: local +Z points along this compass bearing.
+    func testBearingPointsTheFacingDirection() {
+        for degrees in stride(from: 0.0, to: 360.0, by: 23.0) {
+            let stone = Stone(id: "facing", position: .zero, height: 3, width: 2,
+                              thickness: 1, bearing: Angle(degrees: degrees))
+            let facing = stone.directionToWorld(SIMD3(0, 0, 1))
+            XCTAssertEqual(WorldAxes.azimuth(of: normalize(facing)).degrees, degrees,
+                           accuracy: 1e-6, "facing at bearing \(degrees)")
+        }
+    }
+
+    /// The transform must be a rotation, not a mirror — a reflection inverts
+    /// the winding of every triangle and turns the stones black.
+    func testTransformPreservesHandedness() {
+        let stone = Stone(id: "handedness", position: SIMD3(3, 0, 5), height: 4,
+                          width: 2, thickness: 1, bearing: Angle(degrees: 71),
+                          lean: Angle(degrees: 12))
+        let x = stone.directionToWorld(SIMD3(1, 0, 0))
+        let y = stone.directionToWorld(SIMD3(0, 1, 0))
+        let z = stone.directionToWorld(SIMD3(0, 0, 1))
+
+        // X × Y = Z for a right-handed basis; a mirror would give −Z.
+        XCTAssertGreaterThan(simd_dot(simd_cross(x, y), z), 0.99,
+                             "the local-to-world transform has become a reflection")
+        // And it must not scale.
+        for axis in [x, y, z] {
+            XCTAssertEqual(simd_length(axis), 1, accuracy: 1e-9)
+        }
+    }
+
+    /// A trilithon is a doorway, and it is approached along the axis — so the
+    /// broad faces of its uprights look up and down that axis, and the pair is
+    /// offset across it.
+    func testTrilithonUprightsFaceAlongTheAxis() {
+        let uprights = MonumentScene.trilithon(.great).filter { $0.id.contains("upright") }
+        XCTAssertEqual(uprights.count, 2)
+
+        for upright in uprights {
+            let facing = normalize(upright.directionToWorld(SIMD3(0, 0, 1)))
+            XCTAssertEqual(WorldAxes.azimuth(of: facing).separation(to: Monument.axisAzimuth).degrees,
+                           0, accuracy: 0.01,
+                           "\(upright.id) should look along the axis, not across it")
+        }
+
+        // The pair straddles the axis: the line joining them runs across it.
+        let separation = uprights[1].position - uprights[0].position
+        let acrossBearing = WorldAxes.azimuth(of: normalize(separation))
+        let angleToAxis = acrossBearing.separation(to: Monument.axisAzimuth).degrees
+        XCTAssertEqual(angleToAxis, 90, accuracy: 0.5,
+                       "the uprights must be offset across the axis, not along it")
+    }
+
+    /// The Heel Stone leans toward the circle, not away from it.
+    func testHeelStoneLeansTowardTheCircle() {
+        let heel = MonumentScene.heelStone()
+        let apex = heel.apex
+        let base = heel.position
+
+        // Its top should be closer to the centre of the circle than its base.
+        let baseDistance = simd_length(SIMD2(base.x, base.z))
+        let apexDistance = simd_length(SIMD2(apex.x, apex.z))
+        XCTAssertLessThan(apexDistance, baseDistance,
+                          "the Heel Stone leans in toward the monument")
+    }
+}

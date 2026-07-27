@@ -34,6 +34,9 @@ let package = Package(
             name: "HengeGeometry",
             dependencies: ["HengeAstro"],
             path: "Sources/HengeGeometry",
+            // Salisbury Plain as a heightfield, baked from SRTM by
+            // scripts/bake_terrain.py. Provenance in SECURITY.md.
+            resources: [.copy("Resources")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         // The Metal 3 renderer. Shaders travel as a package resource and are

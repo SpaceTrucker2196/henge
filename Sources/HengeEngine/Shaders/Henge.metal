@@ -242,12 +242,34 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
 
     float3 direct = (diffuse + specular) * frame.sunRadiance.rgb * ndotl * shadow;
 
-    // Sky as ambient: the dome above a surface is roughly the sky in the
-    // direction it faces, which is cheap and reads correctly at dusk when the
-    // whole plain goes blue.
-    float3 skyAmbient = preethamSky(normalize(n * 0.5 + float3(0, 0.5, 0)),
-                                    l, frame.skyParameters.x);
-    float3 ambient = albedo * skyAmbient * 0.35;
+    // Hemispheric ambient: sky from above, bounce from the ground below,
+    // mixed by which way the surface looks.
+    //
+    // A single sun with a weak uniform fill is what makes objects read flat —
+    // every face turned away from it collapses to the same near-black and the
+    // form disappears. Outdoors most of the light on a shaded face is sky, and
+    // a good deal of what strikes its underside has come off the ground. Giving
+    // those two different colours and letting the normal choose between them is
+    // what makes a solid look solid.
+    float3 skyColour = preethamSky(float3(0, 1, 0), l, frame.skyParameters.x);
+    float3 horizonColour = preethamSky(normalize(float3(l.x, 0.12, l.z)),
+                                       l, frame.skyParameters.x);
+    // Chalk grassland: a dim, warm-green bounce carrying the sun's own colour.
+    float3 groundBounce = float3(0.26, 0.28, 0.16) * frame.sunRadiance.rgb * 0.045;
+
+    float upwards = n.y * 0.5 + 0.5;
+    float3 skyFill = mix(horizonColour, skyColour, upwards);
+    // Strength matters as much as direction. Too little and every face turned
+    // from the sun collapses to the same black; too much and the fill drowns
+    // the sun, which is worse — the stones go flat pale and stop reading as
+    // solid at all. The sun must remain the modelling light.
+    float3 ambient = albedo * mix(groundBounce, skyFill, upwards) * 0.55;
+
+    // Cheap wrap term so the terminator is not a hard line — light does creep
+    // around a boulder, and a knife edge there is the other thing that reads
+    // as cardboard.
+    float wrap = clamp((dot(n, l) + 0.35) / 1.35, 0.0, 1.0);
+    ambient += albedo * frame.sunRadiance.rgb * wrap * 0.018 * shadow;
 
     // Aerial perspective — distance haze keeps the barrows on the horizon from
     // reading as cardboard cut-outs.

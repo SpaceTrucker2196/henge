@@ -276,12 +276,12 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     ///   which is what the shadow-agreement test needs so that the rendered
     ///   silhouette and the analytic outline describe the same solid.
     public func load(scene: MonumentScene, subdivisions: Int = 12,
-                     roughness: Double = 0.06) throws {
+                     roughness: Double = 0.06, rounding: Double = 0.13) throws {
         var items: [DrawItem] = []
 
         for stone in scene.stones {
             let mesh = StoneMeshBuilder.build(stone, subdivisions: subdivisions,
-                                              roughness: roughness)
+                                              roughness: roughness, rounding: rounding)
             if let item = try makeDrawItem(mesh: mesh, albedo: SurfaceMaterial.sarsen,
                                            label: stone.id) {
                 items.append(item)

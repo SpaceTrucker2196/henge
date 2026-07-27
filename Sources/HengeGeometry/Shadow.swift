@@ -53,6 +53,30 @@ public enum ShadowSolver {
         return convexHull(projected)
     }
 
+    /// The ground shadow of an actual mesh, rather than of the idealised box
+    /// that bounds it.
+    ///
+    /// These differ, and the difference matters. `Stone` is a box; the stone
+    /// the renderer draws is a rounded, noisy solid inscribed within it, whose
+    /// silhouette is smaller. Measuring a render against the bounding box would
+    /// report a disagreement that is really a difference of shape — so the
+    /// agreement test projects the same vertices the GPU rasterises.
+    public static func shadowOutline(of mesh: Mesh,
+                                     sun: HorizontalCoordinate) -> [SIMD2<Double>] {
+        let v = sun.unitVector
+        let direction = SIMD3(v.x, v.y, v.z)
+        guard direction.y > 1e-9 else { return [] }
+
+        var projected: [SIMD2<Double>] = []
+        projected.reserveCapacity(mesh.positions.count)
+        for position in mesh.positions {
+            let point = SIMD3<Double>(position)
+            guard let ground = groundShadow(of: point, sunDirection: direction) else { continue }
+            projected.append(SIMD2(ground.x, ground.z))
+        }
+        return convexHull(projected)
+    }
+
     /// Length of a vertical pole's shadow. Kept as its own function because it
     /// is the case a reader can check in their head: at 45° elevation the
     /// shadow equals the height.

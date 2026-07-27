@@ -3,6 +3,68 @@
 In-flight state. Newest first. Each entry: date, what changed, what's next, and
 anything a cold agent must know that isn't in a doc yet.
 
+## 2026-07-27 (later) — real terrain, and the stones become solids
+
+Two threads, both started by looking at the thing on an iPad.
+
+### Salisbury Plain is now in the tree
+
+`scripts/bake_terrain.py` turns SRTM 1-arc-second tiles into a 768x768
+heightfield at 40 m spacing, ±15.3 km around the monument (1.18 MB, public
+domain — see SECURITY.md). `TerrainModel` reads it, and `Skyline` solves rise
+and set bearings over the real horizon by iterating, since the skyline altitude
+depends on the bearing being solved for.
+
+The bake lands the ground at the monument at **101 m**, matching the surveyed
+figure, and finds Stonehenge Bottom falling away to the north exactly where it
+should be — which is what the orientation tests now pin.
+
+**The point was never scenery.** The horizon altitude toward midsummer sunrise
+had been a hand-picked 0.6°, and it moves the bearing by more than a degree.
+Measured from the terrain it is **0.71°**. The guess was close, which is
+precisely why it would have survived indefinitely. It is now computed from
+cited survey data, as invariant 1 requires.
+
+### The stones are solids now, not slabs
+
+The mesh builder was making six independent box faces and displacing each along
+its own normal. Everything about that was wrong:
+
+- **Unwelded.** Edge vertices existed twice and moved apart — the bright seams.
+- **Perfectly sharp edges**, which read as concrete rather than sarsen.
+- **Normals from winding**, which is only defined up to a sign, so half the
+  faces lit from inside and the stones rendered black.
+- **A mirrored transform.** The local-to-world rotation was written twice with
+  a sign difference; one copy had determinant −1, inverting every triangle's
+  winding. The uprights also sat 10° off the axis because of it.
+
+The stone is now a single closed surface — a sphere swept onto a rounded box,
+displaced radially so shared vertices cannot disagree — with smooth normals and
+a silhouette that carries the solidity. `Stone.toWorld` is the one transform,
+called by both the mesh builder and the shadow solver.
+
+Lighting changed with it: a hemispheric ambient (sky above, ground bounce
+below, chosen by the normal) instead of a weak uniform fill. Strength matters
+as much as direction — the first attempt was 4× too strong and the stones went
+flat pale, which looks worse than too dark because the sun stops being the
+modelling light.
+
+### Consequences worth knowing
+
+The rendered stone is a rounded solid inscribed in its bounding box, so its
+shadow is *smaller* than the box's. The agreement test now projects the mesh
+the renderer actually draws rather than the idealised box —
+`ShadowSolver.shadowOutline(of: Mesh)`. Comparing to the box would charge the
+renderer for a difference of shape.
+
+61 tests green, both platforms warning-clean, run and looked at on an iPad.
+
+### Next
+
+Terrain is loaded and measured but **not yet drawn** — the renderer still puts
+the monument on a flat plane. Wiring `TerrainModel` into the ground mesh is the
+first job of M2, along with the rest of the monument.
+
 ## 2026-07-27 — mission set; M1 "The Light" landed
 
 The charter arrived and `MISSION.md` is written, so the repo is out of the

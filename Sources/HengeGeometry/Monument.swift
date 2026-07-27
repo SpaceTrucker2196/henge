@@ -153,11 +153,19 @@ public struct Stone: Sendable, Hashable {
                                    local.y * cosL - local.z * sinL,
                                    local.y * sinL + local.z * cosL)
 
-        // Proper rotation about +Y: determinant +1, so handedness survives.
+        // Basis stated outright rather than written as a rotation matrix, so
+        // that `bearing` means exactly what it says: **local +Z points along
+        // the compass bearing**, and local +X lies 90° to its left. Writing it
+        // as an angle rotation twice already produced one mirror and one
+        // 10° misalignment that survived a passing test suite because nothing
+        // pinned the direction a stone actually faces.
+        //
+        // Right-handed: X × Y = Z.
         let cosB = bearing.cosine, sinB = bearing.sine
-        let turned = SIMD3<Double>(leaned.x * cosB + leaned.z * sinB,
-                                   leaned.y,
-                                   -leaned.x * sinB + leaned.z * cosB)
+        let across = SIMD3<Double>(-cosB, 0, -sinB)   // local +X
+        let up = SIMD3<Double>(0, 1, 0)               // local +Y
+        let facing = SIMD3<Double>(sinB, 0, -cosB)    // local +Z
+        let turned = across * leaned.x + up * leaned.y + facing * leaned.z
         return turned + position
     }
 

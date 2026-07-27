@@ -67,7 +67,7 @@ final class ShadowAgreementTests: XCTestCase {
         let state = SceneState(sun: sun, sunAngularRadius: 0.00465,
                                camera: camera, turbidity: 2.2, exposure: 1.0)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 2048)
-        try renderer.load(scene: scene, subdivisions: 4, roughness: 0)
+        try renderer.load(scene: scene, subdivisions: 8, roughness: 0, rounding: 0)
         return renderer
     }
 
@@ -144,7 +144,13 @@ final class ShadowAgreementTests: XCTestCase {
             // renderer look wrong by a consistent half metre.
             let bearing = ShadowSolver.shadowBearing(sunAzimuth: Angle(degrees: azimuth))
             let direction = SIMD2(bearing.sine, -bearing.cosine)
-            let outline = ShadowSolver.shadowOutline(of: stone, sun: sun)
+            // Against the mesh the renderer actually draws, not the box that
+            // bounds it: the drawn stone is a rounded solid inscribed in that
+            // box, and comparing to the box would charge the renderer for a
+            // difference of shape.
+            let drawn = StoneMeshBuilder.build(stone, subdivisions: 8,
+                                               roughness: 0, rounding: 0)
+            let outline = ShadowSolver.shadowOutline(of: drawn, sun: sun)
             let analyticDistance = try XCTUnwrap(
                 Self.rayExitDistance(polygon: outline, direction: direction),
                 "the analytic outline does not cross the sampling ray")

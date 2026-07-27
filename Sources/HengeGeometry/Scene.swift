@@ -55,7 +55,7 @@ public struct MonumentScene: Sendable {
             height: which.uprightHeight,
             width: which.uprightWidth,
             thickness: which.uprightThickness,
-            bearing: acrossBearing
+            bearing: axis
         )
         let right = Stone(
             id: "\(which)-upright-right",
@@ -63,7 +63,7 @@ public struct MonumentScene: Sendable {
             height: which.uprightHeight,
             width: which.uprightWidth,
             thickness: which.uprightThickness,
-            bearing: acrossBearing
+            bearing: axis
         )
 
         switch state {
@@ -79,7 +79,7 @@ public struct MonumentScene: Sendable {
                 height: which.lintelHeight,
                 width: which.uprightWidth * 2 + which.gap,
                 thickness: which.uprightThickness,
-                bearing: acrossBearing
+                bearing: axis
             )
             return [left, right, lintel]
         }
@@ -99,8 +99,9 @@ public struct MonumentScene: Sendable {
             width: 2.4,
             thickness: 2.1,
             bearing: Monument.axisAzimuth,
-            // It leans about 27° from vertical toward the circle.
-            lean: Angle(degrees: 27)
+            // Leans about 27° from vertical *toward the circle* — that is,
+            // against its own facing, hence the negative angle.
+            lean: Angle(degrees: -27)
         )
     }
 }
