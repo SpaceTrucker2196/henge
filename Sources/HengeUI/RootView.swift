@@ -58,12 +58,19 @@ public struct RootView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(model.formattedDate)
                 .font(.title3.weight(.semibold))
-            Text(model.formattedTime)
+            // Local time first: it is the time at the monument, which is what
+            // anyone standing there wants. UT stays visible underneath because
+            // it is what the ephemeris is actually computed in.
+            Text(model.formattedLocalTime ?? model.formattedSolarTime)
                 .font(.system(.callout, design: .monospaced))
+            Text(model.formattedLocalTime == nil
+                 ? "local apparent solar time" : model.formattedTime)
+                .font(.system(.caption2, design: .monospaced))
                 .foregroundStyle(.secondary)
 
             Divider().frame(width: 190).padding(.vertical, 6)
 
+            row("Sundial", model.formattedSolarTime)
             row("Sun altitude", String(format: "%.3f°", model.sun.altitude.degrees))
             row("Sun azimuth", String(format: "%.3f°", model.sun.azimuth.degrees))
             if let sunrise = model.sunriseAzimuth {

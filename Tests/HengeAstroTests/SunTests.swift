@@ -269,3 +269,57 @@ final class StonehengeAlignmentTests: XCTestCase {
 private enum Monument {
     static let axisAzimuthForTesting = Angle(degrees: 49.9)
 }
+
+/// The clocks a monument can keep.
+final class LocalTimeTests: XCTestCase {
+
+    let site = GeographicSite.stonehenge
+
+    /// Apparent solar noon is when the sun crosses the meridian, which is what
+    /// a sundial — and a stone circle — actually measures.
+    func testSolarNoonIsWhenTheSunTransits() {
+        // Search the day for the moment the sun is due south.
+        let midnight = JulianDay(CalendarDate(year: 2026, month: 6, day: 21))
+        var best = (difference: 999.0, solar: 0.0, azimuth: 0.0)
+
+        for step in 0...1440 {
+            let t = midnight + Double(step) / 1440.0
+            let sun = Sun.horizontal(at: t, site: site)
+            let difference = abs(sun.azimuth.degrees - 180)
+            if difference < best.difference {
+                best = (difference, Sun.apparentSolarTime(at: t, site: site),
+                        sun.azimuth.degrees)
+            }
+        }
+
+        XCTAssertLessThan(best.difference, 0.5, "should find the transit")
+        XCTAssertEqual(best.solar, 12.0, accuracy: 0.02,
+                       "apparent solar time must read noon at the transit")
+    }
+
+    /// Stonehenge is 1.83° west of Greenwich, so its sun runs about seven and a
+    /// half minutes behind — the reason clock noon and sundial noon differ even
+    /// before the equation of time.
+    func testSolarTimeLagsGreenwichByTheSiteLongitude() {
+        let moment = JulianDay(CalendarDate(year: 2026, month: 4, day: 16, hour: 12))
+        let greenwich = GeographicSite(latitude: site.latitude,
+                                       longitude: Angle(degrees: 0))
+
+        let here = Sun.apparentSolarTime(at: moment, site: site)
+        let there = Sun.apparentSolarTime(at: moment, site: greenwich)
+
+        // 1.8262° at 15° per hour is 7.3 minutes.
+        XCTAssertEqual((there - here) * 60, 7.3, accuracy: 0.2)
+    }
+
+    /// Solar time is the only clock that survives into deep time, and it must
+    /// stay well formed there.
+    func testSolarTimeIsDefinedInTheEraOfConstruction() {
+        for hour in [0, 6, 12, 18] {
+            let t = JulianDay(CalendarDate(year: -2500, month: 7, day: 15, hour: hour))
+            let solar = Sun.apparentSolarTime(at: t, site: site)
+            XCTAssertGreaterThanOrEqual(solar, 0)
+            XCTAssertLessThan(solar, 24)
+        }
+    }
+}

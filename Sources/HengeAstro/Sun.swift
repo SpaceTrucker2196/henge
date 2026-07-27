@@ -162,6 +162,32 @@ public enum Sun {
     }
 }
 
+public extension Sun {
+
+    /// The sun's local hour angle: how far west of the meridian it has turned.
+    /// Zero at local apparent noon, negative before it.
+    static func hourAngle(at ut: JulianDay, site: GeographicSite) -> Angle {
+        let tt = ut.terrestrialTime
+        let position = position(at: tt)
+        let nutation = EarthOrientation.nutation(at: tt)
+        let sidereal = Sidereal.greenwichApparent(at: ut, nutation: nutation,
+                                                  obliquity: position.obliquity)
+        return position.equatorial.hourAngle(at: site, siderealTime: sidereal)
+    }
+
+    /// Local **apparent solar time** — what a sundial reads, in hours.
+    ///
+    /// This is the time the monument itself keeps. Noon is when the sun crosses
+    /// the meridian, not when a clock in another country says so, and it is
+    /// the only clock that means anything in 2500 BC.
+    static func apparentSolarTime(at ut: JulianDay, site: GeographicSite) -> Double {
+        var hours = hourAngle(at: ut, site: site).degrees / 15.0 + 12.0
+        hours.formTruncatingRemainder(dividingBy: 24)
+        if hours < 0 { hours += 24 }
+        return hours
+    }
+}
+
 /// Rising, setting, and the bearings that make the monument a calendar.
 public enum RiseSet {
 

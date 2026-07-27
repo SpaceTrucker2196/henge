@@ -160,6 +160,41 @@ public final class SkyModel {
         return "\(day) \(month) \(year)"
     }
 
+    /// Civil time zone at the site. Wiltshire keeps London time.
+    public static let siteTimeZone = TimeZone(identifier: "Europe/London") ?? .gmt
+
+    /// Civil local time, with the zone named — BST through the summer, GMT
+    /// through the winter.
+    ///
+    /// Returns nil outside the era in which civil time means anything. Britain
+    /// had no standard time before the railways and no summer time before 1916,
+    /// and extrapolating the current rules back to 2500 BC would be inventing a
+    /// clock the builders did not have. `apparentSolarTime` is what serves
+    /// then, and it is the truer answer at a monument anyway.
+    public var formattedLocalTime: String? {
+        let date = calendarDate
+        guard date.year >= 1848 else { return nil }
+
+        let moment = Date(timeIntervalSince1970: (time.value - 2440587.5) * 86400)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = Self.siteTimeZone
+        let parts = calendar.dateComponents([.hour, .minute, .second], from: moment)
+
+        let isSummer = Self.siteTimeZone.isDaylightSavingTime(for: moment)
+        return String(format: "%02d:%02d:%02d %@",
+                      parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0,
+                      isSummer ? "BST" : "GMT")
+    }
+
+    /// Local apparent solar time — the clock the monument itself keeps.
+    public var formattedSolarTime: String {
+        let hours = Sun.apparentSolarTime(at: time, site: site)
+        let totalSeconds = Int((hours * 3600).rounded())
+        return String(format: "%02d:%02d:%02d",
+                      (totalSeconds / 3600) % 24, (totalSeconds % 3600) / 60,
+                      totalSeconds % 60)
+    }
+
     public var formattedTime: String {
         let fraction = calendarDate.day - floor(calendarDate.day)
         let totalSeconds = Int((fraction * 86400).rounded())
