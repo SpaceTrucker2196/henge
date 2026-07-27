@@ -296,7 +296,8 @@ vertex SkyInOut sky_vertex(uint vertexID [[vertex_id]])
     float2 positions[3] = { float2(-1, -3), float2(-1, 1), float2(3, 1) };
     SkyInOut out;
     out.ndc = positions[vertexID];
-    out.clipPosition = float4(positions[vertexID], 1.0, 1.0);
+    // Reverse-Z: the far plane is 0, so that is where the sky sits.
+    out.clipPosition = float4(positions[vertexID], 0.0, 1.0);
     return out;
 }
 
@@ -305,8 +306,8 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
 {
     // Unproject the pixel into a world ray. The renderer supplies the inverse
     // view-projection ready-made rather than inverting a matrix per pixel.
-    float4 worldNear = frame.inverseViewProjection * float4(in.ndc, 0.0, 1.0);
-    float4 worldFar  = frame.inverseViewProjection * float4(in.ndc, 1.0, 1.0);
+    float4 worldNear = frame.inverseViewProjection * float4(in.ndc, 1.0, 1.0);
+    float4 worldFar  = frame.inverseViewProjection * float4(in.ndc, 0.0001, 1.0);
     float3 direction = normalize(worldFar.xyz / worldFar.w - worldNear.xyz / worldNear.w);
 
     float3 l = normalize(frame.sunDirection.xyz);

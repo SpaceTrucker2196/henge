@@ -9,17 +9,33 @@ import simd
 /// here are built for Metal's convention deliberately.
 public enum MetalMath {
 
-    /// Right-handed perspective, reverse-Z off (near maps to 0).
+    /// Right-handed **reverse-Z** perspective: the near plane maps to 1 and
+    /// the far plane to 0.
+    ///
+    /// This is not a stylistic choice. A conventional projection spends almost
+    /// all of a depth buffer's precision in the first few metres, and the ratio
+    /// here is brutal — a 0.2 m near plane against a horizon 15 km away is
+    /// 200,000:1. At that range two faces of the same stone, a metre apart at
+    /// sixty metres out, land in the same depth bucket and z-fight: the wall
+    /// flickers away at some angles and not others, which reads as the stone
+    /// being transparent rather than as a depth problem.
+    ///
+    /// Reversing it puts the floating-point exponent's dense region where the
+    /// geometry is. Paired with a float depth buffer it is accurate across the
+    /// whole range. The far plane goes to infinity, which costs nothing here
+    /// and removes one more thing to tune.
+    ///
+    /// Requires `.greater` depth comparison and a depth clear of 0.
     public static func perspective(fovyRadians: Float, aspect: Float,
-                                   near: Float, far: Float) -> float4x4 {
+                                   near: Float, far: Float = .infinity) -> float4x4 {
         let y = 1 / tan(fovyRadians * 0.5)
         let x = y / aspect
-        let z = far / (near - far)
+        // z_ndc = near / -z_view: 1 at the near plane, tending to 0 at infinity.
         return float4x4(columns: (
             SIMD4<Float>(x, 0, 0, 0),
             SIMD4<Float>(0, y, 0, 0),
-            SIMD4<Float>(0, 0, z, -1),
-            SIMD4<Float>(0, 0, z * near, 0)
+            SIMD4<Float>(0, 0, 0, -1),
+            SIMD4<Float>(0, 0, near, 0)
         ))
     }
 

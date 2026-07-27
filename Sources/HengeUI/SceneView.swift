@@ -34,6 +34,8 @@ public struct HengeSceneView: PlatformViewRepresentable {
         let view = MTKView()
         view.colorPixelFormat = HengeRenderer.colourFormat
         view.depthStencilPixelFormat = HengeRenderer.depthFormat
+        // Reverse-Z: clear to the far plane, which is zero.
+        view.clearDepth = 0
         view.preferredFramesPerSecond = 120     // ProMotion where it exists
         view.isPaused = false
         view.enableSetNeedsDisplay = false

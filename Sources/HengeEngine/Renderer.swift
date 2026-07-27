@@ -110,6 +110,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     private let shadowPipeline: MTLRenderPipelineState
     private let skyPipeline: MTLRenderPipelineState
     private let sceneDepthState: MTLDepthStencilState
+    private let shadowDepthState: MTLDepthStencilState
     private let skyDepthState: MTLDepthStencilState
     private let shadowSampler: MTLSamplerState
     private let shadowMap: MTLTexture
@@ -183,17 +184,29 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                         depth: Self.depthFormat,
                                         useVertexDescriptor: false)
 
+        // The camera renders reverse-Z, so nearer means *greater*.
         let sceneDepth = MTLDepthStencilDescriptor()
-        sceneDepth.depthCompareFunction = .less
+        sceneDepth.depthCompareFunction = .greater
         sceneDepth.isDepthWriteEnabled = true
         guard let sceneDepthState = device.makeDepthStencilState(descriptor: sceneDepth) else {
             throw RendererError.resourceCreationFailed("depth state")
         }
         self.sceneDepthState = sceneDepthState
 
+        // The shadow cascades are orthographic, where precision is uniform and
+        // there is nothing to gain by reversing. Kept conventional so the
+        // comparison in the shader stays the obvious way round.
+        let shadowDepth = MTLDepthStencilDescriptor()
+        shadowDepth.depthCompareFunction = .less
+        shadowDepth.isDepthWriteEnabled = true
+        guard let shadowDepthState = device.makeDepthStencilState(descriptor: shadowDepth) else {
+            throw RendererError.resourceCreationFailed("shadow depth state")
+        }
+        self.shadowDepthState = shadowDepthState
+
         // The sky fills whatever the stones did not, and writes no depth.
         let skyDepth = MTLDepthStencilDescriptor()
-        skyDepth.depthCompareFunction = .lessEqual
+        skyDepth.depthCompareFunction = .greaterEqual
         skyDepth.isDepthWriteEnabled = false
         guard let skyDepthState = device.makeDepthStencilState(descriptor: skyDepth) else {
             throw RendererError.resourceCreationFailed("sky depth state")
@@ -521,7 +534,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             else { continue }
             encoder.label = "shadow cascade \(cascade)"
             encoder.setRenderPipelineState(shadowPipeline)
-            encoder.setDepthStencilState(sceneDepthState)
+            encoder.setDepthStencilState(shadowDepthState)
             // Front-face culling in the shadow pass pushes peter-panning into
             // the stone rather than out onto the ground, which matters when the
             // ground shadow is the thing being measured.
@@ -645,7 +658,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         descriptor.depthAttachment.texture = depth
         descriptor.depthAttachment.loadAction = .clear
         descriptor.depthAttachment.storeAction = .dontCare
-        descriptor.depthAttachment.clearDepth = 1.0
+        // Reverse-Z: the far plane is zero.
+        descriptor.depthAttachment.clearDepth = 0.0
 
         if let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor) {
             encoder.label = "offscreen scene"

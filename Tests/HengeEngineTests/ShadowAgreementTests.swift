@@ -275,14 +275,29 @@ final class RendererSetupTests: XCTestCase {
         XCTAssertEqual(MemoryLayout<MeshVertex>.stride, 32)
     }
 
-    func testProjectionMapsNearPlaneToZeroAndFarToOne() {
-        // Metal's clip space is 0...1 in z, not -1...1. Getting this wrong
-        // yields a plausible picture over a useless depth buffer.
-        let projection = MetalMath.perspective(fovyRadians: 1, aspect: 1.5, near: 0.5, far: 100)
+    /// Reverse-Z: the near plane maps to 1 and distance tends to 0.
+    ///
+    /// Conventional depth spends nearly all its precision in the first few
+    /// metres, and with a horizon 15 km out that left two faces of the same
+    /// stone sharing a depth bucket at sixty metres — the walls flickered away
+    /// at some angles, which reads as transparency rather than as z-fighting.
+    func testProjectionIsReverseZ() {
+        let projection = MetalMath.perspective(fovyRadians: 1, aspect: 1.5, near: 0.5)
         let near = projection * SIMD4<Float>(0, 0, -0.5, 1)
-        let far = projection * SIMD4<Float>(0, 0, -100, 1)
-        XCTAssertEqual(near.z / near.w, 0, accuracy: 1e-4)
-        XCTAssertEqual(far.z / far.w, 1, accuracy: 1e-4)
+        let mid = projection * SIMD4<Float>(0, 0, -60, 1)
+        let far = projection * SIMD4<Float>(0, 0, -15_000, 1)
+
+        XCTAssertEqual(near.z / near.w, 1, accuracy: 1e-4, "the near plane is 1")
+        XCTAssertLessThan(far.z / far.w, mid.z / mid.w, "further is smaller")
+        XCTAssertGreaterThan(far.z / far.w, 0)
+
+        // The point of it: two surfaces a metre apart at sixty metres must
+        // remain distinguishable, which is what failed before.
+        let front = projection * SIMD4<Float>(0, 0, -60, 1)
+        let back = projection * SIMD4<Float>(0, 0, -61, 1)
+        let separation = abs(front.z / front.w - back.z / back.w)
+        XCTAssertGreaterThan(separation, 1e-5,
+                             "a metre of stone at sixty metres must survive the depth buffer")
     }
 
     func testOrbitCameraUsesTheAstronomicalAzimuthConvention() {

@@ -1,5 +1,30 @@
 # henge — progress
 
+## 2026-07-27 (later) — reverse-Z, and why the walls looked transparent
+
+Reported as walls going see-through **at some angles** — which was the clue.
+Geometry does not come and go with the camera; depth precision does.
+
+Extending the ground to the terrain's 15 km horizon put the far plane at 40 km
+against a 0.2 m near plane. A conventional projection spends nearly all of a
+depth buffer's precision in the first few metres, so at that ratio two faces of
+the same stone, a metre apart at sixty metres out, landed in the same depth
+bucket. They z-fought, and which one won depended on the angle.
+
+Thickening the walls would have masked it. The fix is **reverse-Z**: the near
+plane maps to 1 and distance tends to 0, which puts the floating-point
+exponent's dense region where the geometry is. With a float depth buffer it is
+accurate across the whole range, and the far plane can go to infinity.
+
+Camera projection reversed, scene depth comparison now `.greater`, sky
+`.greaterEqual` and drawn at z = 0, depth cleared to 0 in both the view and the
+offscreen path. The shadow cascades stay conventional — they are orthographic,
+where precision is uniform and there is nothing to win.
+
+`testProjectionIsReverseZ` asserts the mapping and, more to the point, that a
+metre of stone at sixty metres still separates in the buffer.
+
+
 In-flight state. Newest first.
 
 ## 2026-07-27 (M2) — the whole monument, standing on real ground
