@@ -85,6 +85,7 @@ public struct RootView: View {
                               model.moonPhase.illuminatedFraction * 100))
             row("Moon altitude", String(format: "%.2f°", model.moon.altitude.degrees))
             row("Lunar swing", model.standstill)
+            row("Pole star", model.poleStar)
 
             if let deviation = model.axisDeviation {
                 row("Off the axis", String(format: "%.2f°", deviation.degrees))

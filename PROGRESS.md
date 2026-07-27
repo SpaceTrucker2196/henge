@@ -363,3 +363,40 @@ current frame.
 
 **Not yet done:** no run on an iOS device or simulator — iOS is verified by
 compiling only.
+
+## 2026-07-27 — M3: deep time, and a scope cut
+
+**Constellation figures are out.** The owner's call, and it dissolves the licence
+question that had been holding up the whole of M3: Stellarium's line data is GPL,
+drawing a set from IAU boundaries was work with no product in it, and licensing
+one was a cost. The sky gets stars without lines. That is also closer to honest —
+the figures are a two-thousand-year-later overlay on the same points of light, and
+this app has a rule about not dressing later tradition as the builders' own.
+
+**Precession landed, and it is computed.** `Precession.swift` carries the
+Capitaine (2003) IAU 2006 series and derives the north celestial pole in ecliptic
+coordinates: one obliquity from the ecliptic pole, swinging around it as
+precession accumulates. `Star` holds seven published J2000 positions — the stars
+that have held the pole or will — which is a handful of cited constants, not a
+catalogue, and nothing to license.
+
+The payoff is the brief's demo moment, and it arrives as a *search* rather than an
+assertion. `testThubanWasNearestAroundTwentyEightHundredBC` sweeps −4000 to −1500
+in 25-year steps and finds the minimum at 2800 BC, within half a degree. Nobody
+told it that. In the same era Polaris sits more than 20° off the pole and is no
+use to anyone; today it is under 1°, and in 13,700 AD the office passes to Vega.
+Six tests, green first run — which after the Metal winding saga is worth noting
+as the difference between a domain with a closed-form answer and one with a
+convention you can only discover by reading back depth.
+
+A known simplification, stated: proper motion is ignored. Over five millennia it
+moves the brightest stars by up to a degree — enough to matter for a close call,
+not enough to change which star is nearest the pole. It is in MISSION.md's
+non-goals and repeated in the doc comment where it could bite.
+
+The pole star is now a readout row, so deep time is visible without a mode switch.
+
+**Still open in M3:** the Hipparcos star field and the Milky Way. The catalogue
+needs fetching and baking into a second vendored data set, which is a
+stops-and-asks under invariant 5 — raise it before doing it.
+

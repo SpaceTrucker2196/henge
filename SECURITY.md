@@ -34,7 +34,7 @@ adding a data set a deliberate act rather than a convenience.
 | Sky model | Preetham et al. (1999), closed form | Published formula, no data tables to vendor | **In use** (M1) |
 | **Terrain** | **SRTM 1-arc-second (NASA/USGS)**, fetched as Skadi `.hgt` tiles N51W002 and N51W003 | **Public domain** (US government work). Baked by `scripts/bake_terrain.py`; the bake script and the tile names are in-tree so the result is reproducible | **In use** — `Sources/HengeGeometry/Resources/salisbury-plain.heightfield`, 1.18 MB, 768x768 at 40 m (±15.3 km) |
 | Star catalogue | **Hipparcos / Tycho-2 (ESA)** | Free with attribution, no share-alike | **Decided, not yet vendored** (M3) |
-| Constellation figures | undecided | — | **OPEN — blocks M3** |
+| Constellation figures | — | — | **Dropped from scope** (owner, 2026-07-27). Stars will be drawn as a field without lines, which removes the only GPL entanglement in the project |
 | Lunar theory | ELP2000 truncation, from the IMCCE-published series | To be confirmed before vendoring | Pending (M3) |
 | Milky Way texture | undecided | — | Pending (M3) |
 
@@ -71,9 +71,13 @@ were incorporated; what was taken is knowledge, not data.
   for commercial redistribution are not clearly permissive and river.io sells
   its software. Hipparcos gives the same ~9,000 stars brighter than magnitude
   6.5 with terms that are unambiguous.
-- **Stellarium's constellation lines are GPL** and therefore incompatible with a
-  closed application. Either draw a line set from the public IAU boundaries or
-  license one. This is the last thing standing between M3 and a night sky.
+- **Stellarium's constellation lines are GPL** and therefore incompatible with
+  a closed application. Rather than draw a set or license one, constellation
+  figures were dropped from scope. The sky gets stars without lines, which is
+  arguably truer to what the builders saw anyway — the figures are a much later
+  overlay on the same points of light.
+- **Pole stars** are seven published J2000 positions cited as constants, not a
+  catalogue. Nothing to license.
 - **Meeus's printed tables are not transcribed wholesale.** Algorithms are
   implemented from the published method and cited; where a long series is
   needed, it comes from the original IMCCE machine-readable data.

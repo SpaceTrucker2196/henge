@@ -141,6 +141,15 @@ public final class SkyModel {
         Self.terrain?.groundHeight(east: east, south: south) ?? 0
     }
 
+    /// Which star the sky turns about at this date, and how closely.
+    ///
+    /// Not a constant: in 2500 BC it was Thuban, and Polaris was more than
+    /// twenty degrees from the pole and no use to anyone.
+    public var poleStar: String {
+        guard let result = Precession.poleStar(at: time.terrestrialTime) else { return "—" }
+        return String(format: "%@ %.1f°", result.star.name, result.separation.degrees)
+    }
+
     public var moon: HorizontalCoordinate {
         Moon.horizontal(at: time, site: site)
     }
