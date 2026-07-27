@@ -1,0 +1,90 @@
+name: Henge
+options:
+  bundleIdPrefix: io.river
+  developmentLanguage: en
+  deploymentTarget:
+    iOS: "17.0"
+    macOS: "14.0"
+  groupSortPosition: top
+  generateEmptyDirectories: true
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    # Warnings are the only signal that something compiled but is wrong
+    # (factory/dark-factory.md §3). Keep the build warning-clean rather than
+    # silencing this.
+    GCC_TREAT_WARNINGS_AS_ERRORS: NO
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+
+# The shared engine, linked from this same directory as a local path package.
+# Both apps get the identical HengeCore/HengeUI build products, so there is no
+# way for the platforms to drift apart in logic.
+packages:
+  HengeLocal:
+    path: .
+
+targets:
+  # ── iOS (iPhone + iPad) ────────────────────────────────────────────────
+  Henge:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: App
+      - path: iOSApp
+    dependencies:
+      - package: HengeLocal
+        product: HengeCore
+      - package: HengeLocal
+        product: HengeUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.river.henge
+        INFOPLIST_FILE: iOSApp/Info.plist
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_PREVIEWS: YES
+
+  # ── macOS ──────────────────────────────────────────────────────────────
+  # Same bundle id as iOS on purpose: one App Store Connect record covering
+  # both platforms, the way MeowPassword ships.
+  Henge-macOS:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: App
+      - path: macOSApp
+    dependencies:
+      - package: HengeLocal
+        product: HengeCore
+      - package: HengeLocal
+        product: HengeUI
+    settings:
+      base:
+        PRODUCT_NAME: Henge
+        PRODUCT_BUNDLE_IDENTIFIER: io.river.henge
+        INFOPLIST_FILE: macOSApp/Info.plist
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        ENABLE_PREVIEWS: YES
+        ENABLE_HARDENED_RUNTIME: YES
+
+schemes:
+  Henge:
+    build:
+      targets:
+        Henge: all
+    run:
+      config: Debug
+  Henge-macOS:
+    build:
+      targets:
+        Henge-macOS: all
+    run:
+      config: Debug
