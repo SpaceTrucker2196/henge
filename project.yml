@@ -12,7 +12,7 @@ configs:
   Release: release
 settings:
   base:
-    SWIFT_VERSION: "5.9"
+    SWIFT_VERSION: "6.0"
     MARKETING_VERSION: "0.0.1"
     CURRENT_PROJECT_VERSION: "1"
     CODE_SIGN_STYLE: Automatic
@@ -23,7 +23,7 @@ settings:
     SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
 
 # The shared engine, linked from this same directory as a local path package.
-# Both apps get the identical HengeCore/HengeUI build products, so there is no
+# Both apps get the identical HengeAstro/Geometry/Engine/UI build products, so
 # way for the platforms to drift apart in logic.
 packages:
   HengeLocal:
@@ -40,7 +40,11 @@ targets:
       - path: iOSApp
     dependencies:
       - package: HengeLocal
-        product: HengeCore
+        product: HengeAstro
+      - package: HengeLocal
+        product: HengeGeometry
+      - package: HengeLocal
+        product: HengeEngine
       - package: HengeLocal
         product: HengeUI
     settings:
@@ -63,7 +67,11 @@ targets:
       - path: macOSApp
     dependencies:
       - package: HengeLocal
-        product: HengeCore
+        product: HengeAstro
+      - package: HengeLocal
+        product: HengeGeometry
+      - package: HengeLocal
+        product: HengeEngine
       - package: HengeLocal
         product: HengeUI
     settings:

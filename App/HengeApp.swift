@@ -15,7 +15,7 @@ struct HengeApp: App {
             RootView()
         }
         #if os(macOS)
-        .defaultSize(width: 720, height: 520)
+        .defaultSize(width: 1100, height: 760)
         .windowResizability(.contentMinSize)
         #endif
     }
