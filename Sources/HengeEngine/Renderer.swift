@@ -288,8 +288,14 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             }
         }
 
-        // The plain. Flat at M1; rolling chalk downland arrives with M2.
-        let ground = Self.groundPlane(halfExtent: 400, divisions: 40)
+        // The plain.
+        //
+        // Reaching out as far as the terrain data does. At 400 m the ground
+        // simply stopped and sky showed beyond it — a visible edge of the
+        // world a few hundred metres out, which reads as the scene being open
+        // rather than as a horizon. Still flat: the heightfield is loaded and
+        // measured but not yet displaced into this mesh, which is M2's first job.
+        let ground = Self.groundPlane(halfExtent: 15_000, divisions: 96)
         if let item = try makeDrawItem(mesh: ground, albedo: SurfaceMaterial.turf,
                                        label: "ground", castsShadow: false) {
             items.append(item)

@@ -82,7 +82,7 @@ public struct Camera: Sendable {
                 target: SIMD3<Float> = SIMD3(0, 3, 0),
                 fieldOfView: Float = 55 * .pi / 180,
                 near: Float = 0.2,
-                far: Float = 3000) {
+                far: Float = 40_000) {
         self.position = position
         self.target = target
         self.fieldOfView = fieldOfView

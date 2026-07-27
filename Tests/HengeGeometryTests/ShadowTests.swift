@@ -373,3 +373,112 @@ final class WaterlineTests: XCTestCase {
                              "but it should not sink into them")
     }
 }
+
+/// Is the stone actually a solid?
+///
+/// A surface can look closed in a wireframe and still be full of holes once
+/// back-face culling is on: a triangle wound the wrong way is not drawn from
+/// outside, so you see straight through the stone and out the far side, which
+/// is also culled. "Open sides" is what that looks like.
+///
+/// A watertight, consistently wound mesh has one property that settles it:
+/// every directed edge appears exactly once, and its reverse appears exactly
+/// once in the neighbouring triangle. Any edge seen twice in the same direction
+/// means two triangles disagree about which way is out; any edge seen once
+/// means there is a hole.
+final class SolidityTests: XCTestCase {
+
+    private func directedEdges(_ mesh: Mesh) -> [Edge: Int] {
+        var counts: [Edge: Int] = [:]
+        for triangle in stride(from: 0, to: mesh.indices.count, by: 3) {
+            let a = mesh.indices[triangle]
+            let b = mesh.indices[triangle + 1]
+            let c = mesh.indices[triangle + 2]
+            for edge in [Edge(a, b), Edge(b, c), Edge(c, a)] {
+                counts[edge, default: 0] += 1
+            }
+        }
+        return counts
+    }
+
+    struct Edge: Hashable {
+        let from: UInt32, to: UInt32
+        init(_ from: UInt32, _ to: UInt32) { self.from = from; self.to = to }
+        var reversed: Edge { Edge(to, from) }
+    }
+
+    func testStoneIsWatertightAndConsistentlyWound() {
+        for (id, stone) in [
+            ("upright", Stone(id: "solid-a", position: .zero, height: 7.3,
+                              width: 2.4, thickness: 1.1)),
+            ("lintel", Stone(id: "solid-b", position: SIMD3(0, 7, 0), height: 1.0,
+                             width: 5.15, thickness: 1.1)),
+            ("leaning", Stone(id: "solid-c", position: .zero, height: 4.7, width: 2.4,
+                              thickness: 2.1, bearing: Angle(degrees: 49.9),
+                              lean: Angle(degrees: -27)))
+        ] {
+            let mesh = StoneMeshBuilder.build(stone, subdivisions: 10)
+            let edges = directedEdges(mesh)
+
+            var duplicated = 0, unpaired = 0
+            for (edge, count) in edges {
+                if count != 1 { duplicated += 1 }
+                if edges[edge.reversed] != 1 { unpaired += 1 }
+            }
+
+            XCTAssertEqual(duplicated, 0,
+                           "\(id): \(duplicated) edges are used twice in the same "
+                           + "direction — neighbouring triangles disagree about which "
+                           + "way is out, so the stone will be see-through")
+            XCTAssertEqual(unpaired, 0,
+                           "\(id): \(unpaired) edges have no matching neighbour — "
+                           + "the surface has holes in it")
+        }
+    }
+
+    /// Euler's formula for a closed surface of genus zero: V − E + F = 2.
+    /// A cheap second opinion that does not depend on the winding at all.
+    func testStoneHasTheTopologyOfASphere() {
+        let mesh = StoneMeshBuilder.build(
+            Stone(id: "euler", position: .zero, height: 6, width: 2, thickness: 1),
+            subdivisions: 8)
+
+        var undirected = Set<Edge>()
+        for triangle in stride(from: 0, to: mesh.indices.count, by: 3) {
+            let a = mesh.indices[triangle]
+            let b = mesh.indices[triangle + 1]
+            let c = mesh.indices[triangle + 2]
+            for (u, v) in [(a, b), (b, c), (c, a)] {
+                undirected.insert(u < v ? Edge(u, v) : Edge(v, u))
+            }
+        }
+
+        let v = mesh.positions.count
+        let e = undirected.count
+        let f = mesh.triangleCount
+        XCTAssertEqual(v - e + f, 2,
+                       "V(\(v)) − E(\(e)) + F(\(f)) should be 2 for a closed solid")
+    }
+
+    /// Every triangle must face outward. Culling draws only the front side, so
+    /// a single inverted triangle is a window into the interior.
+    func testEveryTriangleFacesOutwardIncludingThePoleCaps() {
+        let stone = Stone(id: "outward", position: .zero, height: 7.3,
+                          width: 2.4, thickness: 1.1)
+        let mesh = StoneMeshBuilder.build(stone, subdivisions: 10)
+        let centre = SIMD3<Float>(stone.toWorld(SIMD3(0, stone.height / 2, 0)))
+
+        var inward: [Int] = []
+        for triangle in stride(from: 0, to: mesh.indices.count, by: 3) {
+            let p0 = mesh.positions[Int(mesh.indices[triangle])]
+            let p1 = mesh.positions[Int(mesh.indices[triangle + 1])]
+            let p2 = mesh.positions[Int(mesh.indices[triangle + 2])]
+            let geometric = cross(p1 - p0, p2 - p0)
+            if dot(geometric, ((p0 + p1 + p2) / 3) - centre) <= 0 {
+                inward.append(triangle / 3)
+            }
+        }
+        XCTAssertTrue(inward.isEmpty,
+                      "triangles \(inward.prefix(8)) face inward — each is a hole")
+    }
+}

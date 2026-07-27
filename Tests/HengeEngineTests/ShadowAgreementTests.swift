@@ -328,3 +328,112 @@ extension ShadowAgreementTests {
         return farthest
     }
 }
+
+/// Is the stone opaque once it is actually drawn?
+///
+/// The mesh is provably watertight (`SolidityTests`), but that is not enough:
+/// culling draws only one side of each triangle, and if the renderer's idea of
+/// which side is front disagrees with the mesh's, every face vanishes and the
+/// scene is drawn from the inside out. The mesh would still be perfect and the
+/// stone would still be full of holes.
+///
+/// This settles it by rendering the same view twice — once with the stone and
+/// once without — and flood-filling the untouched pixels inward from the frame
+/// edge. Any pixel the stone failed to cover, that is nonetheless enclosed by
+/// pixels it did cover, is a hole you can see through.
+final class OpacityTests: XCTestCase {
+
+    static let size = 384
+
+    @MainActor
+    private func render(stones: [Stone], sun: HorizontalCoordinate,
+                        bearing: Double, device: MTLDevice) throws -> [UInt8] {
+        let camera = Camera.orbiting(distance: 26, azimuthDegrees: Float(bearing),
+                                     elevationDegrees: 9,
+                                     target: SIMD3<Float>(0, 3.4, 0))
+        let state = SceneState(sun: sun, camera: camera, turbidity: 2.2, exposure: 1.5)
+        let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 1024)
+        try renderer.load(scene: MonumentScene(state: .asItWas, stones: stones),
+                          subdivisions: 12)
+        let texture = try renderer.renderOffscreen(width: Self.size, height: Self.size)
+
+        var pixels = [UInt8](repeating: 0, count: Self.size * Self.size * 4)
+        pixels.withUnsafeMutableBytes { raw in
+            texture.getBytes(raw.baseAddress!, bytesPerRow: Self.size * 4,
+                             from: MTLRegionMake2D(0, 0, Self.size, Self.size),
+                             mipmapLevel: 0)
+        }
+        return pixels
+    }
+
+    @MainActor
+    func testTheStoneIsOpaqueFromEveryBearing() async throws {
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            throw XCTSkip("No Metal device; opacity is unverified in this environment.")
+        }
+
+        let stone = Stone(id: "opaque", position: .zero, height: 6.5,
+                          width: 2.4, thickness: 1.1, bearing: Angle(degrees: 49.9))
+        let sun = HorizontalCoordinate(altitude: Angle(degrees: 22),
+                                       azimuth: Angle(degrees: 300))
+
+        // Includes 320°, where the trilithon is seen along its across-axis and
+        // the uprights line up behind one another.
+        for bearing in [0.0, 49.9, 140.0, 230.0, 320.0] {
+            let withStone = try render(stones: [stone], sun: sun,
+                                       bearing: bearing, device: device)
+            let empty = try render(stones: [], sun: sun, bearing: bearing, device: device)
+
+            // A pixel the stone changed is a pixel it covered.
+            var covered = [Bool](repeating: false, count: Self.size * Self.size)
+            var coveredCount = 0
+            for i in 0..<(Self.size * Self.size) {
+                var difference = 0
+                for channel in 0..<3 {
+                    difference += abs(Int(withStone[i * 4 + channel]) - Int(empty[i * 4 + channel]))
+                }
+                // Generous: the stone's shadow also changes pixels, and that is
+                // fine — shadow only ever adds to the covered region, which
+                // makes this test stricter rather than looser.
+                if difference > 2 { covered[i] = true; coveredCount += 1 }
+            }
+            XCTAssertGreaterThan(coveredCount, 800,
+                                 "the stone is barely visible at bearing \(bearing)")
+
+            // Flood fill the uncovered pixels inward from the border.
+            var reachable = [Bool](repeating: false, count: Self.size * Self.size)
+            var stack: [Int] = []
+            for x in 0..<Self.size {
+                for index in [x, (Self.size - 1) * Self.size + x] where !covered[index] {
+                    if !reachable[index] { reachable[index] = true; stack.append(index) }
+                }
+            }
+            for y in 0..<Self.size {
+                for index in [y * Self.size, y * Self.size + Self.size - 1] where !covered[index] {
+                    if !reachable[index] { reachable[index] = true; stack.append(index) }
+                }
+            }
+            while let index = stack.popLast() {
+                let x = index % Self.size, y = index / Self.size
+                for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+                    let nx = x + dx, ny = y + dy
+                    guard nx >= 0, ny >= 0, nx < Self.size, ny < Self.size else { continue }
+                    let next = ny * Self.size + nx
+                    if !covered[next] && !reachable[next] {
+                        reachable[next] = true
+                        stack.append(next)
+                    }
+                }
+            }
+
+            let holes = (0..<(Self.size * Self.size)).filter { !covered[$0] && !reachable[$0] }
+            XCTAssertLessThan(holes.count, 12,
+                              """
+                              \(holes.count) enclosed background pixels at bearing \
+                              \(bearing)° — the stone is being drawn with holes in it, \
+                              which means the renderer and the mesh disagree about which \
+                              side of a triangle faces out
+                              """)
+        }
+    }
+}

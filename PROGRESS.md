@@ -81,6 +81,28 @@ the tessellation, and pinned by `WaterlineTests`. The lintel also now seats
 0.25 m into the uprights: two rounded surfaces meeting at the nominal height
 left a line of daylight along the joint.
 
+### "Open sides" — investigated, and the mesh was innocent
+
+Reported as see-through polygons. Three tests now settle it rather than an
+opinion about a screenshot:
+
+- `SolidityTests` proves the mesh is **watertight and consistently wound**:
+  every directed edge appears exactly once with its reverse in the neighbouring
+  triangle, V − E + F = 2, and no triangle faces inward.
+- `OpacityTests` proves the **renderer** draws it opaque, by rendering the same
+  view with and without the stone and flood-filling the untouched pixels in
+  from the frame edge. Any enclosed background pixel is a hole you can see
+  through. There are none.
+
+That second test first reported 17 holes, which were an artefact of its own
+classifier: a stone pixel whose colour lands within a dozen levels of the
+background it replaced reads as uncovered. At a tighter threshold it reports
+none, and the threshold now carries that reasoning.
+
+What was actually open was **the world**. The ground plane stopped at 400 m and
+sky showed beyond it, so a few hundred metres out the scene simply ended. It
+now reaches 15 km, matching the terrain data, with the far plane raised to suit.
+
 ### Next
 
 Terrain is loaded and measured but **not yet drawn** — the renderer still puts
