@@ -349,6 +349,60 @@ public final class SkyModel {
         time = time + (seconds * rate) / 86400.0
     }
 
+    // ── the wheel of the year ───────────────────────────────────────────────
+
+    /// The next station of the year, and how far off it is.
+    ///
+    /// Computed from where the sun actually is, so it keeps working in 2500 BC
+    /// where the June solstice falls in July.
+    public var nextStation: (station: WheelStation, instant: JulianDay) {
+        Wheel.nextStation(after: time)
+    }
+
+    public var formattedNextStation: String {
+        let next = nextStation
+        let days = next.instant.value - time.value
+        if days < 1 {
+            return String(format: "%@ in %.0f h", next.station.name, days * 24)
+        }
+        return String(format: "%@ in %.0f d", next.station.name, days)
+    }
+
+    /// What the app is prepared to say about the coming station, tier and all.
+    public var stationNote: LoreNote {
+        Lore.note(for: nextStation.station)
+    }
+
+    /// Jump to a station of the year. Lands on the instant the sun reaches it,
+    /// not on a calendar date — the distinction the whole module exists for.
+    public func jump(to station: WheelStation, year: Int? = nil) {
+        time = Wheel.universalInstant(of: station, year: year ?? time.calendarDate.year)
+    }
+
+    /// Jump to the next occurrence of a station, whichever year that falls in.
+    public func jumpToNext(_ station: WheelStation) {
+        let thisYear = Wheel.universalInstant(of: station, year: time.calendarDate.year)
+        time = thisYear.value > time.value
+            ? thisYear
+            : Wheel.universalInstant(of: station, year: time.calendarDate.year + 1)
+    }
+
+    /// Dawn on the day of a station, at the site being shown — the moment the
+    /// monument is actually about. Falls back to the station's own instant
+    /// inside the polar circles, where the sun may not rise that day.
+    public func jumpToSunrise(of station: WheelStation) {
+        let instant = Wheel.universalInstant(of: station, year: time.calendarDate.year)
+        // Measured off the baked heightfield rather than assumed flat: the ridge
+        // the midsummer sun clears is about seven tenths of a degree up, which
+        // moves the bearing by more than a degree. Only meaningful when the
+        // terrain is the one under the monument.
+        let horizon: HengeAstro.Angle = viewpoint == .stonehenge
+            ? (SkyModel.terrain?.horizonAltitude(azimuth: Monument.axisAzimuth) ?? .zero)
+            : .zero
+        time = RiseSet.time(of: .rise, on: instant.calendarDate,
+                            site: site, horizonAltitude: horizon) ?? instant
+    }
+
     public func jump(toDaysFromNow days: Double) {
         time = time + days
     }

@@ -30,11 +30,18 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       Way. Precession and deep-time mode — Thuban as pole star.
       **Blocked until `SECURITY.md`'s constellation-figure licence is settled.**
 
-- [ ] **M4 — The Calendar (M–L).** Events engine: solstices, equinoxes,
-      cross-quarter days, lunar phases, standstill seasons, eclipse seasons.
-      The Wheel of the Year as the primary control, with the eight festivals as
-      stations. Today ribbon. Alignment moments. The Aubrey 56 eclipse-
-      prediction feature, badged as the modern hypothesis it is.
+- [ ] **M4 — The Calendar (M–L).** *In progress.* The Wheel of the Year has
+      landed: eight stations solved from apparent solar longitude, festival
+      jumps that land on the sunrise of the day rather than midnight of a
+      calendar date, and the tier badge shown at the point of use. The lore
+      type system landed with it — `LoreTier`, `Citation`, `LoreNote`, and the
+      tests that make MISSION.md's third invariant enforceable rather than
+      aspirational. Note the honest number the wheel exposes: the customary
+      cross-quarter dates run three to seven days ahead of the sun.
+
+      Still to come: lunar phases and standstill seasons as events, the today
+      ribbon, alignment moments, and the Aubrey 56 eclipse-prediction feature
+      badged as the modern hypothesis it is.
 
 - [ ] **M5 — The Soul (L).** Lore panels in a bardic register with every claim
       tiered and cited. "Mistletoe & Oak" design language. Weather and season

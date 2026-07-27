@@ -18,15 +18,35 @@ generate:
 # Both platforms must compile warning-clean before anything ships.
 build: build-ios build-mac
 
+# Piping xcodebuild anywhere hands the recipe's exit status to whatever is on
+# the right of the pipe, so an unguarded `| tail` reports success on a failed
+# build and quietly hides the diagnostics that would have said otherwise. Both
+# halves of that are fixed here: pipefail so the failure propagates, and a
+# filter that keeps every error and warning rather than the last five lines.
+#
+# Two things about the shell make this fiddlier than it looks, and both were
+# silently returning zero on a failed build before they were fixed:
+#
+#   1. macOS ships GNU make 3.81, which predates `.SHELLFLAGS` and ignores it.
+#      So `set -o pipefail` goes *inside* the recipe, where 3.81 will run it.
+#   2. `||` binds looser than `|`, so `xcodebuild | grep || true` parses as
+#      `(xcodebuild | grep) || true` and swallows the failure that pipefail had
+#      just surfaced. The braces keep the `|| true` attached to grep, where it
+#      belongs — grep exits 1 on a clean build with nothing to report, and that
+#      is not a failure.
+SHELL := /bin/bash
+
+BUILD_FILTER := { grep -E "error:|warning:|BUILD (SUCCEEDED|FAILED)" || true; }
+
 build-ios: generate
-	xcodebuild -project Henge.xcodeproj -scheme Henge \
+	set -o pipefail; xcodebuild -project Henge.xcodeproj -scheme Henge \
 		-destination 'generic/platform=iOS Simulator' \
-		-configuration Debug CODE_SIGNING_ALLOWED=NO build | tail -5
+		-configuration Debug CODE_SIGNING_ALLOWED=NO build | $(BUILD_FILTER)
 
 build-mac: generate
-	xcodebuild -project Henge.xcodeproj -scheme Henge-macOS \
+	set -o pipefail; xcodebuild -project Henge.xcodeproj -scheme Henge-macOS \
 		-destination 'platform=macOS' \
-		-configuration Debug CODE_SIGNING_ALLOWED=NO build | tail -5
+		-configuration Debug CODE_SIGNING_ALLOWED=NO build | $(BUILD_FILTER)
 
 clean:
 	swift package clean

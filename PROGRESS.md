@@ -400,3 +400,79 @@ The pole star is now a readout row, so deep time is visible without a mode switc
 needs fetching and baking into a second vendored data set, which is a
 stops-and-asks under invariant 5 — raise it before doing it.
 
+## 2026-07-27 — M4 opens: the Wheel of the Year, and a type that enforces honesty
+
+Two things landed together because neither is any good without the other.
+
+**`Wheel`** solves all eight stations of the year from apparent solar longitude —
+the four solstices and equinoxes plus the four cross-quarter midpoints — by the
+same Newton iteration `Seasons` uses, and a test asserts the two agree to a
+microsecond where they overlap. Two implementations, one answer.
+
+One bug worth recording because the shape of it recurs. Imbolc sits at 315°, and
+seeding the search by mapping longitude linearly onto the calendar year puts the
+first guess in mid-November; the nearest solution from there is the *following*
+February, so Imbolc came out 368 days from its customary date. Newton has no
+opinion about which year you meant. The fix walks whole tropical years until the
+answer lands in the year asked for and re-solves — bounded, and it cannot drift
+the way a hand-tuned seasonal offset would. The test that caught it was the
+honesty test, not a numerical one.
+
+**`Lore`** is the type system MISSION.md's third invariant has been promising
+since the mission was written. `LoreNote` cannot be constructed without a
+`LoreTier` and citations; `LoreTests` closes what the type cannot — empty
+citation lists, blank sources, duplicate identifiers, and a check that all three
+tiers are actually in use, because a tier nobody reaches for means the content
+has quietly flattened into one voice.
+
+The tiering is the product, not the metadata. The two solstices are `established`
+as alignments. The equinoxes are `modernTradition`: nothing at Stonehenge points
+at them, and an equinox is defined by arithmetic on the year rather than by
+anything the sun visibly does that morning. The cross-quarters are
+`modernTradition` throughout — Gaelic quarter days, medieval Irish sources,
+attached to Stonehenge by Ross Nichols and Gerald Gardner in the 1950s. A test
+asserts exactly that split, so softening it later requires editing an assertion
+rather than a sentence.
+
+And the wheel reports a number most calendars hide: `traditionalOffset` gives the
+gap between the customary festival date and the sun's own arrival at the
+midpoint. It runs three to seven days, positive — the sun is always late to the
+feast. That is not an error in either direction; they are two calendars answering
+two different questions, and the app shows both.
+
+The UI gets eight jump buttons that land on the **sunrise** of the station rather
+than midnight of its calendar date, with the horizon altitude measured off the
+baked heightfield rather than assumed flat. The tier badge sits beside the next
+station at the point of use, not in a disclaimer nobody reads.
+
+**Next in M4:** lunar phases and standstill seasons as events, the today ribbon,
+alignment moments, and the Aubrey 56 eclipse count — which ships as a toy,
+labelled as one, with Hoyle's paper and Ruggles' rebuttal both cited.
+
+### And the gate was lying
+
+Found while chasing a compile error that `make build` had reported as success:
+the build recipes ended `| tail -5`, which does two bad things at once. It hides
+the diagnostics — the errors were twenty lines above the tail — and it hands the
+recipe's exit status to `tail`, so **`make build` returned 0 on a failed build**.
+Every "both platforms warning-clean" claim in this file was resting on a check
+that could not fail.
+
+Fixing it took three passes, which is worth recording because each failure looked
+like success:
+
+1. `.SHELLFLAGS := -o pipefail -c` — ignored. macOS ships GNU make **3.81**, and
+   `.SHELLFLAGS` arrived in 3.82. `set -o pipefail` now goes inside the recipe.
+2. `xcodebuild | grep ... || true` — `||` binds looser than `|`, so this parses
+   as `(xcodebuild | grep) || true` and swallows the failure pipefail had just
+   surfaced. Braces keep the `|| true` on grep, which legitimately exits 1 when a
+   clean build gives it nothing to match.
+3. Verified the only way that means anything: drop a file with a type error into
+   `HengeAstro`, run `make build-mac`, confirm exit 2 and the error printed; then
+   remove it and confirm exit 0.
+
+That third step is the actual lesson, and it is the same one the Metal winding
+bug taught in a different key: **a check nobody has watched fail is not a check.**
+The winding bug survived a green suite because no test read back depth; this one
+survived because nobody ever broke the build on purpose to see what the gate did.
+

@@ -87,6 +87,10 @@ public struct RootView: View {
             row("Lunar swing", model.standstill)
             row("Pole star", model.poleStar)
 
+            Divider().frame(width: 190).padding(.vertical, 6)
+
+            row("Next", model.formattedNextStation)
+
             if let deviation = model.axisDeviation {
                 row("Off the axis", String(format: "%.2f°", deviation.degrees))
             }
@@ -139,6 +143,8 @@ public struct RootView: View {
             .toggleStyle(.button)
             .accessibilityHint("Switch between the completed monument and the ruin")
 
+            wheel
+
             HStack(spacing: 14) {
                 Button {
                     model.isPlaying.toggle()
@@ -181,6 +187,50 @@ public struct RootView: View {
             }
         }
         .frame(maxWidth: 460)
+    }
+
+    // ── the wheel of the year ───────────────────────────────────────────────
+
+    /// Eight stations, and a jump that lands on the sunrise of each rather than
+    /// on midnight of a calendar date. The tier badge is not decoration: four of
+    /// these eight are modern tradition and the app says so at the point of use,
+    /// not in a disclaimer nobody reads.
+    private var wheel: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                ForEach(WheelStation.allCases) { station in
+                    Button(station.name) { model.jumpToSunrise(of: station) }
+                        .font(.caption2)
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Jump to \(station.name) sunrise")
+                        .accessibilityHint(Lore.note(for: station).tier.rawValue)
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+
+            let note = model.stationNote
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(note.tier.shortLabel.uppercased())
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(tint(for: note.tier), in: Capsule())
+                Text(note.title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(note.title). \(note.tier.rawValue).")
+        }
+    }
+
+    private func tint(for tier: LoreTier) -> some ShapeStyle {
+        switch tier {
+        case .established: Color.green.opacity(0.25)
+        case .debated: Color.orange.opacity(0.25)
+        case .modernTradition: Color.purple.opacity(0.25)
+        }
     }
 
     private func labelled<Control: View>(_ title: String, _ value: String,
