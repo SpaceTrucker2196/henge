@@ -1,5 +1,43 @@
 # henge — progress
 
+## 2026-07-27 (last) — the front of every stone was being culled
+
+"As if the surface facing the camera is transparent" was the exact
+description, and it named the bug.
+
+**Metal treats clockwise as front-facing unless told otherwise.** These meshes
+are built counter-clockwise seen from outside — the right-hand rule, so that a
+cross product of two edges points out. Nothing ever stated the convention, so
+`cullMode(.back)` discarded precisely the faces pointing at the camera and drew
+the ones behind them. What you saw was the inside of each stone's back wall.
+
+Three earlier fixes were all real defects and none of them was this: the mesh
+was watertight, the winding was self-consistent, the depth buffer was precise.
+They just were not the reason.
+
+**Why the test suite missed it.** `OpacityTests` flood-fills for background
+pixels enclosed by the stone. Drawing the far faces instead of the near ones
+fills exactly the same silhouette — the coverage is identical, so there was
+nothing to find. Colour cannot answer this question at all.
+
+`NearSurfaceTests` can, and does it with depth: put a stone of known thickness
+squarely in front of the camera at a known range, read the depth buffer at the
+centre of the frame, and invert the reverse-Z mapping. It must come back as the
+distance to the **near** face. It reported 30.7999 m where the near face was at
+29.2 m and the far face at 30.8 m — the far face, to four decimal places.
+
+Fixed by stating `setFrontFacing(.counterClockwise)` on both passes rather than
+inheriting a default that disagreed with the geometry.
+
+**And a knock-on worth recording.** The ground mesh had been wound the other
+way, so it had been rendering only because the convention was inverted. With
+the convention corrected it faced the earth's core and vanished from above —
+which the overhead shadow tests caught immediately, since they look straight
+down. Ground winding now matches the stones.
+
+78 tests green.
+
+
 ## 2026-07-27 (later still) — Petrie numbering, from reading the literature
 
 Looked at what already exists rather than continuing to invent. The English

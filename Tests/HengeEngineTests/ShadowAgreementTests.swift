@@ -452,3 +452,68 @@ final class OpacityTests: XCTestCase {
         }
     }
 }
+
+/// Are we looking at the near surface, or through it at the far one?
+///
+/// The opacity test cannot tell. If the renderer culled front faces and drew
+/// back ones, the silhouette would still be completely filled and every
+/// coverage check would pass — while what you actually see is the inside of
+/// the stone's back wall. Reported as "the surface facing the camera is
+/// transparent", which is precisely what that looks like.
+///
+/// Depth settles it: the value written at the centre of the stone must be the
+/// distance to its *near* face.
+final class NearSurfaceTests: XCTestCase {
+
+    @MainActor
+    func testTheVisibleSurfaceIsTheOneFacingTheCamera() async throws {
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            throw XCTSkip("No Metal device; the visible surface is unverified here.")
+        }
+
+        // A stone squarely in front of the camera, at a known distance.
+        let thickness = 1.6
+        let stone = Stone(id: "near-surface", position: .zero, height: 6,
+                          width: 3.0, thickness: thickness,
+                          bearing: Angle(degrees: 0))
+
+        let range: Float = 30
+        var camera = Camera(position: SIMD3(0, 3, range), target: SIMD3(0, 3, 0))
+        camera.near = 0.2
+        let state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: 40),
+                                                         azimuth: Angle(degrees: 160)),
+                               camera: camera)
+        let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 512)
+        try renderer.load(scene: MonumentScene(state: .asItWas, stones: [stone]),
+                          subdivisions: 10, roughness: 0, rounding: 0)
+
+        let size = 256
+        let rendered = try renderer.renderOffscreen(width: size, height: size, keepDepth: true)
+        let depthTexture = try XCTUnwrap(rendered.depth, "depth was not kept")
+
+        var depths = [Float](repeating: 0, count: size * size)
+        depths.withUnsafeMutableBytes { raw in
+            depthTexture.getBytes(raw.baseAddress!,
+                                  bytesPerRow: size * MemoryLayout<Float>.size,
+                                  from: MTLRegionMake2D(0, 0, size, size),
+                                  mipmapLevel: 0)
+        }
+
+        let centre = depths[(size / 2) * size + size / 2]
+        XCTAssertGreaterThan(centre, 0,
+                             "nothing was drawn at the centre of the frame")
+
+        let measured = HengeRenderer.distance(fromReverseZ: centre, near: camera.near)
+        let toNearFace = range - Float(thickness / 2)
+        let toFarFace = range + Float(thickness / 2)
+
+        XCTAssertEqual(measured, toNearFace, accuracy: 0.35,
+                       """
+                       the depth written is \(measured) m, but the near face of the \
+                       stone is at \(toNearFace) m and its far face at \(toFarFace) m. \
+                       If this reads as the far face, the renderer is culling the \
+                       surface that faces the camera and drawing the one behind it — \
+                       which looks exactly like the front of the stone being transparent.
+                       """)
+    }
+}

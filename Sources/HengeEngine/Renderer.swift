@@ -387,7 +387,11 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 let b = UInt32((i + 1) * (divisions + 1) + j)
                 let c = UInt32((i + 1) * (divisions + 1) + j + 1)
                 let d = UInt32(i * (divisions + 1) + j + 1)
-                mesh.indices.append(contentsOf: [a, b, c, a, c, d])
+                // Counter-clockwise seen from above, matching the stones. The
+                // obvious ordering winds the other way and produces a ground
+                // plane that faces the earth's core: invisible from above the
+                // moment the front-facing convention is stated correctly.
+                mesh.indices.append(contentsOf: [a, c, b, a, d, c])
             }
         }
 
@@ -535,10 +539,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             encoder.label = "shadow cascade \(cascade)"
             encoder.setRenderPipelineState(shadowPipeline)
             encoder.setDepthStencilState(shadowDepthState)
-            // Front-face culling in the shadow pass pushes peter-panning into
-            // the stone rather than out onto the ground, which matters when the
-            // ground shadow is the thing being measured.
-            encoder.setCullMode(.front)
+            encoder.setFrontFacing(.counterClockwise)
+            encoder.setCullMode(.back)
 
             var matrix = matrices[cascade]
             encoder.setVertexBytes(&matrix, length: MemoryLayout<float4x4>.stride, index: 2)
@@ -568,6 +570,16 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         encoder.setRenderPipelineState(scenePipeline)
         encoder.setDepthStencilState(sceneDepthState)
+        // State the winding rather than inheriting Metal's default.
+        //
+        // Metal treats CLOCKWISE as front-facing unless told otherwise. The
+        // meshes here are built counter-clockwise seen from outside — the
+        // right-hand rule, so that the cross product of two edges points out —
+        // which meant .back culled exactly the faces pointing at the camera and
+        // drew the ones behind them. Every coverage test still passed, because
+        // the silhouette was just as full; what you saw was the inside of the
+        // stone's back wall, and it read as the front being transparent.
+        encoder.setFrontFacing(.counterClockwise)
         encoder.setCullMode(.back)
         encoder.setFragmentTexture(shadowMap, index: 0)
         encoder.setFragmentSamplerState(shadowSampler, index: 0)
@@ -626,6 +638,18 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// harness gets pixels to measure the shadow in, with no window, no
     /// drawable and no display attached.
     public func renderOffscreen(width: Int, height: Int) throws -> MTLTexture {
+        try renderOffscreen(width: width, height: height, keepDepth: false).colour
+    }
+
+    /// Render, optionally keeping the depth buffer readable.
+    ///
+    /// Depth is what settles whether the surface you are looking at is the near
+    /// one. Colour cannot: if the near faces were culled and the far ones drawn,
+    /// the silhouette is still filled and every coverage test still passes,
+    /// while you are in fact seeing the inside of the back wall.
+    public func renderOffscreen(width: Int, height: Int,
+                                keepDepth: Bool) throws -> (colour: MTLTexture,
+                                                            depth: MTLTexture?) {
         let colourDescriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: Self.colourFormat, width: width, height: height, mipmapped: false)
         colourDescriptor.usage = [.renderTarget, .shaderRead]
@@ -633,8 +657,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: Self.depthFormat, width: width, height: height, mipmapped: false)
-        depthDescriptor.usage = .renderTarget
-        depthDescriptor.storageMode = .private
+        depthDescriptor.usage = keepDepth ? [.renderTarget, .shaderRead] : .renderTarget
+        depthDescriptor.storageMode = keepDepth ? .shared : .private
 
         guard let colour = device.makeTexture(descriptor: colourDescriptor),
               let depth = device.makeTexture(descriptor: depthDescriptor),
@@ -657,7 +681,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         descriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
         descriptor.depthAttachment.texture = depth
         descriptor.depthAttachment.loadAction = .clear
-        descriptor.depthAttachment.storeAction = .dontCare
+        descriptor.depthAttachment.storeAction = keepDepth ? .store : .dontCare
         // Reverse-Z: the far plane is zero.
         descriptor.depthAttachment.clearDepth = 0.0
 
@@ -669,7 +693,14 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         commandBuffer.commit()
         commandBuffer.waitUntilCompleted()
-        return colour
+        return (colour, keepDepth ? depth : nil)
+    }
+
+    /// Recover view-space distance from a reverse-Z depth sample.
+    ///
+    /// z_ndc = near / distance, so distance = near / z_ndc.
+    public static func distance(fromReverseZ depth: Float, near: Float) -> Float {
+        depth > 1e-9 ? near / depth : .infinity
     }
 }
 
