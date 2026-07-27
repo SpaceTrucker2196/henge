@@ -26,6 +26,10 @@ public struct FrameUniforms {
     public var cascadeSplits: SIMD4<Float>
     /// x: turbidity, y: exposure, z: seconds since start, w: shadow texel size.
     public var skyParameters: SIMD4<Float>
+    /// Unit vector toward the moon, w = its angular radius in radians.
+    public var moonDirection: SIMD4<Float>
+    /// rgb: moonlight radiance. w: illuminated fraction, 0 new to 1 full.
+    public var moonLight: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -37,7 +41,9 @@ public struct FrameUniforms {
                     (matrix_identity_float4x4, matrix_identity_float4x4, matrix_identity_float4x4),
                 inverseViewProjection: float4x4 = matrix_identity_float4x4,
                 cascadeSplits: SIMD4<Float> = SIMD4(20, 60, 200, 0),
-                skyParameters: SIMD4<Float> = SIMD4(2.2, 1, 0, 1.0 / 2048.0)) {
+                skyParameters: SIMD4<Float> = SIMD4(2.2, 1, 0, 1.0 / 2048.0),
+                moonDirection: SIMD4<Float> = SIMD4(0, -1, 0, 0.0045),
+                moonLight: SIMD4<Float> = .zero) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -48,6 +54,8 @@ public struct FrameUniforms {
         self.inverseViewProjection = inverseViewProjection
         self.cascadeSplits = cascadeSplits
         self.skyParameters = skyParameters
+        self.moonDirection = moonDirection
+        self.moonLight = moonLight
     }
 }
 

@@ -78,6 +78,14 @@ public struct RootView: View {
             if let sunrise = model.sunriseAzimuth {
                 row("Sunrise bearing", String(format: "%.2f°", sunrise.degrees))
             }
+            Divider().frame(width: 190).padding(.vertical, 6)
+
+            row("Moon", model.moonPhase.name)
+            row("Lit", String(format: "%.0f%%",
+                              model.moonPhase.illuminatedFraction * 100))
+            row("Moon altitude", String(format: "%.2f°", model.moon.altitude.degrees))
+            row("Lunar swing", model.standstill)
+
             if let deviation = model.axisDeviation {
                 row("Off the axis", String(format: "%.2f°", deviation.degrees))
             }

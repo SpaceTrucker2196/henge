@@ -9,6 +9,11 @@ import HengeGeometry
 public struct SceneState: Sendable {
 
     /// Where the sun is, from `HengeAstro`. Never set by hand — invariant 1.
+    public var moon: HorizontalCoordinate
+    /// Apparent angular radius of the moon, radians.
+    public var moonAngularRadius: Double
+    /// 0 new, 1 full.
+    public var moonIllumination: Double
     public var sun: HorizontalCoordinate
     /// Apparent angular *radius* of the sun in radians.
     public var sunAngularRadius: Double
@@ -18,11 +23,18 @@ public struct SceneState: Sendable {
     public var exposure: Float
 
     public init(sun: HorizontalCoordinate,
+                moon: HorizontalCoordinate = HorizontalCoordinate(
+                    altitude: Angle(degrees: -30), azimuth: .zero),
+                moonAngularRadius: Double = 0.00452,
+                moonIllumination: Double = 0,
                 sunAngularRadius: Double = 0.00465,
                 camera: Camera = Camera(),
                 turbidity: Float = 2.4,
                 exposure: Float = 1.6) {
         self.sun = sun
+        self.moon = moon
+        self.moonAngularRadius = moonAngularRadius
+        self.moonIllumination = moonIllumination
         self.sunAngularRadius = sunAngularRadius
         self.camera = camera
         self.turbidity = turbidity
@@ -35,11 +47,34 @@ public struct SceneState: Sendable {
     public static func at(_ ut: JulianDay,
                           site: GeographicSite = .stonehenge,
                           camera: Camera = Camera()) -> SceneState {
+        let tt = ut.terrestrialTime
         let sun = Sun.horizontal(at: ut, site: site)
-        let position = Sun.position(at: ut.terrestrialTime)
+        let position = Sun.position(at: tt)
+        let moonPosition = Moon.position(at: tt)
+        let phase = Moon.phase(at: tt)
         return SceneState(sun: sun,
+                          moon: Moon.horizontal(at: ut, site: site),
+                          moonAngularRadius: moonPosition.angularDiameter.radians / 2,
+                          moonIllumination: phase.illuminatedFraction,
                           sunAngularRadius: position.angularDiameter.radians / 2,
                           camera: camera)
+    }
+
+    /// Unit vector toward the moon in world axes.
+    public var moonDirection: SIMD3<Float> {
+        let v = moon.unitVector
+        return SIMD3(Float(v.x), Float(v.y), Float(v.z))
+    }
+
+    /// Moonlight radiance. Faint, cool, and scaled by how much of the disc is
+    /// lit — a full moon is roughly ten times a quarter moon, not twice, since
+    /// the lit crescent is both smaller and more steeply lit.
+    public var moonRadiance: SIMD3<Float> {
+        let altitude = Float(moon.altitude.radians)
+        guard altitude > -0.05 else { return .zero }
+        let fraction = Float(moonIllumination)
+        let brightness = pow(fraction, 2.2) * min(1, max(0, altitude * 4 + 0.2))
+        return SIMD3<Float>(0.62, 0.72, 1.0) * brightness * 0.055
     }
 
     /// Unit vector toward the sun in world axes.
@@ -516,7 +551,9 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             inverseViewProjection: viewProjection.inverse,
             cascadeSplits: splits,
             skyParameters: SIMD4(state.turbidity, state.exposure, 0,
-                                 1.0 / Float(shadowResolution))
+                                 1.0 / Float(shadowResolution)),
+            moonDirection: SIMD4(state.moonDirection, Float(state.moonAngularRadius)),
+            moonLight: SIMD4(state.moonRadiance, Float(state.moonIllumination))
         )
     }
 

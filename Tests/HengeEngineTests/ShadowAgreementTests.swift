@@ -269,8 +269,8 @@ final class RendererSetupTests: XCTestCase {
     /// Swift and MSL agree on struct layout by hand, so a size change on one
     /// side without the other is exactly the bug this catches.
     func testUniformLayoutsAreTheExpectedSize() {
-        // 7 matrices × 64 bytes + 5 float4s × 16 bytes = 528.
-        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 5 * 16)
+        // 7 matrices × 64 bytes + 7 float4s × 16 bytes.
+        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 7 * 16)
         XCTAssertEqual(MemoryLayout<DrawUniforms>.size, 2 * 64 + 16)
         XCTAssertEqual(MemoryLayout<MeshVertex>.stride, 32)
     }

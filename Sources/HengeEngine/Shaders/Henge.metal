@@ -22,6 +22,8 @@ struct FrameUniforms {
     float4x4 inverseViewProjection;
     float4   cascadeSplits;
     float4   skyParameters;  // x turbidity, y exposure, z time, w shadow texel
+    float4   moonDirection;  // toward the moon, w = angular radius
+    float4   moonLight;      // rgb radiance, w = illuminated fraction
 };
 
 struct DrawUniforms {
@@ -242,6 +244,14 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
 
     float3 direct = (diffuse + specular) * frame.sunRadiance.rgb * ndotl * shadow;
 
+    // Moonlight. Unshadowed for now — giving the moon its own cascades is M5
+    // work — so it is kept dim enough that the missing shadows do not read as
+    // a mistake. A gibbous moon on a clear night is about a four-hundred
+    // thousandth of the sun, and the eye's own adaptation does the rest.
+    float3 l2 = normalize(frame.moonDirection.xyz);
+    float moonNdotL = max(dot(n, l2), 0.0);
+    direct += albedo / M_PI_F * frame.moonLight.rgb * moonNdotL;
+
     // Hemispheric ambient: sky from above, bounce from the ground below,
     // mixed by which way the surface looks.
     //
@@ -324,6 +334,41 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
         float mu = sqrt(max(1.0 - r * r, 0.0));
         float limb = 0.3 + 0.7 * pow(mu, 0.55);   // Eddington-like darkening
         sky += frame.sunRadiance.rgb * 12.0 * limb;
+    }
+
+    // ── the moon ────────────────────────────────────────────────────────────
+    //
+    // Lit properly rather than pasted on: the disc is treated as the sphere it
+    // is, and each point on it is shaded by the real angle between its own
+    // surface normal and the direction to the sun. The terminator then falls
+    // out as the curve where that dot product crosses zero — which is why a
+    // half moon is straight-edged and a crescent is not, and why the horns
+    // always point away from the sun without anyone aiming them.
+    float3 m = normalize(frame.moonDirection.xyz);
+    float moonRadius = frame.moonDirection.w;
+    float moonAngle = acos(clamp(dot(direction, m), -1.0, 1.0));
+
+    if (moonAngle < moonRadius && m.y > -0.15) {
+        // A frame on the moon's disc: u toward the sun, v across it.
+        float3 u = normalize(l - m * dot(l, m));
+        float3 v = cross(m, u);
+
+        // Where on the disc this pixel falls, in units of the moon's radius.
+        float3 offset = direction / max(dot(direction, m), 1e-4) - m;
+        float2 disc = float2(dot(offset, u), dot(offset, v)) / moonRadius;
+        float r2 = clamp(disc.x * disc.x + disc.y * disc.y, 0.0, 1.0);
+
+        // The surface normal of the sphere at that point, facing us.
+        float3 normal = disc.x * u + disc.y * v + sqrt(1.0 - r2) * m;
+        float lit = max(dot(normal, l), 0.0);
+
+        // Lambert, softened at the limb the way a dusty regolith actually
+        // scatters, plus earthshine: the dark side is not black, it is lit by
+        // a gibbous Earth hanging in its sky.
+        float3 surface = frame.moonLight.rgb * 26.0 * pow(lit, 0.65);
+        float3 earthshine = float3(0.055, 0.062, 0.085)
+                          * (1.0 - frame.moonLight.w) * 0.6;
+        sky += surface + earthshine;
     }
 
     sky = acesToneMap(sky * frame.skyParameters.y);

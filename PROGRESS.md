@@ -1,5 +1,38 @@
 # henge — progress
 
+## 2026-07-27 — M3 begins: the moon
+
+Position, phase, distance and apparent size from a truncated ELP-2000 (Meeus
+ch. 47), with topocentric parallax — which matters for the moon in a way it
+never does for the sun, since an observer on the surface sees it up to a degree
+from where a geocentric ephemeris puts it, twice its own width.
+
+It checks out against Meeus's Example 47.a to 0.01° in longitude and latitude
+and 60 km in distance, which is the truncation's real accuracy rather than a
+claim. Nine tests, green first run.
+
+**The 18.61-year cycle emerges rather than being written down.** Nothing in the
+code states that period; a test searches for when the ascending node returns to
+its starting longitude and finds 18.61 years. Another sweeps twenty years of
+standstill declinations and finds the envelope swinging between 28.6° and 18.3°
+— beyond the solstice sun at one end and well short of it at the other. That
+swing is what the Station Stone rectangle points at, and it now falls out of
+the arithmetic.
+
+The moon is drawn as the sphere it is: each point on the disc shaded by the
+real angle between its own surface normal and the direction to the sun, so the
+terminator is where that crosses zero. A half moon comes out straight-edged and
+a crescent curved without anyone drawing either, and the horns point away from
+the sun because they cannot do anything else. Earthshine lifts the dark limb.
+
+Moonlight falls on the stones, deliberately unshadowed and dim — giving the
+moon its own cascades is M5, and until then it is kept faint enough that the
+missing shadows do not read as a mistake.
+
+**Still blocked:** the constellation-figure licence. Stars and the Milky Way
+wait on it.
+
+
 ## 2026-07-27 — the sun over *here*, not only over Wiltshire
 
 A sundial only agrees with the clock in your pocket if it stands at your

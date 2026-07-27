@@ -19,7 +19,12 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       weathering maps; PCSS penumbra widening (and with it the re-measured
       shadow tolerance).
 
-- [ ] **M3 — The Night (L).** Moon with correct phase geometry, earthshine and
+- [~] **M3 — The Night (L).** *Moon landed 2026-07-27.* Position, phase,
+      distance and apparent size from a truncated ELP-2000; topocentric
+      parallax; the 18.61-year nodal cycle and standstill envelope, emerging
+      from the arithmetic rather than scripted. Rendered as a sphere lit by the
+      real sun direction, with earthshine, plus unshadowed moonlight on the
+      stones. **Remaining:** Moon with correct phase geometry, earthshine and
       apparent size; the 18.61-year nodal cycle so standstills emerge rather
       than being scripted. Hipparcos star catalogue, constellation lines, Milky
       Way. Precession and deep-time mode — Thuban as pole star.

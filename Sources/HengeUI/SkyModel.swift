@@ -141,6 +141,24 @@ public final class SkyModel {
         Self.terrain?.groundHeight(east: east, south: south) ?? 0
     }
 
+    public var moon: HorizontalCoordinate {
+        Moon.horizontal(at: time, site: site)
+    }
+
+    public var moonPhase: LunarPhase {
+        Moon.phase(at: time.terrestrialTime)
+    }
+
+    /// How wide the moon's swing is at this point in the 18.6-year cycle, and
+    /// whether that is near a standstill.
+    public var standstill: String {
+        let declination = Moon.standstillDeclination(at: time.terrestrialTime).degrees
+        let obliquity = EarthOrientation.meanObliquity(at: time.terrestrialTime).degrees
+        if declination > obliquity + 4.6 { return "major standstill" }
+        if declination < obliquity - 4.6 { return "minor standstill" }
+        return String(format: "%.1f°", declination)
+    }
+
     public var sun: HorizontalCoordinate {
         Sun.horizontal(at: time, site: site)
     }
