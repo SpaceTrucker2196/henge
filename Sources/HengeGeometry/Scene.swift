@@ -70,7 +70,9 @@ public struct MonumentScene: Sendable {
 
             let bearing = Angle(degrees: Double(i) * 360 / Double(count))
             stones.append(Stone(
-                id: "sarsen-upright-\(i)",
+                // Petrie numbers the outer circle 1–30 clockwise from the
+                // sarsen immediately east of the axis, seen from the centre.
+                id: "stone-\(i + 1)",
                 position: WorldAxes.direction(azimuth: bearing) * radius,
                 height: Monument.sarsenUprightHeight,
                 width: Monument.sarsenUprightWidth,
@@ -97,7 +99,8 @@ public struct MonumentScene: Sendable {
         let chord = 2 * radius * sin(.pi / Double(count))
 
         return Stone(
-            id: "sarsen-lintel-\(index)",
+            // Outer-circle lintels are 101–130 in the same order.
+            id: "stone-\(101 + index)",
             // Seated into the uprights, not balanced on them.
             position: SIMD3(position.x, Monument.sarsenUprightHeight - 0.2, position.z),
             height: Monument.sarsenLintelHeight,
@@ -152,12 +155,13 @@ public struct MonumentScene: Sendable {
         let across = WorldAxes.direction(azimuth: (facing + Angle(degrees: 90)).normalized)
         let halfSpan = which.uprightWidth / 2 + which.gap / 2
 
-        let left = Stone(id: "\(which)-upright-left",
+        let numbers = which.numbers
+        let left = Stone(id: "stone-\(numbers.first)",
                          position: centre - across * halfSpan,
                          height: which.uprightHeight, width: which.uprightWidth,
                          thickness: which.uprightThickness, bearing: facing,
                          material: .sarsen)
-        let right = Stone(id: "\(which)-upright-right",
+        let right = Stone(id: "stone-\(numbers.second)",
                           position: centre + across * halfSpan,
                           height: which.uprightHeight, width: which.uprightWidth,
                           thickness: which.uprightThickness, bearing: facing,
@@ -173,7 +177,9 @@ public struct MonumentScene: Sendable {
             // survive complete. Established.
             switch which {
             case .great:
-                return [left]
+                // Only stone 56 still stands; 55 fell in 1797 and brought
+                // lintel 156 down with it. Established.
+                return [right]
             case .northWestOuter, .southEastOuter:
                 return [left, right, lintelFor(which, centre, facing)]
             default:
@@ -187,7 +193,7 @@ public struct MonumentScene: Sendable {
         // Seated into the uprights rather than balanced on them: two rounded
         // surfaces meeting at the nominal height leave a line of daylight, and
         // a real lintel sits in a mortice anyway.
-        Stone(id: "\(which)-lintel",
+        Stone(id: "stone-\(which.numbers.lintel)",
               position: SIMD3(centre.x, which.uprightHeight - 0.25, centre.z),
               height: which.lintelHeight,
               width: which.uprightWidth * 2 + which.gap,
@@ -211,7 +217,11 @@ public struct MonumentScene: Sendable {
             // Roughly half survive, scattered rather than in a clean arc.
             if state == .asItStands && i % 5 < 2 { return nil }
             let bearing = Angle(degrees: Double(i) * 360 / Double(count) + 4)
-            return Stone(id: "bluestone-circle-\(i)",
+            return Stone(// Petrie numbered the bluestone circle 31–49, but that covers only
+            // the stones he could see. This reconstruction raises forty, so the
+            // surplus carries a marked scheme rather than borrowing numbers
+            // that belong to the trilithons.
+            id: i < 19 ? "stone-\(31 + i)" : "bluestone-circle-\(i)",
                          position: WorldAxes.direction(azimuth: bearing) * radius,
                          height: 1.9 + Double(i % 5) * 0.16,
                          width: 0.95, thickness: 0.62,
@@ -233,7 +243,7 @@ public struct MonumentScene: Sendable {
             let bearing = (apexBearing + Angle(degrees: offset)).normalized
             // Oval rather than circular: deeper along the axis.
             let radius = 6.2 + 1.5 * cos(Angle(degrees: offset).radians)
-            return Stone(id: "bluestone-horseshoe-\(i)",
+            return Stone(id: i < 12 ? "stone-\(61 + i)" : "bluestone-horseshoe-\(i)",
                          position: WorldAxes.direction(azimuth: bearing) * radius,
                          height: 2.5 - abs(offset) / 135.0 * 0.8,
                          width: 0.9, thickness: 0.6,
@@ -252,7 +262,7 @@ public struct MonumentScene: Sendable {
     /// pinned beneath the fallen stones of the Great Trilithon.
     public static func altarStone(state: Monument.State = .asItWas) -> Stone {
         let apexBearing = (Monument.axisAzimuth + Angle(degrees: 180)).normalized
-        return Stone(id: "altar-stone",
+        return Stone(id: "stone-80",
                      position: WorldAxes.direction(azimuth: apexBearing) * 5.4,
                      // Recumbent: it lies flat, so its "height" is its thickness.
                      height: 0.6, width: 4.9, thickness: 1.0,
@@ -267,7 +277,7 @@ public struct MonumentScene: Sendable {
     /// beside it forming a corridor — Debated, and a toggle in a later
     /// milestone rather than something quietly drawn in.
     public static func heelStone() -> Stone {
-        Stone(id: "heel-stone",
+        Stone(id: "stone-96",
               position: WorldAxes.direction(azimuth: Monument.axisAzimuth)
                   * Monument.heelStoneDistance,
               height: Monument.heelStoneHeight,
@@ -289,16 +299,16 @@ public struct MonumentScene: Sendable {
 
         switch state {
         case .asItStands:
-            return [Stone(id: "slaughter-stone",
+            return [Stone(id: "stone-95",
                           position: entrance - across * 1.8,
                           height: 0.9, width: 6.4, thickness: 2.1,
                           bearing: axis, material: .sarsen)]
         case .asItWas:
             return [
-                Stone(id: "slaughter-stone", position: entrance - across * 1.8,
+                Stone(id: "stone-95", position: entrance - across * 1.8,
                       height: 4.3, width: 2.1, thickness: 1.1,
                       bearing: axis, material: .sarsen),
-                Stone(id: "slaughter-stone-portal", position: entrance + across * 1.8,
+                Stone(id: "stone-E", position: entrance + across * 1.8,
                       height: 4.3, width: 2.1, thickness: 1.1,
                       bearing: axis, material: .sarsen)
             ]
@@ -331,7 +341,7 @@ public struct MonumentScene: Sendable {
         return corners.compactMap { corner in
             if state == .asItStands && !corner.survives { return nil }
             let bearing = (axis + Angle(degrees: corner.offset)).normalized
-            return Stone(id: "station-stone-\(corner.name)",
+            return Stone(id: "stone-\(corner.name)",
                          position: WorldAxes.direction(azimuth: bearing) * radius,
                          height: state == .asItStands && corner.name == "93" ? 1.0 : 1.4,
                          width: 1.2, thickness: 0.8,

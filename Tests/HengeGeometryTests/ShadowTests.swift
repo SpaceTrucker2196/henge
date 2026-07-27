@@ -116,7 +116,7 @@ final class MonumentGeometryTests: XCTestCase {
         let stones = MonumentScene.trilithon(.great)
         XCTAssertEqual(stones.count, 3, "two uprights and a lintel when complete")
 
-        let uprights = stones.filter { $0.id.contains("upright") }
+        let uprights = stones.filter { $0.height > 3 }
         let midpoint = (uprights[0].position + uprights[1].position) / 2
         let bearing = WorldAxes.azimuth(of: normalize(SIMD3(midpoint.x, 0, midpoint.z)))
 
@@ -131,20 +131,20 @@ final class MonumentGeometryTests: XCTestCase {
         let complete = MonumentScene.milestoneOne(state: .asItWas)
         let ruin = MonumentScene.milestoneOne(state: .asItStands)
         XCTAssertGreaterThan(complete.stones.count, ruin.stones.count)
-        XCTAssertNotNil(ruin.stone(id: "heel-stone"), "the Heel Stone still stands")
+        XCTAssertNotNil(ruin.stone(id: "stone-96"), "the Heel Stone still stands")
     }
 
     /// Stones must be identical between runs: the GPU shadow test compares
     /// against an analytic position, and a stone that wandered would make the
     /// oracle flaky in a way that looks like a rendering bug.
     func testStoneSeedsAreDeterministic() {
-        let first = Stone(id: "great-upright-left", position: .zero,
+        let first = Stone(id: "stone-56", position: .zero,
                           height: 7.3, width: 2.4, thickness: 1.1)
-        let second = Stone(id: "great-upright-left", position: .zero,
+        let second = Stone(id: "stone-56", position: .zero,
                            height: 7.3, width: 2.4, thickness: 1.1)
         XCTAssertEqual(first.seed, second.seed)
         XCTAssertNotEqual(first.seed,
-                          Stone(id: "great-upright-right", position: .zero,
+                          Stone(id: "stone-55", position: .zero,
                                 height: 7.3, width: 2.4, thickness: 1.1).seed,
                           "different stones must not share a surface")
     }
@@ -292,7 +292,7 @@ final class StoneOrientationTests: XCTestCase {
     /// broad faces of its uprights look up and down that axis, and the pair is
     /// offset across it.
     func testTrilithonUprightsFaceAlongTheAxis() {
-        let uprights = MonumentScene.trilithon(.great).filter { $0.id.contains("upright") }
+        let uprights = MonumentScene.trilithon(.great).filter { $0.height > 3 }
         XCTAssertEqual(uprights.count, 2)
 
         for upright in uprights {
@@ -364,8 +364,10 @@ final class WaterlineTests: XCTestCase {
     /// shows daylight along the joint. It should sit into them.
     func testLintelSeatsIntoTheUprights() {
         let stones = MonumentScene.trilithon(.great)
-        let uprights = stones.filter { $0.id.contains("upright") }
-        let lintel = try! XCTUnwrap(stones.first { $0.id.contains("lintel") })
+        let uprights = stones.filter { $0.height > 3 }
+        // Lintel 156 caps the Great Trilithon (stones 55 and 56) in Petrie's
+        // numbering — the scheme the literature has used since 1877.
+        let lintel = try! XCTUnwrap(stones.first { $0.id == "stone-156" })
 
         XCTAssertLessThan(lintel.position.y, uprights[0].height,
                           "the lintel must overlap the uprights, not balance on them")
@@ -492,8 +494,8 @@ final class CompleteMonumentTests: XCTestCase {
 
     func testTheCircleHasThirtyUprightsAndThirtyLintels() {
         let scene = MonumentScene.complete(state: .asItWas)
-        let uprights = scene.stones.filter { $0.id.hasPrefix("sarsen-upright") }
-        let lintels = scene.stones.filter { $0.id.hasPrefix("sarsen-lintel") }
+        let uprights = scene.stones.filter { (1...30).contains(Int($0.id.dropFirst(6)) ?? 0) }
+        let lintels = scene.stones.filter { (101...130).contains(Int($0.id.dropFirst(6)) ?? 0) }
 
         XCTAssertEqual(uprights.count, Monument.sarsenUprightCount)
         XCTAssertEqual(lintels.count, Monument.sarsenUprightCount,
@@ -510,7 +512,7 @@ final class CompleteMonumentTests: XCTestCase {
     /// The lintel ring ran dead level although the ground slopes. Sockets were
     /// packed to compensate, so every lintel shares a height.
     func testTheLintelRingIsLevel() {
-        let lintels = MonumentScene.sarsenCircle().filter { $0.id.hasPrefix("sarsen-lintel") }
+        let lintels = MonumentScene.sarsenCircle().filter { (101...130).contains(Int($0.id.dropFirst(6)) ?? 0) }
         let heights = Set(lintels.map { ($0.position.y * 1000).rounded() })
         XCTAssertEqual(heights.count, 1, "the lintel ring must be level")
     }
@@ -520,15 +522,15 @@ final class CompleteMonumentTests: XCTestCase {
         let radius = Monument.sarsenCircleDiameter / 2
         let chord = 2 * radius * sin(.pi / Double(Monument.sarsenUprightCount))
         let lintel = try! XCTUnwrap(MonumentScene.sarsenCircle()
-            .first { $0.id == "sarsen-lintel-0" })
+            .first { $0.id == "stone-101" })
         XCTAssertGreaterThan(lintel.width, chord,
                              "a lintel shorter than the gap leaves a hole in the ring")
     }
 
     func testTheHorseshoeIsGradedAndOpensNorthEast() {
         let scene = MonumentScene.complete(state: .asItWas)
-        let great = try! XCTUnwrap(scene.stone(id: "great-upright-left"))
-        let outer = try! XCTUnwrap(scene.stone(id: "northWestOuter-upright-left"))
+        let great = try! XCTUnwrap(scene.stone(id: "stone-56"))
+        let outer = try! XCTUnwrap(scene.stone(id: "stone-59"))
 
         XCTAssertGreaterThan(great.height, outer.height,
                              "the Great Trilithon is the tallest, at the apex")
@@ -548,7 +550,7 @@ final class CompleteMonumentTests: XCTestCase {
         XCTAssertFalse(scene.bluestones.isEmpty)
 
         let sarsenRadius = Monument.sarsenCircleDiameter / 2
-        for stone in scene.bluestones where stone.id.hasPrefix("bluestone-circle") {
+        for stone in scene.bluestones where stone.material == .bluestone && !stone.id.contains("horseshoe") && stone.id != "stone-80" {
             let distance = simd_length(SIMD2(stone.position.x, stone.position.z))
             XCTAssertLessThan(distance, sarsenRadius, stone.id)
             XCTAssertEqual(stone.material, .bluestone)
@@ -563,7 +565,7 @@ final class CompleteMonumentTests: XCTestCase {
         XCTAssertEqual(stones.count, 4)
 
         func at(_ name: String) -> SIMD2<Double> {
-            let s = stones.first { $0.id.hasSuffix(name) }!
+            let s = stones.first { $0.id == "stone-\(name)" }!
             return SIMD2(s.position.x, s.position.z)
         }
         let (a, b, c, d) = (at("91"), at("92"), at("93"), at("94"))
@@ -579,6 +581,19 @@ final class CompleteMonumentTests: XCTestCase {
         let short = min(simd_distance(a, b), simd_distance(b, c))
         XCTAssertEqual(long, 80, accuracy: 12)
         XCTAssertEqual(short, 33, accuracy: 12)
+    }
+
+    /// Petrie's numbers are a namespace, and two stones cannot share one. The
+    /// bluestone circle originally ran into the trilithons' 51–60 because this
+    /// reconstruction raises more bluestones than Petrie could number.
+    func testEveryStoneHasAUniqueIdentifier() {
+        for state in Monument.State.allCases {
+            let ids = MonumentScene.complete(state: state).stones.map(\.id)
+            let duplicates = Dictionary(grouping: ids, by: { $0 })
+                .filter { $0.value.count > 1 }.keys.sorted()
+            XCTAssertTrue(duplicates.isEmpty,
+                          "\(state) has stones sharing an id: \(duplicates)")
+        }
     }
 
     func testAllFiftySixAubreyHolesLieOnTheirCircle() {
@@ -598,10 +613,10 @@ final class CompleteMonumentTests: XCTestCase {
         let ruin = MonumentScene.complete(state: .asItStands)
 
         XCTAssertGreaterThan(complete.stones.count, ruin.stones.count)
-        XCTAssertNil(ruin.stone(id: "great-upright-right"),
+        XCTAssertNil(ruin.stone(id: "stone-55"),
                      "only stone 56 of the Great Trilithon still stands")
-        XCTAssertNotNil(ruin.stone(id: "great-upright-left"))
-        XCTAssertNotNil(ruin.stone(id: "heel-stone"))
+        XCTAssertNotNil(ruin.stone(id: "stone-56"))
+        XCTAssertNotNil(ruin.stone(id: "stone-96"))
         XCTAssertEqual(MonumentScene.stationStones(state: .asItStands).count, 2,
                        "two Station Stones survive")
     }

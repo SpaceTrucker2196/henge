@@ -44,6 +44,27 @@ work and therefore public domain, with no attribution obligation — though the
 app will credit it anyway, because a claim about where the sun rises should say
 what it was measured against.
 
+### Reference sources consulted, and deliberately not vendored
+
+Existing Stonehenge models were reviewed before extending the geometry. None
+were incorporated; what was taken is knowledge, not data.
+
+- **English Heritage / Greenhatch Group laser survey (2011)** — the definitive
+  record, 1 mm across the circle and 0.5 mm on four faces of interest, covering
+  every visible face including the lintel tops. Not openly licensed for
+  redistribution, so it is a thing to read about rather than to ship. If
+  per-stone geometry ever matters more than the surveyed dimensions already in
+  `Monument`, this is the source to license.
+- **Petrie's numbering (1874–77)** — adopted. Not data, a convention, and the
+  one the literature has used for 150 years.
+- **Sketchfab LiDAR landscapes** — several are CC-BY over Environment Agency
+  open LiDAR. Nothing to gain: this repo already bakes the terrain from SRTM
+  itself, which is public domain and reproducible from `scripts/bake_terrain.py`.
+- **Sketchfab monument models** — mixed licences, mostly artistic
+  reconstructions rather than survey. Incorporating one would put a licence and
+  an unverifiable provenance at the centre of a project whose first invariant is
+  that its geometry traces to cited survey data.
+
 ### Notes on the open questions
 
 - **Yale BSC5 was considered and rejected.** The brief named it, but its terms

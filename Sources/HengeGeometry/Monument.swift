@@ -70,6 +70,23 @@ public enum Monument {
         /// Clear gap between the pair of uprights.
         public var gap: Double { 0.35 }
 
+        /// Petrie's numbers for the pair and their lintel.
+        ///
+        /// Flinders Petrie surveyed the monument in 1874–77 and numbered the
+        /// stones clockwise from the axis; the scheme is still what the
+        /// literature uses. The trilithon uprights run 51–60 clockwise with
+        /// lintels 152–160, so citing "stone 56" means something to a reader
+        /// and "great-upright-left" does not.
+        public var numbers: (first: Int, second: Int, lintel: Int) {
+            switch self {
+            case .southEastOuter: (51, 52, 152)
+            case .southEastInner: (53, 54, 154)
+            case .great: (55, 56, 156)
+            case .northWestInner: (57, 58, 158)
+            case .northWestOuter: (59, 60, 160)
+            }
+        }
+
         public var name: String {
             switch self {
             case .great: "Great Trilithon"

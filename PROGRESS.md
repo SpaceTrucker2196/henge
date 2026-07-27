@@ -1,5 +1,26 @@
 # henge — progress
 
+## 2026-07-27 (later still) — Petrie numbering, from reading the literature
+
+Looked at what already exists rather than continuing to invent. The English
+Heritage / Greenhatch laser survey of 2011 is the definitive record — 1 mm
+across the circle — but it is not openly licensed, so it stays a thing to read
+about. What was worth taking was free: **Petrie's numbering**, devised in
+1874–77 and still the scheme every paper uses.
+
+Stones now carry it. The outer circle is 1–30 clockwise from the sarsen east of
+the axis, its lintels 101–130; trilithon uprights 51–60 with lintels 152–160;
+bluestone circle 31–49, horseshoe 61–72; Altar Stone 80, Slaughter Stone 95,
+Heel Stone 96, Station Stones 91–94. "Stone 56" now means something to a reader
+who knows the site, where `great-upright-left` meant nothing to anyone.
+
+It immediately caught a bug: this reconstruction raises forty bluestones where
+Petrie could number nineteen, so the circle ran straight into the trilithons'
+51–60 and two different stones shared an id. Surplus stones now carry a marked
+scheme instead of borrowing numbers, and `testEveryStoneHasAUniqueIdentifier`
+holds it.
+
+
 ## 2026-07-27 (later) — reverse-Z, and why the walls looked transparent
 
 Reported as walls going see-through **at some angles** — which was the clue.
