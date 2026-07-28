@@ -34,6 +34,8 @@ struct FrameUniforms {
     float4   shadowSource;   // x: 0 sun-cast shadows, 1 moon-cast
     float4   haze;           // x: scatter per metre (0 skips the pass),
                              // y: march distance m, z: scale height m, w spare
+    float4   torch;          // xyz: torch position, w: night-gated intensity
+                             // (0 removes the term)
 };
 
 struct DrawUniforms {
@@ -996,13 +998,41 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     float3 direct = (diffuse + specular) * frame.sunRadiance.rgb * ndotl
                   * sunShadow * microShadow;
 
-    // Moonlight. Unshadowed for now — giving the moon its own cascades is M5
-    // work — so it is kept dim enough that the missing shadows do not read as
-    // a mistake. A gibbous moon on a clear night is about a four-hundred
-    // thousandth of the sun, and the eye's own adaptation does the rest.
+    // Moonlight. Shadowed by the shared cascades whenever the frame fitted
+    // them to the moon (`shadowSource`); on nights the moon is too thin to
+    // earn the shadow budget it falls back to unshadowed, and is kept dim
+    // enough that the absence does not read as a mistake. A gibbous moon on
+    // a clear night is about a four-hundred-thousandth of the sun, and the
+    // eye's own adaptation does the rest.
     float3 l2 = normalize(frame.moonDirection.xyz);
     float moonNdotL = max(dot(n, l2), 0.0);
     direct += albedo / M_PI_F * frame.moonLight.rgb * moonNdotL * moonShadow;
+
+    // The carried torch: a warm point light at the viewer's hand, falling
+    // off with the square of distance. Unshadowed, deliberately — the one
+    // shadow map belongs to the sky's light, and a torch's own shadows swing
+    // with every flicker; drawing them steady would be a stranger lie than
+    // leaving them out. The intensity arrives night-gated and flickered from
+    // the CPU (`SceneState.torchIntensity`), so a zero here means the whole
+    // term is absent and daylight frames are byte-identical with the torch
+    // switched on.
+    if (frame.torch.w > 0.0) {
+        float3 toTorch = frame.torch.xyz - in.worldPosition;
+        // Clamped inside half a metre: the falloff would otherwise blow out
+        // the fragment the torch is standing on.
+        float torchDistanceSq = max(dot(toTorch, toTorch), 0.25);
+        float3 torchDirection = toTorch * rsqrt(torchDistanceSq);
+        float torchNdotl = max(dot(n, torchDirection), 0.0);
+        // Flame colour: blackbody-ish 1900 K, warm orange.
+        const float3 kFlame = float3(1.0, 0.52, 0.20);
+        // Plain albedo/π, like the moon term — NOT `diffuse`, whose Fresnel
+        // factor belongs to the sun's half-vector. Reusing it coupled the
+        // torch to where the *hidden* sun stood: looking toward the sunset
+        // azimuth at night extinguished the flame entirely, which the
+        // adversarial review caught before it shipped.
+        direct += albedo / M_PI_F * kFlame * frame.torch.w
+                * torchNdotl / torchDistanceSq;
+    }
 
     // Hemispheric ambient: sky from above, bounce from the ground below,
     // mixed by which way the surface looks.
@@ -1436,6 +1466,19 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
 
     float3 direct = albedo / M_PI_F * frame.sunRadiance.rgb
         * (ndotl * shadow + through);
+
+    // The torch reaches the blades too — two-sided like the sun term,
+    // because a blade is thin enough that which face the flame lights is
+    // close to arbitrary. Without this the walker stands on a dark island
+    // in a ring of lit stone, which reads as a bug the moment you look down.
+    if (frame.torch.w > 0.0) {
+        float3 toTorch = frame.torch.xyz - in.worldPosition;
+        float torchDistanceSq = max(dot(toTorch, toTorch), 0.25);
+        float3 torchDirection = toTorch * rsqrt(torchDistanceSq);
+        const float3 kFlame = float3(1.0, 0.52, 0.20);
+        direct += albedo / M_PI_F * kFlame * frame.torch.w
+                * abs(dot(n, torchDirection)) / torchDistanceSq;
+    }
 
     float3 skyColour = preethamSky(float3(0, 1, 0), l, frame.skyParameters.x);
     // Only the upper part of a blade sees much sky; deeper in the sward it is

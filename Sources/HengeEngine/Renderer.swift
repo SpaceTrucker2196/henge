@@ -60,6 +60,13 @@ public struct SceneState: Sendable {
     /// ways and compare.
     public var weathering: Bool
 
+    /// Whether a carried torch lights the stones — the ceremony mode.
+    ///
+    /// Off by default: it is a mode you choose, like the overlay, not a
+    /// state of the world. The torch rides at the camera's hand, so walking
+    /// the circle carries the light with you.
+    public var torchlight: Bool
+
     /// Whether the golden hours march light shafts through the haze.
     ///
     /// On everywhere the app runs; a switch because it is one more detail
@@ -123,7 +130,8 @@ public struct SceneState: Sendable {
                 soilBanks: Bool = true,
                 windBearing: Double = 250,
                 windTime: Double = 0,
-                lightShafts: Bool = true) {
+                lightShafts: Bool = true,
+                torchlight: Bool = false) {
         self.sun = sun
         self.moon = moon
         self.moonAngularRadius = moonAngularRadius
@@ -141,6 +149,40 @@ public struct SceneState: Sendable {
         self.windBearing = windBearing
         self.windTime = windTime
         self.lightShafts = lightShafts
+        self.torchlight = torchlight
+    }
+
+    /// How hard the torch burns, before the shader's falloff.
+    ///
+    /// Two factors, both here rather than in MSL so a test can hold them:
+    ///
+    /// The **night gate** fades the torch out across dusk — full below the
+    /// horizon, gone by 6° of sun. Physically a torch burns at noon too; it
+    /// just cannot be *seen* against sunlight, and modelling that honestly
+    /// would mean adding a light the eye must then fail to notice. Gating is
+    /// the legible version of the same truth, and it makes "torch at noon
+    /// changes nothing" a testable promise instead of a hope.
+    ///
+    /// The **flicker** runs on the wall clock, like the wind and for the
+    /// same reason: at a day a second a fire that kept astronomical time
+    /// would strobe. Three incommensurate sines, bounded well away from
+    /// zero — a real flame gutters but does not go out.
+    public static func torchIntensity(sunAltitudeDegrees: Double,
+                                      flickerAt seconds: Double) -> Double {
+        let t = min(max((sunAltitudeDegrees + 1) / 7, 0), 1)
+        let night = 1 - t * t * (3 - 2 * t)
+        // 90 is measured, not guessed: sarsen's delivered linear albedo is
+        // dark (the texture calibration puts its mean near 0.03), and the
+        // first cut at 14 lit a stone three metres off by four luminance
+        // levels — a nightlight, not a ceremony. This figure puts roughly
+        // forty levels on that face and lets the inverse square do the rest.
+        return 90.0 * night * torchFlicker(at: seconds)
+    }
+
+    /// The flame's unsteadiness, 1 on average, never below 0.8.
+    public static func torchFlicker(at seconds: Double) -> Double {
+        0.95 + 0.09 * sin(seconds * 7.3) * sin(seconds * 3.1)
+             + 0.06 * sin(seconds * 11.7 + 1.4)
     }
 
     /// Build the state for a moment in time at a site. This is the only path
@@ -954,6 +996,19 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 // over the ninety-metre march — mist you notice the sun in,
                 // not fog you lose the stones behind.
                 return SIMD4(Float(boost) * 0.0085, 90, 12, 0)
+            }(),
+            torch: {
+                guard state.torchlight else { return .zero }
+                // At the hand: half a pace ahead of the eye and a little
+                // below it, so the light models the stones from where a
+                // carried flame actually rides.
+                let forward = simd_normalize(state.camera.target - state.camera.position)
+                let position = state.camera.position + forward * 0.45
+                    + SIMD3<Float>(0, -0.2, 0)
+                let intensity = SceneState.torchIntensity(
+                    sunAltitudeDegrees: state.sun.altitude.degrees,
+                    flickerAt: state.windTime)
+                return SIMD4(position, Float(intensity))
             }()
         )
     }

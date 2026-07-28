@@ -341,10 +341,18 @@ public final class SkyModel {
     /// figure a weather station would give.
     public var windSpeed: Double = 0.45
 
+    /// Whether the ceremony torch is lit. See `SceneState.torchlight`.
+    public var torchlight = false
+
     public var sceneState: SceneState {
         var state = SceneState.at(time, site: site, camera: camera)
         state.windTime = windTime
         state.windSpeed = Float(windSpeed)
+        // A torch is carried, and nobody carries one four hundred metres up:
+        // from the aerial station the same light would hang sourceless in
+        // the night sky and wash the monument warm. It relights the moment
+        // you stand back on the ground.
+        state.torchlight = torchlight && station != .aerial
         return state
     }
 

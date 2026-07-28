@@ -270,15 +270,15 @@ final class RendererSetupTests: XCTestCase {
     /// Swift and MSL agree on struct layout by hand, so a size change on one
     /// side without the other is exactly the bug this catches.
     func testUniformLayoutsAreTheExpectedSize() {
-        // 7 matrices × 64 bytes + 14 float4s × 16 bytes; the float4s after
+        // 7 matrices × 64 bytes + 15 float4s × 16 bytes; the float4s after
         // the camera/sun block are `cascadeRadii` (PCSS), `wind`, `grass`,
-        // `night`, `season`, `shadowSource` and `haze` (the light shafts).
-        // This assertion has now caught four separate field additions, which
-        // is the whole reason it is written as arithmetic rather than a magic
-        // number — adding a field on one side only silently reinterprets
-        // every uniform after it, and the result is a plausible-looking
-        // render rather than a crash.
-        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 14 * 16)
+        // `night`, `season`, `shadowSource`, `haze` (the light shafts) and
+        // `torch`. This assertion has now caught four separate field
+        // additions, which is the whole reason it is written as arithmetic
+        // rather than a magic number — adding a field on one side only
+        // silently reinterprets every uniform after it, and the result is a
+        // plausible-looking render rather than a crash.
+        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 15 * 16)
         // 2 matrices + albedo + `surface` (which map set, tile size, normal
         // strength) + `weather` (the stone's foot, lichen, damp, seed)
         // + `reflectance` (specular strength, roughness floor, takes wind).

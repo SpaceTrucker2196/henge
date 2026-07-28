@@ -75,6 +75,7 @@ public struct RootView: View {
                     almanacToggle
                     overlayToggle
                     markerToggle
+                    torchToggle
                 }
             }
             .padding(16)
@@ -384,6 +385,24 @@ public struct RootView: View {
             .accessibilityHint("The Aubrey holes held cremated human remains; "
                                + "nothing excavated supports moving markers. "
                                + "The lore panel has the sources.")
+    }
+
+    /// The ceremony torch. Gated to the night by the engine, so lighting it
+    /// at noon costs nothing and changes nothing.
+    private var torchToggle: some View {
+        Button {
+            model.torchlight.toggle()
+        } label: {
+            Image(systemName: model.torchlight ? "flame.fill" : "flame")
+                .frame(width: 36, height: 32)
+        }
+        .buttonStyle(.plain)
+        .hengeControl(isSelected: model.torchlight)
+        .foregroundStyle(model.torchlight ? Henge.bronze : Henge.stone)
+        .accessibilityLabel(model.torchlight ? "Put out the torch" : "Light the torch")
+        .accessibilityHint("A carried flame that lights the stones at night "
+                           + "from the ground stations; it fades out in "
+                           + "daylight and stays unlit from the air")
     }
 
     /// Hoyle's markers, standing gold in the Aubrey holes.

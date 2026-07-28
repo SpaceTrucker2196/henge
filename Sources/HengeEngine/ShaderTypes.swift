@@ -59,6 +59,10 @@ public struct FrameUniforms {
     /// y: how far each ray marches, metres. z: the haze's scale height,
     /// metres — how quickly it thins with altitude. w: spare.
     public var haze: SIMD4<Float>
+    /// The carried torch. xyz: world position at the camera's hand.
+    /// w: intensity, already night-gated and flickered by
+    /// `SceneState.torchIntensity`; zero means no torch term at all.
+    public var torch: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -79,7 +83,8 @@ public struct FrameUniforms {
                 night: SIMD4<Float> = SIMD4(0.0075, 0.009, 0.0155, 0.0075),
                 season: SIMD4<Float> = SIMD4(1, 1, 1, 0.2),
                 shadowSource: SIMD4<Float> = .zero,
-                haze: SIMD4<Float> = SIMD4(0, 90, 12, 0)) {
+                haze: SIMD4<Float> = SIMD4(0, 90, 12, 0),
+                torch: SIMD4<Float> = .zero) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -99,6 +104,7 @@ public struct FrameUniforms {
         self.season = season
         self.shadowSource = shadowSource
         self.haze = haze
+        self.torch = torch
     }
 }
 

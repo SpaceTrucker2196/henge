@@ -66,8 +66,9 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       "Mistletoe & Oak" as a full design language is unstarted — what exists is
       a functional layout, not a designed one. Hosek–Wilkie still waits on its
       data licence. MetalFX is unexplored; 120 Hz is set on the view but has not
-      been profiled. Moon shadow cascades are unbuilt, so moonlight is still
-      unshadowed and kept dim enough that the absence does not read as a bug.
+      been profiled. (Moon-cast shadows are no longer on this list: the shared
+      cascades are fitted to the moon when it is up and bright enough, and only
+      thin-crescent nights fall back to unshadowed moonlight.)
 
 ## Still open, needing a decision
 
