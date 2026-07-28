@@ -1149,3 +1149,62 @@ number had to be far below any mast reading, and the eye said how far.
 
 181 tests, both platforms warning-clean.
 
+## 2026-07-28 — Night, seasons, erosion, and breaking the tiling
+
+**Night palettes.** Two authored end points and an interpolation, because what a
+person sees at night is not a radiometric quantity — it is dark adaptation and
+the Purkinje shift, and no formula describes that. Full moon is silver-blue and
+brighter than people expect (about 0.25 lux, enough to read a headline by); the
+blue is not in the light, which is very slightly *warmer* than sunlight, it is
+the eye handing over from cones to rods. Painting it neutral is physically right
+and looks wrong.
+
+New moon is not black: airglow, zodiacal light and integrated starlight give
+roughly 0.002 lux, and on a clear night here you can see the stones against the
+sky. The palette's `w` is a **visibility floor** — the least light any surface
+receives — so the darkest night stays legible. A physically honest new moon on a
+screen is a black rectangle, and an app about standing among these stones cannot
+go blank for several hours a month.
+
+The blend runs on illuminated fraction raised to 2.2, not linearly: a half moon
+gives under a tenth of a full moon's light, because at full the surface is lit
+head-on with no shadows between the regolith grains to swallow it.
+
+**A full moon casts shadows.** One shadow map, and at night the sun is not using
+it — so when the sun is down and the moon is up and more than 45% lit, the
+cascades fit the moon instead and the fragment shader applies them to the
+moonlight term. The threshold is on illuminated fraction rather than altitude: a
+crescent casts nothing anyone would call a shadow, and fitting cascades to it
+would spend the frame's shadow budget on nothing.
+
+**Seasonal palettes**, keyed to solar longitude rather than calendar month — in
+2500 BC the June solstice falls in July and a month-indexed palette would put
+high summer in the wrong season. Four corners: spring new growth, midsummer
+starting to bleach, autumn tawny and seed-headed, midwinter grey-green and short,
+with dryness driving how much chalk shows through and how far the blades go to
+straw. The season tints vegetation but **not** bare earth — soil is soil in March
+and September, and tinting it too made the world change hue like a filter.
+
+**Erosion from the terrain itself.** Steep ground is thin, pale and stony because
+soil creeps off it; hollows hold moisture and grow rank. The ground mesh already
+carries the real heightfield, so its normal *is* a slope measurement — no extra
+data and no invented landforms, just reading what the survey already said.
+
+**The stones are older.** Lichen coverage widened, and solution hollows added:
+rain standing on a horizontal ledge dissolves the silcrete's carbonate cement
+and leaves pits, which are the most distinctive thing about a weathered sarsen
+close to. They perturb the normal as well as the albedo, because they are holes
+rather than stains.
+
+**And the tiling is broken up.** One photographed rock face across eighty stones
+repeats, and triplanar makes it worse rather than better — every stone samples
+the same world-space grid, so neighbours in a circle land on nearly the same
+texels. Three breaks off the existing per-stone seed: offset, per-plane rotation
+(the one that actually matters — offset alone leaves every stone with parallel
+bedding), and ±12% scale jitter. Plus a second sample at an incommensurate scale
+multiplied in, because a 1.5 m tile repeats four times over inside a single
+seven-metre upright and no per-stone variation hides a repeat that happens
+within one stone.
+
+181 tests, both platforms warning-clean.
+

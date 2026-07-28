@@ -83,6 +83,12 @@ public struct SceneState: Sendable {
     public var moonAngularRadius: Double
     /// 0 new, 1 full.
     public var moonIllumination: Double
+    /// The sun's apparent ecliptic longitude — where we are in the year.
+    ///
+    /// Drives the seasonal palette. Longitude rather than calendar month
+    /// because in 2500 BC the June solstice falls in July, and a palette
+    /// indexed by month would put high summer in the wrong season.
+    public var solarLongitude: Angle
     public var sun: HorizontalCoordinate
     /// Apparent angular *radius* of the sun in radians.
     public var sunAngularRadius: Double
@@ -96,6 +102,7 @@ public struct SceneState: Sendable {
                     altitude: Angle(degrees: -30), azimuth: .zero),
                 moonAngularRadius: Double = 0.00452,
                 moonIllumination: Double = 0,
+                solarLongitude: Angle = Angle(degrees: 90),
                 sunAngularRadius: Double = 0.00465,
                 camera: Camera = Camera(),
                 turbidity: Float = 2.4,
@@ -111,6 +118,7 @@ public struct SceneState: Sendable {
         self.moon = moon
         self.moonAngularRadius = moonAngularRadius
         self.moonIllumination = moonIllumination
+        self.solarLongitude = solarLongitude
         self.sunAngularRadius = sunAngularRadius
         self.camera = camera
         self.turbidity = turbidity
@@ -139,6 +147,7 @@ public struct SceneState: Sendable {
                           moon: Moon.horizontal(at: ut, site: site),
                           moonAngularRadius: moonPosition.angularDiameter.radians / 2,
                           moonIllumination: phase.illuminatedFraction,
+                          solarLongitude: position.apparentLongitude,
                           sunAngularRadius: position.angularDiameter.radians / 2,
                           camera: camera)
     }
@@ -794,6 +803,24 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         var matrices = (matrix_identity_float4x4, matrix_identity_float4x4, matrix_identity_float4x4)
         var radii = SIMD4<Float>(splits.x, splits.y, splits.z, Self.shadowDepthSpan)
 
+        // Which light is casting.
+        //
+        // One shadow map, and at night the sun is not using it. A full moon
+        // gives about a quarter of a lux — enough to throw a shadow with an
+        // edge you can see, and standing among the stones under one is a large
+        // part of why people come. So when the sun is down and the moon is up
+        // and bright enough to matter, the cascades are fitted to the moon
+        // instead and the fragment shader applies them to the moonlight term.
+        //
+        // The threshold is on *illuminated fraction*, not altitude alone: a
+        // crescent casts nothing a person would call a shadow, and fitting
+        // cascades to it would spend the frame's shadow budget on nothing.
+        let moonDirection = state.moonDirection
+        let moonCasts = sunDirection.y <= 0.0002
+            && moonDirection.y > 0.05
+            && state.moonIllumination > 0.45
+        let shadowDirection = moonCasts ? moonDirection : sunDirection
+
         // Fit cascades whenever the sun is above the horizon at all.
         //
         // This threshold used to be 0.01, which is an altitude of 0.573° — so
@@ -809,18 +836,18 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         // exactly at grazing incidence. `state.sun` is already refracted, so
         // this is measured against the *apparent* horizon, which is the one you
         // see the sun rise over.
-        if sunDirection.y > 0.0002 {
+        if shadowDirection.y > 0.0002 {
             let m0 = Self.cascadeMatrix(camera: state.camera, aspect: aspect,
                                         near: state.camera.near, far: splits.x,
-                                        lightDirection: sunDirection,
+                                        lightDirection: shadowDirection,
                                         resolution: shadowResolution)
             let m1 = Self.cascadeMatrix(camera: state.camera, aspect: aspect,
                                         near: splits.x, far: splits.y,
-                                        lightDirection: sunDirection,
+                                        lightDirection: shadowDirection,
                                         resolution: shadowResolution)
             let m2 = Self.cascadeMatrix(camera: state.camera, aspect: aspect,
                                         near: splits.y, far: splits.z,
-                                        lightDirection: sunDirection,
+                                        lightDirection: shadowDirection,
                                         resolution: shadowResolution)
             matrices = (m0.matrix, m1.matrix, m2.matrix)
             radii = SIMD4(m0.radius, m1.radius, m2.radius, Self.shadowDepthSpan)
@@ -851,7 +878,14 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 return SIMD4(Float(sin(towards)), state.windSpeed,
                              Float(-cos(towards)), Float(state.windTime))
             }(),
-            grass: SIMD4(GrassField.radius, GrassField.fade, 0, 0)
+            grass: SIMD4(GrassField.radius, GrassField.fade, 0, 0),
+            night: NightPalette.colour(illuminatedFraction: state.moonIllumination,
+                                       moonAltitude: state.moon.altitude),
+            season: {
+                let palette = SeasonPalette.colour(atSolarLongitude: state.solarLongitude)
+                return SIMD4(palette.tint, palette.dryness)
+            }(),
+            shadowSource: SIMD4(moonCasts ? 1 : 0, 0, 0, 0)
         )
     }
 

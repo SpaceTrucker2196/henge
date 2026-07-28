@@ -29,6 +29,9 @@ struct FrameUniforms {
     float4   wind;           // xz: unit direction the wind blows toward,
                              // y: speed in m/s, w: seconds of wind time
     float4   grass;          // x: blade radius in metres, y: fade width, zw spare
+    float4   night;          // rgb night ambient, w: visibility floor
+    float4   season;         // rgb vegetation tint, w: dryness
+    float4   shadowSource;   // x: 0 sun-cast shadows, 1 moon-cast
 };
 
 struct DrawUniforms {
@@ -373,17 +376,59 @@ static Surface sampleStone(float3 worldPosition, float3 n,
                            texture2d<float> roughnessMap,
                            sampler surfaceSampler)
 {
-    float scale = 1.0 / max(draw.surface.y, 0.01);
+    // Per-stone randomisation of the mapping.
+    //
+    // One photographed rock face tiled across eighty stones repeats, and the
+    // eye finds it fast — the same crack in the same place on three uprights is
+    // more obviously wrong than no texture at all. Triplanar mapping makes this
+    // worse, not better: every stone samples the same world-space grid, so
+    // neighbours in a circle land on nearly the same texels.
+    //
+    // Three cheap breaks, all driven off `weather.w`, the per-stone seed that
+    // is already there for the weathering:
+    //
+    //   **Offset.** Each stone starts somewhere else in the texture.
+    //   **Rotation.** Each stone's mapping is turned, so the grain does not run
+    //   the same way twice. This is what kills the repeat — offsetting alone
+    //   leaves every stone with parallel bedding.
+    //   **Scale jitter.** ±12%, so the grain is not all the same size either.
+    //
+    // The rotation is per-plane as well as per-stone, which costs nothing and
+    // stops the three triplanar projections agreeing with each other.
+    float seed = draw.weather.w;
+    float2 offset = fract(float2(seed * 0.7548776662, seed * 0.5698402909)) * 8.0;
+    float jitter = 0.88 + fract(seed * 0.3141592653) * 0.24;
+    float scale = jitter / max(draw.surface.y, 0.01);
     float3 w = triplanarWeights(n);
 
-    float2 uvX = worldPosition.zy * scale;
-    float2 uvY = worldPosition.xz * scale;
-    float2 uvZ = worldPosition.xy * scale;
+    float turn = fract(seed * 0.6180339887) * 6.2831853;
+    float2x2 spinX = float2x2(cos(turn), -sin(turn), sin(turn), cos(turn));
+    float turnY = turn + 2.0943951;                      // +120°
+    float2x2 spinY = float2x2(cos(turnY), -sin(turnY), sin(turnY), cos(turnY));
+    float turnZ = turn + 4.1887902;                      // +240°
+    float2x2 spinZ = float2x2(cos(turnZ), -sin(turnZ), sin(turnZ), cos(turnZ));
+
+    float2 uvX = spinX * (worldPosition.zy * scale) + offset;
+    float2 uvY = spinY * (worldPosition.xz * scale) + offset.yx;
+    float2 uvZ = spinZ * (worldPosition.xy * scale) + offset;
 
     float3 cx = albedoMap.sample(surfaceSampler, uvX).rgb;
     float3 cy = albedoMap.sample(surfaceSampler, uvY).rgb;
     float3 cz = albedoMap.sample(surfaceSampler, uvZ).rgb;
     float3 colour = cx * w.x + cy * w.y + cz * w.z;
+
+    // And a second sample at an incommensurate scale, multiplied in — the same
+    // trick the ground uses. Within a single seven-metre upright the 1.5 m tile
+    // repeats four times over, and no amount of per-stone variation hides a
+    // repeat that happens inside one stone.
+    float2 broad = spinX * (worldPosition.zy * scale * 0.229) + offset;
+    float2 broadY = spinY * (worldPosition.xz * scale * 0.229) + offset.yx;
+    float2 broadZ = spinZ * (worldPosition.xy * scale * 0.229) + offset;
+    float3 bx = albedoMap.sample(surfaceSampler, broad).rgb;
+    float3 by = albedoMap.sample(surfaceSampler, broadY).rgb;
+    float3 bz = albedoMap.sample(surfaceSampler, broadZ).rgb;
+    float3 broadColour = bx * w.x + by * w.y + bz * w.z;
+    colour *= mix(float3(1.0), broadColour / kRockMean, 0.45);
 
     float rx = roughnessMap.sample(surfaceSampler, uvX).r;
     float ry = roughnessMap.sample(surfaceSampler, uvY).r;
@@ -412,6 +457,7 @@ static Surface sampleStone(float3 worldPosition, float3 n,
 }
 
 static Surface sampleGround(float3 worldPosition, float3 n, float turf,
+                            constant FrameUniforms &frame,
                             constant DrawUniforms &draw,
                             texture2d<float> albedoMap,
                             texture2d<float> normalMap,
@@ -428,6 +474,17 @@ static Surface sampleGround(float3 worldPosition, float3 n, float turf,
     float3 near = albedoMap.sample(surfaceSampler, uv).rgb;
     float3 far  = albedoMap.sample(surfaceSampler, uv * 0.137).rgb;
     float3 colour = near * mix(1.0, far / kGrassMean, 0.55);
+
+    // Erosion, read off the terrain itself.
+    //
+    // Chalk downland wears where water runs and gathers where it settles: a
+    // steep face is thin, pale and stony because the soil creeps off it, while
+    // a hollow holds moisture and grows rank and dark. The ground mesh already
+    // carries the real Salisbury Plain heightfield, so the surface normal is a
+    // measurement of slope — no extra data, no invented terrain features, just
+    // reading what the survey already said.
+    float groundSlope = clamp(1.0 - n.y, 0.0, 1.0);
+    float steepness = smoothstep(0.02, 0.22, groundSlope);
 
     // Where this fragment sits between bare soil and turf.
     //
@@ -465,7 +522,11 @@ static Surface sampleGround(float3 worldPosition, float3 n, float turf,
     // The path's own edge is broken by the fine mottle, so it has the frayed
     // margin a walked line really has instead of a clean band.
     trodden *= 0.55 + 0.75 * fineMottle;
-    float wear = clamp(max(natural, trodden), 0.0, 1.0);
+    // Steep ground is worn ground, and the season's dryness bleaches
+    // everything: high summer and autumn let far more chalk through than a wet
+    // spring does.
+    float wear = clamp(max(max(natural, trodden), steepness * 0.55)
+                       + frame.season.w * 0.22, 0.0, 1.0);
 
     colour = mix(colour, colour * 0.55 + kChalkAlbedo * kGrassMean * 1.15, wear * 0.6);
 
@@ -502,6 +563,10 @@ static Surface sampleGround(float3 worldPosition, float3 n, float turf,
     // soil banks and the turf they sit in are two ends of one range instead of
     // two separately-authored greens that never quite meet.
     float3 material = mix(kTurfAlbedo, kSoilAlbedo, soilness);
+    // The season tints the vegetation but not the bare earth under it — soil
+    // is soil in March and in September, and tinting it too made the whole
+    // world change hue like a filter rather than the grass changing colour.
+    material *= mix(frame.season.rgb, float3(1.0), soilness);
     out.albedo = material * (colour / kGrassMean);
     out.normal = bent;
     // Floored high. The old floor was 0.2, which is a polished floor, not a
@@ -649,8 +714,16 @@ static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
     // north is -Z and east is +X — the sheltered quarter faces -Z and +X.
     float up = clamp(n.y, 0.0, 1.0);
     float sheltered = clamp(-n.z * 0.5 + n.x * 0.25 + 0.5, 0.0, 1.0);
-    float patch = smoothstep(0.40, 0.72, fbm(p * 1.7));
-    float lichen = lichenAmount * clamp(up * 0.9 + sheltered * 0.7, 0.0, 1.0) * patch;
+    // Widened from 0.40–0.72. Four and a half thousand years of it: the
+    // sheltered faces of these stones are more lichen than rock, and the
+    // earlier range left them looking freshly quarried with a few spots on.
+    float patch = smoothstep(0.28, 0.66, fbm(p * 1.7));
+    float lichen = lichenAmount * clamp(up * 1.05 + sheltered * 0.85, 0.0, 1.0) * patch;
+
+    // Solution hollows. Rain standing on a horizontal ledge dissolves the
+    // silcrete's carbonate cement and leaves pits — the pocked upper surfaces
+    // that are the most distinctive thing about a weathered sarsen close to.
+    float pits = smoothstep(0.55, 0.85, fbm(p * 4.5)) * clamp(n.y, 0.0, 1.0);
 
     // Rain wash: vertical channels, so the noise is stretched hard along Y.
     float vertical = 1.0 - up;
@@ -669,6 +742,8 @@ static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
     albedo = mix(albedo, albedo * lichenTint * 1.45, clamp(lichen, 0.0, 1.0));
     albedo *= mix(1.0, washTint, wash * 0.40);
     albedo *= 1.0 + scour * 0.14;
+    // Pits read as shadow, not as stain: they are holes.
+    albedo *= 1.0 - pits * 0.32;
 
     float roughness = surface.roughness;
     roughness = mix(roughness, 0.96, clamp(lichen, 0.0, 1.0) * 0.85);  // lichen is matte
@@ -679,7 +754,8 @@ static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
     // what stops it reading as a decal printed on the stone.
     float3 crust = float3(fbm(p * 9.0) - 0.5, fbm(p * 9.0 + 17.0) - 0.5,
                           fbm(p * 9.0 + 43.0) - 0.5);
-    float3 normal = normalize(surface.normal + crust * lichen * 0.35);
+    float3 normal = normalize(surface.normal + crust * lichen * 0.35
+                              + crust * pits * 0.55);
 
     Surface out;
     out.albedo = albedo;
@@ -783,7 +859,7 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     Surface surface;
     if (draw.surface.w > 0.5) {
         if (draw.surface.x > 0.5) {
-            surface = sampleGround(in.worldPosition, geometricNormal, in.turf, draw,
+            surface = sampleGround(in.worldPosition, geometricNormal, in.turf, frame, draw,
                                    albedoMap, normalMap, roughnessMap, surfaceSampler);
             surface = blowGrass(surface, in.worldPosition, frame, draw);
         } else {
@@ -829,7 +905,14 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     specular *= draw.reflectance.x;
     float3 diffuse = (1.0 - f) * albedo / M_PI_F;
 
-    float3 direct = (diffuse + specular) * frame.sunRadiance.rgb * ndotl * shadow;
+    // The shadow map belongs to whichever light was fitted this frame. When
+    // the moon is casting, the sun is below the horizon and its term is zero
+    // anyway, so handing it an unshadowed 1 costs nothing and keeps the branch
+    // out of the inner loop.
+    float sunShadow = frame.shadowSource.x > 0.5 ? 1.0 : shadow;
+    float moonShadow = frame.shadowSource.x > 0.5 ? shadow : 1.0;
+
+    float3 direct = (diffuse + specular) * frame.sunRadiance.rgb * ndotl * sunShadow;
 
     // Moonlight. Unshadowed for now — giving the moon its own cascades is M5
     // work — so it is kept dim enough that the missing shadows do not read as
@@ -837,7 +920,7 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // thousandth of the sun, and the eye's own adaptation does the rest.
     float3 l2 = normalize(frame.moonDirection.xyz);
     float moonNdotL = max(dot(n, l2), 0.0);
-    direct += albedo / M_PI_F * frame.moonLight.rgb * moonNdotL;
+    direct += albedo / M_PI_F * frame.moonLight.rgb * moonNdotL * moonShadow;
 
     // Hemispheric ambient: sky from above, bounce from the ground below,
     // mixed by which way the surface looks.
@@ -861,6 +944,20 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // the sun, which is worse — the stones go flat pale and stop reading as
     // solid at all. The sun must remain the modelling light.
     float3 ambient = albedo * mix(groundBounce, skyFill, upwards) * 0.55;
+
+    // Night. The palette blends full moon to new across the lunar month, and
+    // its `w` is a floor — the least light any surface receives — so that the
+    // darkest night is dim but never illegible. A physically honest new moon on
+    // a screen is a black rectangle, and an app about standing among these
+    // stones cannot go blank for several hours a month.
+    //
+    // Faded in as the sun sets rather than switched: the crossover through
+    // twilight is the most-looked-at hour here and a step in it would be the
+    // first thing anyone noticed.
+    float nightness = 1.0 - smoothstep(-0.10, 0.06, frame.sunDirection.y);
+    float3 nightAmbient = frame.night.rgb * (0.35 + 0.65 * upwards);
+    ambient += albedo * nightAmbient * nightness;
+    ambient += albedo * frame.night.w * nightness;
 
     // Specular ambient: the sky, reflected.
     //
@@ -1123,7 +1220,13 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
     // This is doing the work an ambient-occlusion pass would, for nothing.
     float3 base = float3(0.13, 0.17, 0.07);
     float3 tipColour = float3(0.34, 0.42, 0.17);
-    float3 albedo = mix(base, tipColour, in.heightAlongBlade) * in.tint;
+    float3 albedo = mix(base, tipColour, in.heightAlongBlade) * in.tint
+        * frame.season.rgb;
+    // Parched grass loses its green from the tips down, which is why a dry
+    // sward reads as straw-coloured with green still in its base.
+    const float3 straw = float3(0.42, 0.36, 0.19);
+    albedo = mix(albedo, straw * in.tint,
+                 frame.season.w * in.heightAlongBlade * 0.75);
 
     float shadow = sampleShadow(shadowMap, shadowSampler, in.worldPosition,
                                 frame, in.viewDepth, max(dot(n, l), 0.05));
@@ -1143,6 +1246,8 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
     // enclosed. Same reasoning as the root darkening, and the two together are
     // what give a field depth rather than a uniform green.
     float3 ambient = albedo * skyColour * (0.16 + 0.34 * in.heightAlongBlade);
+    float nightness = 1.0 - smoothstep(-0.10, 0.06, frame.sunDirection.y);
+    ambient += albedo * (frame.night.rgb + frame.night.w) * nightness;
 
     float distance = length(frame.cameraPosition.xyz - in.worldPosition);
     float fogAmount = 1.0 - exp(-distance * 0.0016);

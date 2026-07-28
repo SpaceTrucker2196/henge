@@ -44,6 +44,15 @@ public struct FrameUniforms {
     /// x: how far out individual blades are drawn, metres. y: how wide the
     /// fade back into the textured ground is. zw spare.
     public var grass: SIMD4<Float>
+    /// rgb: ambient night colour for this phase of the moon. w: the visibility
+    /// floor — the least light any surface gets, so the darkest night stays
+    /// legible rather than becoming a black rectangle.
+    public var night: SIMD4<Float>
+    /// rgb: seasonal tint for vegetation. w: dryness, 0 lush to 1 parched.
+    public var season: SIMD4<Float>
+    /// x: 0 when the cascades were fitted to the sun, 1 when to the moon.
+    /// A single shadow map serves whichever light is actually casting.
+    public var shadowSource: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -60,7 +69,10 @@ public struct FrameUniforms {
                 moonLight: SIMD4<Float> = .zero,
                 cascadeRadii: SIMD4<Float> = SIMD4(24, 90, 320, 13),
                 wind: SIMD4<Float> = SIMD4(0, 0, 0, 0),
-                grass: SIMD4<Float> = SIMD4(28, 6, 0, 0)) {
+                grass: SIMD4<Float> = SIMD4(28, 6, 0, 0),
+                night: SIMD4<Float> = SIMD4(0.0075, 0.009, 0.0155, 0.0075),
+                season: SIMD4<Float> = SIMD4(1, 1, 1, 0.2),
+                shadowSource: SIMD4<Float> = .zero) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -76,6 +88,9 @@ public struct FrameUniforms {
         self.cascadeRadii = cascadeRadii
         self.wind = wind
         self.grass = grass
+        self.night = night
+        self.season = season
+        self.shadowSource = shadowSource
     }
 }
 
