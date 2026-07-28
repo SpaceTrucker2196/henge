@@ -8,3 +8,4 @@ the whole ledger: `ledger.py --energy-total`.
 | commit | date | model(s) | input | output | cache_read | cache_write | cost_usd | summary |
 |--------|------|----------|------:|-------:|-----------:|------------:|---------:|---------|
 <!-- ledger rows appended here -->
+| 138718c | 2026-07-28T18:17:47Z | claude-fable-5 | 303 | 300405 | 24096002 | 619947 | 51.5182 | Light shafts: volumetric haze pass with shadow-cascade beams at sunrise/sunset |
