@@ -1208,3 +1208,30 @@ within one stone.
 
 181 tests, both platforms warning-clean.
 
+## 2026-07-28 — The day bar
+
+The second panel from the bottom now carries the whole local day, midnight to
+midnight, coloured by where the sun is: night, the three twilights, day. It
+answers at a glance what the almanac answers in numbers — how far off is dawn —
+and it doubles as the scrub control, because a bar showing the shape of the day
+is the obvious thing to drag when you want a different hour of it. Tap jumps,
+drag scrubs, and either pauses the clock first.
+
+**The bands are sampled, not solved.** Solving for twilight boundaries means six
+root-finds that can each fail: inside the polar circles the sun may never cross
+a threshold at all, and this app runs anywhere across five millennia. Sampling
+altitude and colouring by band is unconditional — it draws a correct bar for a
+Wiltshire equinox and for a polar summer without a special case for either.
+
+Two facts the tests pin because they are real and would look like bugs:
+Wiltshire has **no astronomical night in midsummer** (the sun never gets 18°
+below the horizon), and local midnight in BST is **23:00 UT the previous day**,
+so scrubbing to the bar's left edge legitimately moves the UT date back while
+staying on the same local day. My first assertion compared UT dates and failed
+on the second of those — correct behaviour, wrong question.
+
+Deep time has no time zones, so before 1900 the local day is the solar one,
+15° to the hour.
+
+186 tests, both platforms warning-clean.
+

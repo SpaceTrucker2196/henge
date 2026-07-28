@@ -402,6 +402,56 @@ public final class SkyModel {
         time = time + (seconds * rate) / 86400.0
     }
 
+    // ── the shape of the day ────────────────────────────────────────────────
+
+    /// Hours the site's clock runs ahead of UT.
+    ///
+    /// Falls back to the longitude when civil time means nothing — there were
+    /// no time zones in 2500 BC, and the honest local day there is the solar
+    /// one, 15° to the hour.
+    public var clockOffsetHours: Double {
+        let year = calendarDate.year
+        if year > 1900, year < 2100 {
+            let date = Date(timeIntervalSince1970: (time.value - 2_440_587.5) * 86_400)
+            return Double(civilTimeZone.secondsFromGMT(for: date)) / 3600
+        }
+        return site.longitude.degrees / 15
+    }
+
+    /// Julian Day of local midnight beginning the day currently shown.
+    public var dayStart: JulianDay {
+        let offset = clockOffsetHours / 24
+        // JD begins at noon, so shift by half a day before flooring.
+        return JulianDay((time.value + offset + 0.5).rounded(.down) - 0.5 - offset)
+    }
+
+    /// Where in the day we are, 0 at local midnight to 1 at the next.
+    public var fractionOfDay: Double {
+        min(max(time.value - dayStart.value, 0), 1)
+    }
+
+    /// The sun's altitude across the whole local day.
+    ///
+    /// Sampled rather than solved. Solving for each twilight boundary means six
+    /// root-finds that can all fail — inside the polar circles the sun may
+    /// never cross a threshold at all, and this app runs anywhere and across
+    /// five millennia. Sampling the altitude and colouring by band is
+    /// unconditional: it draws a correct bar for a Wiltshire equinox and for a
+    /// polar summer without a special case for either.
+    public func dayProfile(samples: Int = 144) -> [Double] {
+        let start = dayStart
+        let site = self.site
+        return (0..<samples).map { step in
+            let moment = start + Double(step) / Double(samples)
+            return Sun.horizontal(at: moment, site: site).altitude.degrees
+        }
+    }
+
+    /// Move to a fraction through the local day, keeping the date.
+    public func scrub(toFractionOfDay fraction: Double) {
+        time = dayStart + min(max(fraction, 0), 1)
+    }
+
     // ── alignment ───────────────────────────────────────────────────────────
 
     /// The horizon the monument actually looks at, along a given bearing.

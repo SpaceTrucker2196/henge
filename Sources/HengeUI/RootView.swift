@@ -174,6 +174,15 @@ public struct RootView: View {
     ]
 
     private var timeBar: some View {
+        VStack(spacing: 10) {
+            DayBar(model: model)
+            timeControls
+        }
+        .padding(10)
+        .hengePanel()
+    }
+
+    private var timeControls: some View {
         HStack(spacing: 8) {
             Button {
                 model.isPlaying.toggle()
@@ -226,8 +235,6 @@ public struct RootView: View {
             .accessibilityHint("What is known, what is argued, and what is modern "
                                + "tradition — each with its sources")
         }
-        .padding(8)
-        .hengePanel()
     }
 
     // ── what is coming ──────────────────────────────────────────────────────

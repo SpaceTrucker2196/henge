@@ -168,3 +168,85 @@ extension SkyModelTests {
         XCTAssertLessThan(abs(direction.y), 0.999, "the camera is looking straight down")
     }
 }
+
+extension SkyModelTests {
+
+    /// The day bar's profile covers a whole local day and finds the sun.
+    func testTheDayProfileSpansOneDay() {
+        let model = SkyModel()
+        model.viewpoint = .stonehenge
+        model.time = JulianDay(CalendarDate(year: 2026, month: 6, day: 21, hour: 12))
+
+        let profile = model.dayProfile(samples: 96)
+        XCTAssertEqual(profile.count, 96)
+        // Midsummer at 51° N: the sun climbs past 60° and dips below the
+        // horizon, but never as far as astronomical night — Wiltshire has none
+        // in June, which is a real fact the bar should show.
+        XCTAssertGreaterThan(profile.max() ?? 0, 58)
+        XCTAssertLessThan(profile.min() ?? 0, 0)
+        XCTAssertGreaterThan(profile.min() ?? -90, -18,
+                             "there is no astronomical night here in midsummer")
+    }
+
+    /// Midwinter is the other case, and must reach real night.
+    func testMidwinterReachesAstronomicalNight() {
+        let model = SkyModel()
+        model.viewpoint = .stonehenge
+        model.time = JulianDay(CalendarDate(year: 2026, month: 12, day: 21, hour: 12))
+        let profile = model.dayProfile(samples: 96)
+        XCTAssertLessThan(profile.min() ?? 0, -18)
+        XCTAssertLessThan(profile.max() ?? 90, 20, "the midwinter sun stays low")
+    }
+
+    /// Scrubbing lands where it was asked to, and keeps the date.
+    func testScrubbingMovesWithinTheDay() {
+        let model = SkyModel()
+        model.viewpoint = .stonehenge
+        model.time = JulianDay(CalendarDate(year: 2026, month: 6, day: 21, hour: 3))
+        // The *local* day, not the UT one. In BST local midnight is 23:00 UT
+        // the previous evening, so scrubbing to the left edge of the bar
+        // legitimately moves the UT date back a day while staying on the same
+        // local day — which is the day the bar is showing.
+        let localDay = model.dayStart.value
+
+        for fraction in [0.0, 0.25, 0.5, 0.75, 0.999] {
+            model.scrub(toFractionOfDay: fraction)
+            XCTAssertEqual(model.fractionOfDay, fraction, accuracy: 1e-6)
+            XCTAssertEqual(model.dayStart.value, localDay, accuracy: 1e-6,
+                           "scrubbing to \(fraction) left the local day")
+        }
+
+        // Out of range is clamped rather than wrapping into another date.
+        model.scrub(toFractionOfDay: 1.8)
+        XCTAssertLessThanOrEqual(model.fractionOfDay, 1.0)
+        model.scrub(toFractionOfDay: -0.5)
+        XCTAssertGreaterThanOrEqual(model.fractionOfDay, 0.0)
+    }
+
+    /// Local midnight is local midnight: the bar's left edge is 00:00 on the
+    /// site's clock, not on UT.
+    func testTheDayStartsAtLocalMidnight() {
+        let model = SkyModel()
+        model.viewpoint = .stonehenge
+        model.time = JulianDay(CalendarDate(year: 2026, month: 6, day: 21, hour: 15))
+
+        // BST is UT+1 in June, so local midnight is 23:00 UT the day before.
+        let start = model.dayStart.calendarDate
+        let hourUT = (start.day - start.day.rounded(.down)) * 24
+        XCTAssertEqual(hourUT, 23, accuracy: 0.02,
+                       "local midnight landed at \(hourUT):00 UT")
+    }
+
+    /// Deep time has no time zones, so the local day is the solar one.
+    func testDeepTimeUsesTheSolarDay() {
+        let model = SkyModel()
+        model.viewpoint = .stonehenge
+        model.time = JulianDay(CalendarDate(year: -2500, month: 7, day: 14, hour: 12))
+
+        XCTAssertEqual(model.clockOffsetHours, GeographicSite.stonehenge.longitude.degrees / 15,
+                       accuracy: 1e-9)
+        let profile = model.dayProfile(samples: 48)
+        XCTAssertEqual(profile.count, 48)
+        XCTAssertGreaterThan(profile.max() ?? 0, 55, "midsummer sun in the builders' era")
+    }
+}
