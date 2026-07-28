@@ -38,6 +38,9 @@ public struct FrameUniforms {
     /// a tuned constant, which is exactly what it must not be — the whole
     /// point is that the penumbra follows from the sun's angular size.
     public var cascadeRadii: SIMD4<Float>
+    /// xz: the unit direction the wind blows *toward*. y: speed in m/s.
+    /// w: wind time in seconds — wall-clock, not the astronomical clock.
+    public var wind: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -52,7 +55,8 @@ public struct FrameUniforms {
                 skyParameters: SIMD4<Float> = SIMD4(2.2, 1, 0, 1.0 / 2048.0),
                 moonDirection: SIMD4<Float> = SIMD4(0, -1, 0, 0.0045),
                 moonLight: SIMD4<Float> = .zero,
-                cascadeRadii: SIMD4<Float> = SIMD4(24, 90, 320, 13)) {
+                cascadeRadii: SIMD4<Float> = SIMD4(24, 90, 320, 13),
+                wind: SIMD4<Float> = SIMD4(0, 0, 0, 0)) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -66,6 +70,7 @@ public struct FrameUniforms {
         self.moonDirection = moonDirection
         self.moonLight = moonLight
         self.cascadeRadii = cascadeRadii
+        self.wind = wind
     }
 }
 
@@ -83,17 +88,24 @@ public struct DrawUniforms {
     /// fragment sits. y: how much lichen, 0 for none. z: how far damp wicks up,
     /// in metres. w: per-stone seed, so no two weather alike.
     public var weather: SIMD4<Float>
+    /// x: specular strength, 1 for a solid surface and much less for grass.
+    /// y: the lowest roughness this surface may reach. z: 1 if the wind moves
+    /// it. w: spare.
+    public var reflectance: SIMD4<Float>
+
 
     public init(model: float4x4 = matrix_identity_float4x4,
                 normalMatrix: float4x4 = matrix_identity_float4x4,
                 albedo: SIMD4<Float> = SIMD4(0.55, 0.53, 0.48, 0.85),
                 surface: SIMD4<Float> = SIMD4(0, 1.4, 1.0, 1),
-                weather: SIMD4<Float> = SIMD4(0, 0, 0.55, 0)) {
+                weather: SIMD4<Float> = SIMD4(0, 0, 0.55, 0),
+                reflectance: SIMD4<Float> = SIMD4(1, 0.14, 0, 0)) {
         self.model = model
         self.normalMatrix = normalMatrix
         self.albedo = albedo
         self.surface = surface
         self.weather = weather
+        self.reflectance = reflectance
     }
 }
 
@@ -120,6 +132,16 @@ public enum SurfaceMaterial {
     public static let bluestone = SIMD4<Float>(0.34, 0.36, 0.41, 0.80)
     /// Chalk grassland.
     public static let turf = SIMD4<Float>(0.28, 0.32, 0.18, 0.95)
+
+    /// How much specular a surface returns, and how smooth it may get.
+    ///
+    /// Grass is the odd one out and the reason this exists. A dielectric F0 of
+    /// 0.04 is right for a solid; grass is a mass of thin blades with air
+    /// between them, and most of what would be a specular lobe scatters instead.
+    /// At full strength with a 0.2 roughness floor it grew a bright rim along
+    /// every slope facing a low sun — the hour this app is entirely about.
+    public static let stoneReflectance = SIMD4<Float>(1.0, 0.14, 0, 0)
+    public static let turfReflectance = SIMD4<Float>(0.22, 0.74, 1, 0)
     /// Weathered chalk, for the Aubrey holes.
     public static let chalk = SIMD4<Float>(0.74, 0.72, 0.66, 0.92)
 

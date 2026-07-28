@@ -26,6 +26,8 @@ struct FrameUniforms {
     float4   moonLight;      // rgb radiance, w = illuminated fraction
     float4   cascadeRadii;   // xyz: half-extent in metres of each cascade's ortho
                              // box. w: how many radii deep that box runs
+    float4   wind;           // xz: unit direction the wind blows toward,
+                             // y: speed in m/s, w: seconds of wind time
 };
 
 struct DrawUniforms {
@@ -36,6 +38,8 @@ struct DrawUniforms {
                              // z: normal strength, w: 1 textured / 0 flat
     float4   weather;        // x: world Y of the stone's foot, y: lichen amount,
                              // z: damp rise in metres, w: per-stone seed
+    float4   reflectance;    // x: specular strength, y: roughness floor,
+                             // z: 1 if the surface takes wind, w: spare
 };
 
 struct Vertex {
@@ -221,6 +225,48 @@ static float sampleShadow(depth2d_array<float> shadowMap,
     return sum / 16.0;
 }
 
+// ── noise ───────────────────────────────────────────────────────────────────
+//
+// Shared by the weathering and the wind, and declared up here because MSL has
+// no forward declarations: putting it beside its first user left `windField`
+// calling an `fbm` the compiler had not seen yet, and the whole library failed
+// to build. Nothing rendered at all, which the suite caught immediately — the
+// one failure mode a pixel test cannot miss.
+
+static float hash13(float3 p)
+{
+    p = fract(p * 0.1031);
+    p += dot(p, p.yzx + 33.33);
+    return fract((p.x + p.y) * p.z);
+}
+
+static float valueNoise(float3 p)
+{
+    float3 i = floor(p);
+    float3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);          // smoothstep, so the derivative is continuous
+
+    float n000 = hash13(i + float3(0, 0, 0)), n100 = hash13(i + float3(1, 0, 0));
+    float n010 = hash13(i + float3(0, 1, 0)), n110 = hash13(i + float3(1, 1, 0));
+    float n001 = hash13(i + float3(0, 0, 1)), n101 = hash13(i + float3(1, 0, 1));
+    float n011 = hash13(i + float3(0, 1, 1)), n111 = hash13(i + float3(1, 1, 1));
+
+    float nx00 = mix(n000, n100, f.x), nx10 = mix(n010, n110, f.x);
+    float nx01 = mix(n001, n101, f.x), nx11 = mix(n011, n111, f.x);
+    return mix(mix(nx00, nx10, f.y), mix(nx01, nx11, f.y), f.z);
+}
+
+static float fbm(float3 p)
+{
+    float sum = 0.0, amplitude = 0.5;
+    for (int i = 0; i < 4; ++i) {
+        sum += amplitude * valueNoise(p);
+        p *= 2.03;                         // not exactly 2, to avoid the octaves
+        amplitude *= 0.5;                  // lining their features up
+    }
+    return sum;
+}
+
 // ── surface texture ─────────────────────────────────────────────────────────
 //
 // The stones carry no UVs, deliberately: `StoneMesh` welds a box grid and any
@@ -327,8 +373,101 @@ static Surface sampleGround(float3 worldPosition, float3 n,
     Surface out;
     out.albedo = draw.albedo.rgb * (colour / kGrassMean);
     out.normal = bent;
+    // Floored high. The old floor was 0.2, which is a polished floor, not a
+    // hillside — and combined with a dielectric F0 of 0.04 and Fresnel at
+    // grazing incidence it put a bright specular rim along every distant slope.
+    // Grass is a mass of thin scattering blades: it has a faint sheen when the
+    // sun is behind it and is otherwise as matte as a surface gets.
     out.roughness = clamp(draw.albedo.w
-                          * roughnessMap.sample(surfaceSampler, uv).r * 2.0, 0.2, 1.0);
+                          * roughnessMap.sample(surfaceSampler, uv).r * 2.0,
+                          draw.reflectance.y, 1.0);
+    return out;
+}
+
+// ── wind over the grass ─────────────────────────────────────────────────────
+//
+// No blade geometry. At eye height on a plain that runs to the horizon, what
+// you actually see of wind in grass is not individual blades moving — it is the
+// *shading* changing across a field as gusts lay the blades over, the pale
+// travelling cat's-paws that cross a meadow ahead of a squall. That is a
+// reflectance effect, and it can be modelled where reflectance lives.
+//
+// The field is noise advected along the wind, which is what makes gusts travel
+// rather than pulse in place. Two scales, because real wind has two: broad
+// fronts tens of metres across, and a finer ripple riding on them. They move at
+// different speeds so they never lock into a repeating pattern.
+//
+// Bending changes two things, and both are needed or it reads as a stain
+// sliding over the ground:
+//
+//   **The normal tilts toward the wind.** Blades lie over downwind, so the
+//   surface they present tips that way.
+//
+//   **The surface goes paler and smoother.** A standing blade shows its edge; a
+//   bent one shows its flat, waxier underside. That is why a gust reads as a
+//   silver wave running away from you — it is the undersides catching the sky.
+//
+// Wind time is *wall-clock*, deliberately, and is not the app's astronomical
+// clock. At a day a second the sun must race and the wind must not: a breeze
+// that sped up with the time-lapse would be a strobe.
+static float windField(float2 groundXZ, constant FrameUniforms &frame)
+{
+    float2 direction = frame.wind.xz;
+    float speed = frame.wind.y;
+    float t = frame.wind.w;
+
+    // Spatial and temporal factors are deliberately the same number in each
+    // term. `p * k - dir * speed * t * k` advects the pattern at exactly
+    // `speed` metres per second; different factors would make the gusts travel
+    // at some other speed than the wind, which is the sort of thing that reads
+    // as wrong without being nameable.
+    //
+    // Scales matter more than they look. The first version used 40 m fronts,
+    // which is a plausible gust and larger than the patch of ground a standing
+    // viewer has in front of them — so the whole near field gated on and off
+    // together instead of a wave crossing it, and six seconds of wind produced
+    // a byte-identical frame. Fronts are now ~33 m and the ripple ~3 m, so both
+    // vary within a few paces.
+    const float frontScale = 0.03;      // ~33 m
+    const float rippleScale = 0.34;     // ~3 m
+    // The surface ripple outruns the mean wind; it is the fastest air, nearest
+    // the top of the sward.
+    const float rippleSpeed = 1.25;
+
+    float2 broad = groundXZ * frontScale - direction * (speed * t * frontScale);
+    float front = fbm(float3(broad.x, 0.0, broad.y));
+
+    float2 fine = groundXZ * rippleScale
+        - direction * (speed * rippleSpeed * t * rippleScale);
+    float ripple = fbm(float3(fine.x, 11.0, fine.y));
+
+    // Gusts modulate the ripple's strength rather than gating it. A hard gate
+    // meant that wherever the front was weak the grass was perfectly still,
+    // which is not what a windy day looks like — the sward is always working,
+    // and the gusts are where it works hardest.
+    float gust = smoothstep(0.22, 0.72, front);
+    return clamp((0.28 + 0.72 * gust) * (0.30 + 0.70 * ripple), 0.0, 1.0);
+}
+
+static Surface blowGrass(Surface surface, float3 worldPosition,
+                         constant FrameUniforms &frame, constant DrawUniforms &draw)
+{
+    if (draw.reflectance.z < 0.5 || frame.wind.y <= 0.0) { return surface; }
+
+    float bend = windField(worldPosition.xz, frame);
+
+    float3 downwind = float3(frame.wind.x, 0.0, frame.wind.z);
+
+    Surface out;
+    // Paler where laid over — the undersides catching the sky.
+    out.albedo = surface.albedo * (1.0 + bend * 0.28);
+    // Tilting the normal is what carries most of the effect: it changes n·l,
+    // so a gust reads differently depending on where the sun is, and crossing
+    // grass toward a low sun brightens while crossing away from it darkens.
+    // A constant albedo wobble would look the same in every light.
+    out.normal = normalize(surface.normal + downwind * bend * 0.45);
+    // Smoother, but nowhere near shiny: a waxy leaf back, not a mirror.
+    out.roughness = clamp(surface.roughness - bend * 0.12, draw.reflectance.y, 1.0);
     return out;
 }
 
@@ -362,40 +501,6 @@ static Surface sampleGround(float3 worldPosition, float3 n,
 // stone from `Stone.seed`, so no two weather alike and the pattern is stable
 // across frames — a weathering that shimmered as the camera moved would be
 // worse than none.
-static float hash13(float3 p)
-{
-    p = fract(p * 0.1031);
-    p += dot(p, p.yzx + 33.33);
-    return fract((p.x + p.y) * p.z);
-}
-
-static float valueNoise(float3 p)
-{
-    float3 i = floor(p);
-    float3 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);          // smoothstep, so the derivative is continuous
-
-    float n000 = hash13(i + float3(0, 0, 0)), n100 = hash13(i + float3(1, 0, 0));
-    float n010 = hash13(i + float3(0, 1, 0)), n110 = hash13(i + float3(1, 1, 0));
-    float n001 = hash13(i + float3(0, 0, 1)), n101 = hash13(i + float3(1, 0, 1));
-    float n011 = hash13(i + float3(0, 1, 1)), n111 = hash13(i + float3(1, 1, 1));
-
-    float nx00 = mix(n000, n100, f.x), nx10 = mix(n010, n110, f.x);
-    float nx01 = mix(n001, n101, f.x), nx11 = mix(n011, n111, f.x);
-    return mix(mix(nx00, nx10, f.y), mix(nx01, nx11, f.y), f.z);
-}
-
-static float fbm(float3 p)
-{
-    float sum = 0.0, amplitude = 0.5;
-    for (int i = 0; i < 4; ++i) {
-        sum += amplitude * valueNoise(p);
-        p *= 2.03;                         // not exactly 2, to avoid the octaves
-        amplitude *= 0.5;                  // lining their features up
-    }
-    return sum;
-}
-
 static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
                             constant DrawUniforms &draw)
 {
@@ -549,6 +654,7 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
         if (draw.surface.x > 0.5) {
             surface = sampleGround(in.worldPosition, geometricNormal, draw,
                                    albedoMap, normalMap, roughnessMap, surfaceSampler);
+            surface = blowGrass(surface, in.worldPosition, frame, draw);
         } else {
             surface = sampleStone(in.worldPosition, geometricNormal, draw,
                                   albedoMap, normalMap, roughnessMap, surfaceSampler);
@@ -583,7 +689,13 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     float3 f = fresnelSchlick(max(dot(h, v), 0.0), f0);
     float ndf = distributionGGX(n, h, roughness);
     float g = geometrySmith(n, v, l, roughness);
+    // Specular strength is per material. A dielectric F0 of 0.04 is right for
+    // a solid surface, and grass is not one — it is a mass of thin blades with
+    // air between them, and most of what would be a specular lobe scatters
+    // instead. Left at full strength the plain grew a bright rim along every
+    // slope facing the low sun, which is the hour that matters most here.
     float3 specular = (ndf * g * f) / max(4.0 * max(dot(n, v), 0.0) * ndotl, 1e-4);
+    specular *= draw.reflectance.x;
     float3 diffuse = (1.0 - f) * albedo / M_PI_F;
 
     float3 direct = (diffuse + specular) * frame.sunRadiance.rgb * ndotl * shadow;
@@ -618,6 +730,28 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // the sun, which is worse — the stones go flat pale and stop reading as
     // solid at all. The sun must remain the modelling light.
     float3 ambient = albedo * mix(groundBounce, skyFill, upwards) * 0.55;
+
+    // Specular ambient: the sky, reflected.
+    //
+    // Until now the only specular in the scene came from the sun, which meant
+    // that away from the sun's own highlight every surface was purely diffuse —
+    // and a wet sarsen with no sheen from the sky above it reads as chalk. The
+    // sky model is closed form, so it can simply be evaluated down the
+    // reflection vector: the actual colour of the actual sky in the direction
+    // the surface is looking. At dawn that puts the sunrise itself faintly on
+    // the eastern faces, which is the whole point of the app.
+    //
+    // Weighted by Fresnel — reflections strengthen at grazing angles, and that
+    // is most of why wet things look wet — and folded down by roughness, since
+    // a rough surface scatters the reflection into the diffuse term instead.
+    float3 reflected = reflect(-v, n);
+    float3 skyReflection = preethamSky(normalize(float3(reflected.x,
+                                                        max(reflected.y, 0.02),
+                                                        reflected.z)),
+                                       l, frame.skyParameters.x);
+    float grazing = fresnelSchlick(max(dot(n, v), 0.0), f0).r;
+    float gloss = (1.0 - roughness) * (1.0 - roughness);
+    ambient += skyReflection * grazing * gloss * draw.reflectance.x * 0.85;
 
     // Cheap wrap term so the terminator is not a hard line — light does creep
     // around a boulder, and a knife edge there is the other thing that reads

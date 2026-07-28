@@ -337,6 +337,8 @@ public struct RootView: View {
             row("Moon altitude", String(format: "%.2f°", model.moon.altitude.degrees))
             row("Lunar swing", model.standstill)
             row("Pole star", model.poleStar)
+            row("Wind", model.windSpeed > 0
+                ? String(format: "%.1f m/s SW", model.windSpeed) : "still")
             row("Aubrey", String(format: "%.1f holes to node", model.aubrey.sunToNode))
             if model.isAubreyEclipseSeason {
                 row("", "eclipse season — hypothesis")

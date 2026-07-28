@@ -834,3 +834,80 @@ monument stays faintly present behind the reading.
 
 151 tests, both platforms warning-clean.
 
+## 2026-07-28 — Reflections, matte grass, and wind on the plain
+
+### The sky, reflected
+
+Until now the only specular in the scene came from the sun, so away from its own
+highlight every surface was purely diffuse — and a wet sarsen with no sheen off
+the sky above it reads as chalk. The sky model is closed form, so it can simply
+be evaluated down the reflection vector: the actual colour of the actual sky in
+the direction the surface is looking. At dawn that puts the sunrise itself
+faintly on the eastern faces, which is the whole point of the app. Weighted by
+Fresnel, since reflections strengthen at grazing angles and that is most of why
+wet things look wet, and folded down by roughness.
+
+### Grass does not shine
+
+`sampleGround` floored roughness at 0.2 — a polished floor, not a hillside — and
+grass carried the full dielectric F0 of 0.04. Grass is not a solid surface: it is
+a mass of thin blades with air between them, and most of what would be a
+specular lobe scatters instead. Materials now carry a specular strength and a
+roughness floor, turf at 0.22 and 0.74.
+
+The test for it was wrong twice, in the two ways a rendering test usually is.
+It looked *away* from the sun, so it could not have found a highlight if one
+existed — a specular lobe only appears between viewer and light. And it sampled
+to the horizon, where aerial perspective blends turf into sky, then read that fog
+as a highlight thirty-two times the median. Reframed to look toward the sun and
+sample the near ground, the ratio is 1.43 on a well-lit field. It also asserts
+the ground is bright enough for the question to mean anything, because a black
+frame has no highlight either.
+
+### Wind
+
+No blade geometry. What you actually see of wind in grass at eye height on a
+plain is not individual blades but the *shading* changing as gusts lay the sward
+over — the pale travelling cat's-paws that cross a meadow ahead of a squall.
+That is a reflectance effect and belongs where reflectance lives.
+
+Noise advected along the wind, which is what makes gusts travel rather than
+pulse in place; two scales, because real wind has two. Bending both tilts the
+normal downwind and pales the surface, and both are needed: the tilt changes n·l
+so a gust reads differently depending on where the sun is, while a pure albedo
+wobble would look identical in every light.
+
+**Wind keeps wall-clock time, never the astronomical clock.** Time here runs at
+up to a day a second; a breeze scaled by that would be a strobe, one frozen while
+time is paused would be a photograph. It advances from real elapsed seconds and
+is not gated on `isPlaying`.
+
+Two bugs found by measurement rather than by looking:
+
+**The gust fronts were bigger than the ground.** At 40 m a front is larger than
+the patch a standing viewer has in front of them, so the whole near field gated
+on and off together rather than a wave crossing it — six seconds of wind produced
+a byte-identical frame. Fronts are now ~33 m and the ripple ~3 m, both varying
+within a few paces. The hard gate became a soft modulation for the same reason:
+wherever the front was weak the grass was perfectly still, and a windy day does
+not look like that. The sward is always working; gusts are where it works hardest.
+
+**Spatial and temporal factors must match.** `p·k − dir·speed·t·k` advects the
+pattern at exactly `speed` m/s. Different factors send the gusts across the plain
+at some speed other than the wind's, which reads as wrong without being nameable.
+
+The shader also failed to compile at one point — `windField` called an `fbm`
+declared below it, and MSL has no forward declarations. Nothing rendered at all,
+which the suite caught instantly. The one failure mode a pixel test cannot miss.
+
+### And a test target that should have existed
+
+`SkyModel` is the app's whole state machine — every jump, every clock, every
+number the almanac prints — and had no tests whatever until the wind needed one
+and there was nowhere to put it. `HengeUITests` now covers the wall-clock/sky-clock
+split, that the scene and the almanac share one sun, that station jumps land on
+the sun's arrival rather than a calendar date, and that zoom is bounded at both
+ends in both kinds of view.
+
+163 tests, both platforms warning-clean.
+

@@ -218,8 +218,21 @@ public final class SkyModel {
         }
     }
 
+    /// Wall-clock seconds the wind has been blowing this session.
+    ///
+    /// Advanced from real elapsed time, never from the astronomical clock, and
+    /// never gated on `isPlaying` — the breeze does not stop because you paused
+    /// the sun. See `SceneState.windTime`.
+    public var windTime: Double = 0
+
+    /// How hard it is blowing, m/s. Zero for a still day.
+    public var windSpeed: Double = 4.5
+
     public var sceneState: SceneState {
-        SceneState.at(time, site: site, camera: camera)
+        var state = SceneState.at(time, site: site, camera: camera)
+        state.windTime = windTime
+        state.windSpeed = Float(windSpeed)
+        return state
     }
 
     // ── the almanac ─────────────────────────────────────────────────────────
@@ -344,7 +357,12 @@ public final class SkyModel {
     // ── playback ────────────────────────────────────────────────────────────
 
     /// Advance by a wall-clock interval scaled by the current rate.
+    ///
+    /// The wind is advanced first and unconditionally: it keeps wall-clock
+    /// time, so it must not be scaled by the rate and must not stop when the
+    /// astronomical clock is paused.
     public func advance(byRealSeconds seconds: Double) {
+        windTime += seconds
         guard isPlaying else { return }
         time = time + (seconds * rate) / 86400.0
     }

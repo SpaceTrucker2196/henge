@@ -78,6 +78,15 @@ let package = Package(
             dependencies: ["HengeEngine", "HengeGeometry", "HengeAstro"],
             path: "Tests/HengeEngineTests",
             swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        // `SkyModel` is the app's whole state machine — every jump, every
+        // clock, every readout the almanac shows — and it had no tests at all
+        // until the wind needed one. Added when that gap became load-bearing.
+        .testTarget(
+            name: "HengeUITests",
+            dependencies: ["HengeUI", "HengeEngine", "HengeGeometry", "HengeAstro"],
+            path: "Tests/HengeUITests",
+            swiftSettings: [.swiftLanguageMode(.v6)]
         )
     ]
 )

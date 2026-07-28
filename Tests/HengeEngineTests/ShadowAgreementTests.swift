@@ -270,15 +270,17 @@ final class RendererSetupTests: XCTestCase {
     /// Swift and MSL agree on struct layout by hand, so a size change on one
     /// side without the other is exactly the bug this catches.
     func testUniformLayoutsAreTheExpectedSize() {
-        // 7 matrices × 64 bytes + 8 float4s × 16 bytes. The eighth is
-        // `cascadeRadii`, added for PCSS — and this assertion caught the
-        // change, which is the whole reason it is written as arithmetic rather
-        // than a magic number. Adding a field on one side only would have
-        // silently reinterpreted every uniform after it.
-        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 8 * 16)
+        // 7 matrices × 64 bytes + 9 float4s × 16 bytes: the last two are
+        // `cascadeRadii` (PCSS) and `wind`. This assertion has now caught three
+        // separate field additions, which is the whole reason it is written as
+        // arithmetic rather than a magic number — adding a field on one side
+        // only silently reinterprets every uniform after it, and the result is
+        // a plausible-looking render rather than a crash.
+        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 9 * 16)
         // 2 matrices + albedo + `surface` (which map set, tile size, normal
-        // strength) + `weather` (the stone's foot, lichen, damp, seed).
-        XCTAssertEqual(MemoryLayout<DrawUniforms>.size, 2 * 64 + 3 * 16)
+        // strength) + `weather` (the stone's foot, lichen, damp, seed)
+        // + `reflectance` (specular strength, roughness floor, takes wind).
+        XCTAssertEqual(MemoryLayout<DrawUniforms>.size, 2 * 64 + 4 * 16)
         XCTAssertEqual(MemoryLayout<MeshVertex>.stride, 32)
     }
 

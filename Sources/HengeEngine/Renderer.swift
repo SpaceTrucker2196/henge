@@ -8,6 +8,29 @@ import HengeGeometry
 /// Everything the renderer needs to know about the moment being drawn.
 public struct SceneState: Sendable {
 
+    /// Wind speed at the surface, m/s. Zero stops the grass dead.
+    ///
+    /// Default 4.5 — a fresh breeze, and about the annual mean at 10 m on
+    /// Salisbury Plain. Fast enough to see, slow enough not to distract from a
+    /// sunrise.
+    public var windSpeed: Float
+
+    /// The bearing the wind blows *from*, degrees.
+    ///
+    /// 250° — south-westerly, which is the prevailing wind over southern
+    /// England for most of the year. A detail nobody will name, and one that
+    /// would be quietly wrong if the gusts crossed the plain the other way.
+    public var windBearing: Double
+
+    /// Seconds of wind, on the wall clock.
+    ///
+    /// **Not the astronomical clock, and this is the whole design.** Time in
+    /// this app runs at up to a day a second. A wind that scaled with it would
+    /// be a strobe; a wind frozen while time is paused would be a photograph.
+    /// So the breeze keeps its own time, advancing in real seconds whether the
+    /// sun is racing, crawling or stopped.
+    public var windTime: Double
+
     /// Whether the stones carry four thousand years of weather.
     ///
     /// Separate from `surfaceTexturing` because it is a separate claim, and
@@ -56,7 +79,10 @@ public struct SceneState: Sendable {
                 turbidity: Float = 2.4,
                 exposure: Float = 1.6,
                 surfaceTexturing: Bool = true,
-                weathering: Bool = true) {
+                weathering: Bool = true,
+                windSpeed: Float = 4.5,
+                windBearing: Double = 250,
+                windTime: Double = 0) {
         self.sun = sun
         self.moon = moon
         self.moonAngularRadius = moonAngularRadius
@@ -67,6 +93,9 @@ public struct SceneState: Sendable {
         self.exposure = exposure
         self.surfaceTexturing = surfaceTexturing
         self.weathering = weathering
+        self.windSpeed = windSpeed
+        self.windBearing = windBearing
+        self.windTime = windTime
     }
 
     /// Build the state for a moment in time at a site. This is the only path
@@ -470,7 +499,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                             weather: SIMD4(mesh.positions.map(\.y).min() ?? 0,
                                            kind == .grass ? 0 : 1,
                                            0.55,
-                                           Float(seed % 997))),
+                                           Float(seed % 997)),
+                            reflectance: kind == .grass
+                                ? SurfaceMaterial.turfReflectance
+                                : SurfaceMaterial.stoneReflectance),
                         castsShadow: castsShadow,
                         surfaceKind: kind)
     }
@@ -670,7 +702,16 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                  1.0 / Float(shadowResolution)),
             moonDirection: SIMD4(state.moonDirection, Float(state.moonAngularRadius)),
             moonLight: SIMD4(state.moonRadiance, Float(state.moonIllumination)),
-            cascadeRadii: radii
+            cascadeRadii: radii,
+            wind: {
+                // Bearing is where the wind comes *from*; the shader wants the
+                // direction it travels, so this is the reciprocal. Getting it
+                // backwards would send every gust upwind, which is the sort of
+                // thing that looks subtly wrong and is hard to name.
+                let towards = (state.windBearing + 180) * .pi / 180
+                return SIMD4(Float(sin(towards)), state.windSpeed,
+                             Float(-cos(towards)), Float(state.windTime))
+            }()
         )
     }
 
