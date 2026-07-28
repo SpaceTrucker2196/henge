@@ -51,6 +51,28 @@ public struct LunarPhase: Sendable, Hashable {
         default: "New"
         }
     }
+
+    /// The SF Symbol for this phase, keyed off the same age bands as `name`
+    /// so the glyph and the word can never disagree. It lives here rather
+    /// than in the view for the usual reason: a mapping in SwiftUI is a
+    /// mapping no test reaches, and a waxing moon drawn waning is exactly
+    /// the kind of quiet wrongness this app exists to not commit.
+    ///
+    /// These are the northern-hemisphere glyphs, which is the sky the
+    /// monument stands under.
+    public var symbolName: String {
+        switch age {
+        case ..<1.85: "moonphase.new.moon"
+        case ..<5.5: "moonphase.waxing.crescent"
+        case ..<9.2: "moonphase.first.quarter"
+        case ..<12.9: "moonphase.waxing.gibbous"
+        case ..<16.6: "moonphase.full.moon"
+        case ..<20.3: "moonphase.waning.gibbous"
+        case ..<24.0: "moonphase.last.quarter"
+        case ..<27.7: "moonphase.waning.crescent"
+        default: "moonphase.new.moon"
+        }
+    }
 }
 
 public enum Moon {

@@ -36,6 +36,24 @@ public enum EventKind: Sendable, Hashable {
         }
     }
 
+    /// The SF Symbol for the ribbon, or nil where a word reads better — the
+    /// wheel stations are festivals with names, not phases with shapes. Kept
+    /// beside `name` for the same reason `LunarPhase.symbolName` is: a glyph
+    /// chosen in a view is a glyph no test can pin to its meaning.
+    public var symbolName: String? {
+        switch self {
+        case .station: nil
+        case .newMoon: "moonphase.new.moon"
+        case .firstQuarter: "moonphase.first.quarter"
+        case .fullMoon: "moonphase.full.moon"
+        case .lastQuarter: "moonphase.last.quarter"
+        case .eclipsePossible(let solar, _):
+            solar ? "sun.max.circle.fill" : "moon.circle.fill"
+        case .standstill(let major):
+            major ? "arrow.up.to.line" : "arrow.down.to.line"
+        }
+    }
+
     /// Sorted so the calendar can show the important thing first when two land
     /// on the same day — an eclipse outranks the moon phase that carries it.
     public var priority: Int {

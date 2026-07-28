@@ -50,8 +50,17 @@ public struct RootView: View {
             .padding(.horizontal, 14)
             .padding(.bottom, 10)
         }
-        .overlay(alignment: .topLeading) {
-            if showingAlmanac { HengeGlass { almanac }.padding(16) }
+        .overlay(alignment: .top) {
+            // The almanac runs the width of the view: a reading strip along
+            // the top, columns side by side, scrolling horizontally where the
+            // screen is narrower than the day is interesting. The toggle
+            // keeps its corner, so the strip stops short of it.
+            if showingAlmanac {
+                HengeGlass { almanac }
+                    .padding(.top, 16)
+                    .padding(.leading, 16)
+                    .padding(.trailing, 72)
+            }
         }
         .overlay(alignment: .topTrailing) { HengeGlass { almanacToggle }.padding(16) }
         .foregroundStyle(Henge.stone)
@@ -279,7 +288,17 @@ public struct RootView: View {
             model.time = event.instant
         } label: {
             VStack(spacing: 1) {
-                Text(event.kind.name).font(Henge.body(.caption2))
+                // Phases and the moon's business are shapes before they are
+                // words, so they ride as glyphs; the festivals keep their
+                // names. The mapping lives in HengeAstro where a test can
+                // hold it to its meaning.
+                if let symbol = event.kind.symbolName {
+                    Image(systemName: symbol)
+                        .font(.system(size: 15))
+                        .accessibilityHidden(true)
+                } else {
+                    Text(event.kind.name).font(Henge.body(.caption2))
+                }
                 Text("\(days) d").font(Henge.figure(.caption2)).opacity(0.7)
             }
             .padding(.horizontal, 9).padding(.vertical, 5)
@@ -312,94 +331,132 @@ public struct RootView: View {
         .accessibilityLabel(showingAlmanac ? "Hide the almanac" : "Show the almanac")
     }
 
+    /// The reading strip. What was a tall corner panel is now columns across
+    /// the top — when, sun, moon, sky, alignments, and the two switches —
+    /// separated by hairlines, scrolling horizontally where the screen runs
+    /// out before the columns do. Dynamic Type is served the same way as
+    /// before: nothing has a fixed width, so a column grows and the strip
+    /// simply scrolls sooner.
     private var almanac: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(model.formattedDate)
-                .font(Henge.title(.title3))
-            // Local time first: it is the time at the monument, which is what
-            // anyone standing there wants. UT stays visible underneath because
-            // it is what the ephemeris is actually computed in.
-            Text(model.formattedLocalTime ?? model.formattedSolarTime)
-                .font(Henge.figure(.callout))
-            Text(model.formattedLocalTime == nil
-                 ? "local apparent solar time" : model.formattedTime)
-                .font(Henge.figure(.caption2))
-                .opacity(0.65)
-
-            rule
-
-            row("Sundial", model.formattedSolarTime)
-            row("Sun over", model.viewpoint == .here
-                ? SkyModel.deviceSite.name : "Stonehenge")
-            row("Sun altitude", String(format: "%.3f°", model.sun.altitude.degrees))
-            row("Sun azimuth", String(format: "%.3f°", model.sun.azimuth.degrees))
-            if let sunrise = model.sunriseAzimuth {
-                row("Sunrise bearing", String(format: "%.2f°", sunrise.degrees))
-            }
-
-            rule
-
-            row("Moon", model.moonPhase.name)
-            row("Lit", String(format: "%.0f%%", model.moonPhase.illuminatedFraction * 100))
-            row("Moon altitude", String(format: "%.2f°", model.moon.altitude.degrees))
-            row("Lunar swing", model.standstill)
-            row("Pole star", model.poleStar)
-            row("Wind", model.windSpeed > 0
-                ? String(format: "%.1f m/s SW", model.windSpeed) : "still")
-            row("Aubrey", String(format: "%.1f holes to node", model.aubrey.sunToNode))
-            if model.isAubreyEclipseSeason {
-                row("", "eclipse season — hypothesis")
-            }
-
-            rule
-
-            // Live alignment: how far off the line the sun is right now, not
-            // whether today happens to be the right date.
-            ForEach(model.alignments, id: \.alignment) { entry in
-                HStack(spacing: 10) {
-                    Text(entry.alignment.name)
-                        .font(Henge.body(.caption))
-                        .opacity(0.75)
-                    Spacer(minLength: 12)
-                    Text(String(format: "%.2f°", entry.deviation.degrees))
-                        .font(Henge.figure(.caption))
-                        .foregroundStyle(entry.isOn ? Henge.mistletoe : Henge.stone)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: 14) {
+                column {
+                    Text(model.formattedDate)
+                        .font(Henge.title(.title3))
+                    // Local time first: it is the time at the monument, which
+                    // is what anyone standing there wants. UT stays visible
+                    // underneath because it is what the ephemeris is actually
+                    // computed in.
+                    Text(model.formattedLocalTime ?? model.formattedSolarTime)
+                        .font(Henge.figure(.callout))
+                    Text(model.formattedLocalTime == nil
+                         ? "local apparent solar time" : model.formattedTime)
+                        .font(Henge.figure(.caption2))
+                        .opacity(0.65)
                 }
-                .frame(maxWidth: 260, alignment: .leading)
-            }
 
-            // The two viewpoint choices and the two states of the monument,
-            // demoted to the bottom of the almanac: they are read far less
-            // often than they were reached for when they sat in the main bar.
-            HStack(spacing: 6) {
-                ForEach(SkyModel.Viewpoint.allCases) { viewpoint in
-                    Button(viewpoint.rawValue) { model.viewpoint = viewpoint }
-                        .font(Henge.body(.caption2))
-                        .padding(.horizontal, 8).padding(.vertical, 5)
-                        .hengeControl(isSelected: model.viewpoint == viewpoint)
-                        .buttonStyle(.plain)
+                columnRule
+
+                column {
+                    row("Sundial", model.formattedSolarTime)
+                    row("Sun over", model.viewpoint == .here
+                        ? SkyModel.deviceSite.name : "Stonehenge")
+                    row("Altitude", String(format: "%.3f°", model.sun.altitude.degrees))
+                    row("Azimuth", String(format: "%.3f°", model.sun.azimuth.degrees))
+                    if let sunrise = model.sunriseAzimuth {
+                        row("Sunrise", String(format: "%.2f°", sunrise.degrees))
+                    }
                 }
-                Button(model.monumentState == .asItStands ? "Ruin" : "Whole") {
-                    model.monumentState = model.monumentState == .asItStands
-                        ? .asItWas : .asItStands
+
+                columnRule
+
+                column {
+                    HStack(spacing: 6) {
+                        Image(systemName: model.moonPhase.symbolName)
+                            .font(.system(size: 14))
+                            .accessibilityHidden(true)
+                        Text(model.moonPhase.name)
+                            .font(Henge.body(.caption))
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Moon, \(model.moonPhase.name)")
+                    row("Lit", String(format: "%.0f%%",
+                                      model.moonPhase.illuminatedFraction * 100))
+                    row("Altitude", String(format: "%.2f°", model.moon.altitude.degrees))
+                    row("Swing", model.standstill)
                 }
-                .font(Henge.body(.caption2))
-                .padding(.horizontal, 8).padding(.vertical, 5)
-                .hengeControl()
-                .buttonStyle(.plain)
-                .accessibilityHint("Switch between the completed monument and the ruin")
+
+                columnRule
+
+                column {
+                    row("Pole star", model.poleStar)
+                    row("Wind", model.windSpeed > 0
+                        ? String(format: "%.1f m/s SW", model.windSpeed) : "still")
+                    row("Aubrey", String(format: "%.1f holes to node",
+                                         model.aubrey.sunToNode))
+                    if model.isAubreyEclipseSeason {
+                        row("", "eclipse season — hypothesis")
+                    }
+                }
+
+                columnRule
+
+                // Live alignment: how far off the line the sun is right now,
+                // not whether today happens to be the right date.
+                column {
+                    ForEach(model.alignments, id: \.alignment) { entry in
+                        HStack(spacing: 10) {
+                            Text(entry.alignment.name)
+                                .font(Henge.body(.caption))
+                                .opacity(0.75)
+                            Text(String(format: "%.2f°", entry.deviation.degrees))
+                                .font(Henge.figure(.caption))
+                                .foregroundStyle(entry.isOn ? Henge.mistletoe : Henge.stone)
+                        }
+                    }
+                }
+
+                columnRule
+
+                // The two viewpoint choices and the two states of the
+                // monument, at the strip's far end: read far less often than
+                // they were reached for when they sat in the main bar.
+                column {
+                    HStack(spacing: 6) {
+                        ForEach(SkyModel.Viewpoint.allCases) { viewpoint in
+                            Button(viewpoint.rawValue) { model.viewpoint = viewpoint }
+                                .font(Henge.body(.caption2))
+                                .padding(.horizontal, 8).padding(.vertical, 5)
+                                .hengeControl(isSelected: model.viewpoint == viewpoint)
+                                .buttonStyle(.plain)
+                        }
+                    }
+                    Button(model.monumentState == .asItStands ? "Ruin" : "Whole") {
+                        model.monumentState = model.monumentState == .asItStands
+                            ? .asItWas : .asItStands
+                    }
+                    .font(Henge.body(.caption2))
+                    .padding(.horizontal, 8).padding(.vertical, 5)
+                    .hengeControl()
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Switch between the completed monument and the ruin")
+                }
             }
-            .padding(.top, 8)
+            .padding(12)
         }
-        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .hengePanel()
     }
 
-    private var rule: some View {
+    private func column(@ViewBuilder _ content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 4, content: content)
+    }
+
+    private var columnRule: some View {
         Rectangle()
             .fill(Henge.stone.opacity(0.22))
-            .frame(width: 180, height: 1)
-            .padding(.vertical, 5)
+            .frame(width: 1)
+            .frame(minHeight: 56)
     }
 
     private func row(_ label: String, _ value: String) -> some View {
@@ -407,15 +464,10 @@ public struct RootView: View {
             Text(label)
                 .font(Henge.body(.caption))
                 .opacity(0.7)
-            Spacer(minLength: 12)
             Text(value)
                 .font(Henge.figure(.caption))
                 .monospacedDigit()
         }
-        // No fixed width: at the larger Dynamic Type sizes a 210-point row
-        // clipped the value. The label and value now size themselves and the
-        // panel grows, which is what Dynamic Type is for.
-        .frame(maxWidth: 260, alignment: .leading)
     }
 
     // ── the clock ───────────────────────────────────────────────────────────
