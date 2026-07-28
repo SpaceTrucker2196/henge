@@ -36,16 +36,19 @@ final class SoilSkirtTests: XCTestCase {
         let mesh = SoilSkirt.build(around: stone)
         XCTAssertFalse(mesh.indices.isEmpty)
 
-        // Three rings per segment now — inner, middle, feathered outer — so
-        // the outer ring is every third vertex starting at 2.
-        let outer = stride(from: 2, to: mesh.positions.count, by: 3).map { mesh.positions[$0] }
+        // Four rings per segment — two buried under the stone, a middle, and
+        // the feathered outer — plus one cap vertex at the very end. The outer
+        // ring is therefore every fourth starting at 3, stopping short of the
+        // cap.
+        let outer = stride(from: 3, to: mesh.positions.count - 1, by: 4)
+            .map { mesh.positions[$0] }
         let radii = outer.map { simd_length(SIMD2($0.x, $0.z)) }
         let spread = (radii.max() ?? 0) - (radii.min() ?? 0)
         XCTAssertGreaterThan(spread, 0.3,
                              "the outer edge varies by only \(spread) m — that is a collar")
 
         // And the height varies too, not just the reach.
-        let inner = stride(from: 0, to: mesh.positions.count, by: 3).map { mesh.positions[$0].y }
+        let inner = stride(from: 0, to: mesh.positions.count - 1, by: 4).map { mesh.positions[$0].y }
         XCTAssertGreaterThan((inner.max() ?? 0) - (inner.min() ?? 0), 0.02)
     }
 
@@ -54,7 +57,7 @@ final class SoilSkirtTests: XCTestCase {
     func testNoTwoMoundsAreTheSame() {
         let shapes = (1...12).map { seed -> [Float] in
             let mesh = SoilSkirt.build(around: upright(id: "s\(seed)", seed: UInt64(seed)))
-            return stride(from: 2, to: mesh.positions.count, by: 3)
+            return stride(from: 3, to: mesh.positions.count - 1, by: 4)
                 .map { simd_length(SIMD2(mesh.positions[$0].x, mesh.positions[$0].z)) }
         }
         for (i, a) in shapes.enumerated() {
@@ -90,11 +93,48 @@ final class SoilSkirtTests: XCTestCase {
     func testTheMoundFollowsTheGround() {
         let slope: (Float, Float) -> Float = { x, _ in x * 0.15 }
         let mesh = SoilSkirt.build(around: upright(), groundHeight: slope)
-        let outer = stride(from: 2, to: mesh.positions.count, by: 3).map { mesh.positions[$0] }
+        let outer = stride(from: 3, to: mesh.positions.count - 1, by: 4)
+            .map { mesh.positions[$0] }
 
         for point in outer {
             XCTAssertEqual(point.y, slope(point.x, point.z), accuracy: 0.02,
                            "the outer edge left the ground at x \(point.x)")
+        }
+    }
+
+    /// **The top is closed.** The mound used to be an annulus with a hole
+    /// where the stone stands, which is only watertight if the stone exactly
+    /// fills it — and `StoneMeshBuilder` displaces its surface by noise, so
+    /// wherever the rock pulled inward you saw through the top of the bank.
+    /// The same shape of fault as the stones' own winding bug, and invisible
+    /// from most angles for the same reason.
+    func testTheMoundHasNoHoleInItsTop() {
+        let mesh = SoilSkirt.build(around: upright())
+
+        // A mound lying on the ground is a sheet, not a solid: its feathered
+        // outer rim is legitimately an open boundary, where it simply becomes
+        // turf. So the claim is not "no open edges" — it is that every open
+        // edge is on *that* rim. A hole anywhere else is a hole in the top.
+        let ringCount = 4
+        let outerRing = Set(stride(from: 3, to: mesh.positions.count - 1, by: ringCount)
+            .map { UInt32($0) })
+
+        var edges: [String: Int] = [:]
+        for triangle in stride(from: 0, to: mesh.indices.count, by: 3) {
+            let v = (0..<3).map { mesh.indices[triangle + $0] }
+            for i in 0..<3 {
+                let a = v[i], b = v[(i + 1) % 3]
+                edges[a < b ? "\(a)-\(b)" : "\(b)-\(a)", default: 0] += 1
+            }
+        }
+
+        let open = edges.filter { $0.value != 2 }.keys
+        for edge in open {
+            let ends = edge.split(separator: "-").compactMap { UInt32($0) }
+            XCTAssertEqual(ends.count, 2)
+            XCTAssertTrue(outerRing.contains(ends[0]) && outerRing.contains(ends[1]),
+                          "open edge \(edge) is not on the feathered rim — "
+                          + "that is a hole in the top of the mound")
         }
     }
 

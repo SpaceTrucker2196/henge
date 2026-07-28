@@ -116,12 +116,20 @@ public struct DrawUniforms {
 
 /// One vertex, matching the MSL `Vertex` struct.
 public struct MeshVertex {
-    public var position: SIMD3<Float>
-    public var normal: SIMD3<Float>
+    /// xyz world position; **w carries a blend value** — 0 for bare soil, 1 for
+    /// turf — used by the soil banks to fade into the grass around them.
+    ///
+    /// It rides in the padding for nothing. `SIMD3<Float>` is 16 bytes with the
+    /// fourth lane unused, so widening the attribute to `float4` leaves the
+    /// stride at 32 and adds no bandwidth. Everything that is not a soil bank
+    /// writes 1 here and never reads it.
+    public var position: SIMD4<Float>
+    /// xyz world normal; w spare.
+    public var normal: SIMD4<Float>
 
-    public init(position: SIMD3<Float>, normal: SIMD3<Float>) {
-        self.position = position
-        self.normal = normal
+    public init(position: SIMD3<Float>, normal: SIMD3<Float>, blend: Float = 1) {
+        self.position = SIMD4(position, blend)
+        self.normal = SIMD4(normal, 0)
     }
 }
 

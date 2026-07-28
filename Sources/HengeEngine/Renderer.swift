@@ -26,12 +26,15 @@ public struct SceneState: Sendable {
 
     /// Wind speed at the surface, m/s. Zero stops the grass dead.
     ///
-    /// Default 1.8 — a light breeze. It began at 4.5, the annual mean at 10 m
+    /// Default 0.45 — barely a stir. It began at 4.5, the annual mean at 10 m
     /// over Salisbury Plain, which is correct for 10 m and wrong for the top of
     /// the sward: the wind profile falls off sharply through the boundary
     /// layer, and grass at ankle height feels a fraction of what an anemometer
-    /// on a mast reads. It also simply looked hurried against a monument whose
-    /// whole subject is slowness.
+    /// on a mast reads. It went to 1.8 on that reasoning and then to a quarter
+    /// of that by eye, which is the right way round — the physics says the
+    /// number is much smaller than the mast reading, and the eye says how much
+    /// smaller. It also simply looked hurried against a monument whose whole
+    /// subject is slowness.
     public var windSpeed: Float
 
     /// The bearing the wind blows *from*, degrees.
@@ -99,7 +102,7 @@ public struct SceneState: Sendable {
                 exposure: Float = 1.6,
                 surfaceTexturing: Bool = true,
                 weathering: Bool = true,
-                windSpeed: Float = 1.8,
+                windSpeed: Float = 0.45,
                 grassBlades: Bool = true,
                 soilBanks: Bool = true,
                 windBearing: Double = 250,
@@ -283,11 +286,11 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         // Vertex layout, matching MeshVertex and the MSL `Vertex` struct.
         let vertexDescriptor = MTLVertexDescriptor()
-        vertexDescriptor.attributes[0].format = .float3
+        vertexDescriptor.attributes[0].format = .float4
         vertexDescriptor.attributes[0].offset = 0
         vertexDescriptor.attributes[0].bufferIndex = 30
-        vertexDescriptor.attributes[1].format = .float3
-        vertexDescriptor.attributes[1].offset = MemoryLayout<SIMD3<Float>>.stride
+        vertexDescriptor.attributes[1].format = .float4
+        vertexDescriptor.attributes[1].offset = MemoryLayout<SIMD4<Float>>.stride
         vertexDescriptor.attributes[1].bufferIndex = 30
         vertexDescriptor.layouts[30].stride = MemoryLayout<MeshVertex>.stride
 
@@ -572,7 +575,9 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         var vertices: [MeshVertex] = []
         vertices.reserveCapacity(mesh.positions.count)
         for i in mesh.positions.indices {
-            vertices.append(MeshVertex(position: mesh.positions[i], normal: mesh.normals[i]))
+            vertices.append(MeshVertex(position: mesh.positions[i],
+                                       normal: mesh.normals[i],
+                                       blend: mesh.blends.isEmpty ? 1 : mesh.blends[i]))
         }
 
         guard let vertexBuffer = device.makeBuffer(

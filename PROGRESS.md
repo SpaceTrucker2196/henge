@@ -1106,3 +1106,46 @@ principle that a suite should turn off exactly what it must and no more.
 
 180 tests, both platforms warning-clean.
 
+## 2026-07-28 — Colour that meets, paths, closed mounds, slower air
+
+**The soil banks now blend by colour, not only by shape.** `MeshVertex` gained a
+blend channel — free, because `SIMD3<Float>` already wastes its fourth lane, so
+widening the attribute to `float4` leaves the stride at 32 — carrying 0 at the
+stone to 1 at the feathered rim. The shader picks its material colour per
+fragment from that, mixing bare soil to turf, so the two are ends of one range
+rather than separately-authored greens that never quite meet. Noise frays the
+transition: earth meets grass in a ragged front, with tufts standing in the soil
+and bare patches out in the turf, and a mound that fades *evenly* still reads as
+an applied object.
+
+**Paths.** From the air this landscape is not plain grass, and the marks that
+read are the ones feet have made — pale, not dark, because worn turf here shows
+the chalk beneath. Three: the visitor circuit at about 35 m, wandering a little
+because nobody walks a perfect ring; the Avenue on the solstice axis, 22 m
+between its banks, fading out as it runs north-east; and radial desire lines
+where people cut across. They are not painted on top — they feed the same
+worn-turf term the natural thin patches use, since physically they are the same
+thing, and the fine mottle breaks their edges so a walked line has the frayed
+margin it really has.
+
+**The mounds were open at the top, and it was the stones' bug again.** They were
+annuli with a hole where the stone stands, which is watertight only if the stone
+exactly fills it — and `StoneMeshBuilder` displaces its surface by noise, so
+wherever the rock pulled inward you saw straight through. Now four rings, the
+inner two buried inside the footprint, capped by a centre vertex.
+
+Writing the test for that found a second fault the eye would never have caught.
+Asserting "no unpaired edges" was wrong — a mound lying on the ground is a
+sheet, and its feathered rim is legitimately open. The right claim is that every
+open edge is *on that rim*. Which then failed at the seam: rings were emitted
+for `0...segments`, so the group at 2π duplicated the group at 0 with different
+indices — positions coincident, topology not closed. Wrapping with `% segments`
+fixed it. Invisible in any render, and exactly the sort of thing that becomes a
+hole the moment anything else touches the mesh.
+
+**The wind is down to a quarter**, 1.8 m/s to 0.45. Worth noting the order the
+two adjustments came in, because it is the right one: the physics said the
+number had to be far below any mast reading, and the eye said how far.
+
+181 tests, both platforms warning-clean.
+

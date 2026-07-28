@@ -44,8 +44,8 @@ struct DrawUniforms {
 };
 
 struct Vertex {
-    float3 position [[attribute(0)]];
-    float3 normal   [[attribute(1)]];
+    float4 position [[attribute(0)]];   // w: 0 bare soil … 1 turf
+    float4 normal   [[attribute(1)]];
 };
 
 struct SceneInOut {
@@ -53,6 +53,7 @@ struct SceneInOut {
     float3 worldPosition;
     float3 worldNormal;
     float  viewDepth;
+    float  turf;             // 0 bare soil … 1 turf, for the soil banks
 };
 
 // ── depth-only pass, for the shadow cascades ────────────────────────────────
@@ -61,7 +62,7 @@ vertex float4 shadow_vertex(Vertex in [[stage_in]],
                             constant DrawUniforms &draw [[buffer(1)]],
                             constant float4x4 &lightViewProjection [[buffer(2)]])
 {
-    float4 world = draw.model * float4(in.position, 1.0);
+    float4 world = draw.model * float4(in.position.xyz, 1.0);
     return lightViewProjection * world;
 }
 
@@ -72,9 +73,10 @@ vertex SceneInOut scene_vertex(Vertex in [[stage_in]],
                                constant DrawUniforms &draw [[buffer(1)]])
 {
     SceneInOut out;
-    float4 world = draw.model * float4(in.position, 1.0);
+    float4 world = draw.model * float4(in.position.xyz, 1.0);
     out.worldPosition = world.xyz;
-    out.worldNormal = normalize((draw.normalMatrix * float4(in.normal, 0.0)).xyz);
+    out.worldNormal = normalize((draw.normalMatrix * float4(in.normal.xyz, 0.0)).xyz);
+    out.turf = in.position.w;
     out.clipPosition = frame.viewProjection * world;
     out.viewDepth = -(frame.view * world).z;
     return out;
@@ -289,6 +291,66 @@ static float fbm(float3 p)
 // grain, not claiming to be a photograph of stone 56.
 constant float3 kRockMean  = float3(0.36, 0.33, 0.30);
 constant float3 kGrassMean = float3(0.24, 0.27, 0.14);
+// The two ends of the ground's colour range. Everything between a bare soil
+// bank and clean turf is a mix of these two, chosen so the banks around the
+// stones have somewhere to blend *to* rather than being a separate colour laid
+// on top of the grass.
+constant float3 kSoilAlbedo = float3(0.26, 0.235, 0.165);
+constant float3 kTurfAlbedo = float3(0.28, 0.32, 0.18);
+// Worn chalk, for paths and thin ground.
+constant float3 kChalkAlbedo = float3(0.66, 0.64, 0.56);
+
+// ── paths and the marks people leave ────────────────────────────────────────
+//
+// From the air this landscape is not plain grass. The features that read are
+// the ones feet and wheels have made, and they read because worn turf shows the
+// chalk beneath — which is why they are pale rather than dark, unlike a worn
+// path on almost any other soil in Britain.
+//
+// Three, all still visible:
+//
+//   **The visitor circuit.** A path rings the stones at about 35 m, walked by
+//   more than a million people a year. It is the single most obvious human mark
+//   in any aerial photograph of the site.
+//
+//   **The Avenue.** The Neolithic earthwork running north-east on the solstice
+//   axis, about 22 m between its banks. Ploughed nearly flat, but it still
+//   shows as a pair of parallel marks in dry summers.
+//
+//   **Approach desire lines.** Where people cut between the circuit and the
+//   paths in from the road, the turf goes first.
+//
+// Returned as a wear value, 0 to 1, which the mottling then folds into its own
+// chalk term — so a path is not painted on, it is the same worn-turf treatment
+// as the bare patches, just following a line.
+static float pathWear(float2 groundXZ)
+{
+    float radius = length(groundXZ);
+
+    // The circuit: a soft-edged annulus, wandering a little so it is not a
+    // drawn circle. Nobody walks a perfect ring.
+    float wander = (fbm(float3(groundXZ.x * 0.06, 21.0, groundXZ.y * 0.06)) - 0.5) * 5.0;
+    float circuit = 1.0 - smoothstep(0.0, 4.5, abs(radius - (35.0 + wander)));
+
+    // The Avenue: a corridor on the monument's axis, 49.9° from north, running
+    // out to the north-east. World +X is east and +Z is south.
+    const float axis = 49.9 * (M_PI_F / 180.0);
+    float2 along = float2(sin(axis), -cos(axis));
+    float2 across = float2(along.y, -along.x);
+    float distanceAlong = dot(groundXZ, along);
+    float distanceAcross = abs(dot(groundXZ, across));
+    // Only beyond the bank, and fading out as it goes.
+    float avenue = smoothstep(50.0, 80.0, distanceAlong)
+        * (1.0 - smoothstep(0.0, 11.0, distanceAcross))
+        * (1.0 - smoothstep(300.0, 700.0, distanceAlong));
+
+    // Desire lines: a few radial scuffs, strongest near the circuit.
+    float spokes = fbm(float3(atan2(groundXZ.y, groundXZ.x) * 2.6, 33.0, radius * 0.012));
+    float scuff = smoothstep(0.62, 0.9, spokes)
+        * (1.0 - smoothstep(20.0, 60.0, abs(radius - 30.0)));
+
+    return clamp(max(max(circuit, avenue * 0.75), scuff * 0.55), 0.0, 1.0);
+}
 
 struct Surface {
     float3 albedo;
@@ -349,7 +411,7 @@ static Surface sampleStone(float3 worldPosition, float3 n,
     return out;
 }
 
-static Surface sampleGround(float3 worldPosition, float3 n,
+static Surface sampleGround(float3 worldPosition, float3 n, float turf,
                             constant DrawUniforms &draw,
                             texture2d<float> albedoMap,
                             texture2d<float> normalMap,
@@ -366,6 +428,16 @@ static Surface sampleGround(float3 worldPosition, float3 n,
     float3 near = albedoMap.sample(surfaceSampler, uv).rgb;
     float3 far  = albedoMap.sample(surfaceSampler, uv * 0.137).rgb;
     float3 colour = near * mix(1.0, far / kGrassMean, 0.55);
+
+    // Where this fragment sits between bare soil and turf.
+    //
+    // The vertex blend gives the shape of the transition; the noise breaks its
+    // edge up so a bank does not end on a clean contour line. A soil mound that
+    // fades smoothly but *evenly* still reads as an applied object — real earth
+    // meets grass in a ragged front, with tufts standing in the soil and bare
+    // patches out in the turf.
+    float ragged = fbm(float3(worldPosition.x * 1.6, 41.0, worldPosition.z * 1.6));
+    float soilness = clamp((1.0 - turf) * 1.35 + (ragged - 0.5) * 0.85, 0.0, 1.0);
 
     // Mottling, at the scale a person actually reads the ground at.
     //
@@ -384,9 +456,18 @@ static Surface sampleGround(float3 worldPosition, float3 n,
     float fineMottle = fbm(float3(worldPosition.x * 0.85, 7.0, worldPosition.z * 0.85));
 
     colour *= 0.78 + 0.44 * broadMottle;
-    float wear = smoothstep(0.52, 0.86, fineMottle * 0.65 + broadMottle * 0.35);
-    const float3 chalk = float3(0.74, 0.72, 0.63);
-    colour = mix(colour, colour * 0.55 + chalk * kGrassMean * 0.85, wear * 0.55);
+
+    // Worn ground: the natural thin patches, plus the paths people have made.
+    // Both are the same thing physically — turf gone, chalk showing — so they
+    // share a treatment rather than the paths being drawn over the top.
+    float natural = smoothstep(0.52, 0.86, fineMottle * 0.65 + broadMottle * 0.35);
+    float trodden = pathWear(worldPosition.xz);
+    // The path's own edge is broken by the fine mottle, so it has the frayed
+    // margin a walked line really has instead of a clean band.
+    trodden *= 0.55 + 0.75 * fineMottle;
+    float wear = clamp(max(natural, trodden), 0.0, 1.0);
+
+    colour = mix(colour, colour * 0.55 + kChalkAlbedo * kGrassMean * 1.15, wear * 0.6);
 
     float3 t = normalMap.sample(surfaceSampler, uv).xyz * 2.0 - 1.0;
     float strength = draw.surface.z;
@@ -417,7 +498,11 @@ static Surface sampleGround(float3 worldPosition, float3 n,
     bent = normalize(bent + slope * relief);
 
     Surface out;
-    out.albedo = draw.albedo.rgb * (colour / kGrassMean);
+    // The material colour is chosen per fragment rather than per draw, so the
+    // soil banks and the turf they sit in are two ends of one range instead of
+    // two separately-authored greens that never quite meet.
+    float3 material = mix(kTurfAlbedo, kSoilAlbedo, soilness);
+    out.albedo = material * (colour / kGrassMean);
     out.normal = bent;
     // Floored high. The old floor was 0.2, which is a polished floor, not a
     // hillside — and combined with a dielectric F0 of 0.04 and Fresnel at
@@ -698,7 +783,7 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     Surface surface;
     if (draw.surface.w > 0.5) {
         if (draw.surface.x > 0.5) {
-            surface = sampleGround(in.worldPosition, geometricNormal, draw,
+            surface = sampleGround(in.worldPosition, geometricNormal, in.turf, draw,
                                    albedoMap, normalMap, roughnessMap, surfaceSampler);
             surface = blowGrass(surface, in.worldPosition, frame, draw);
         } else {

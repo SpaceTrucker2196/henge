@@ -74,10 +74,21 @@ public enum SoilSkirt {
         var positions: [SIMD3<Float>] = []
         var normals: [SIMD3<Float>] = []
         var indices: [UInt32] = []
+        // 0 bare soil at the stone, 1 turf at the feathered edge. Carried per
+        // vertex so the bank fades into the grass by colour as well as by
+        // shape — a mound that is the right height and the wrong colour still
+        // reads as an applied collar.
+        var blends: [Float] = []
 
         let base = Float(stone.position.y) - Float(stone.height) * 0.5
 
-        for segment in 0...segments {
+        // `0..<segments`, not `0...segments`. Emitting a duplicate group at 2π
+        // and indexing straight through it leaves the seam's positions
+        // coincident but its *indices* distinct — so the ring is not
+        // topologically closed, and the radial edges at both ends of the seam
+        // are unpaired. Invisible in a render and exactly the kind of thing
+        // that becomes a hole the moment anything else touches the mesh.
+        for segment in 0..<segments {
             let angle = Float(segment) / Float(segments) * 2 * .pi
 
             // Where the stone's face is in this direction — the box outline,
@@ -104,13 +115,23 @@ public enum SoilSkirt {
             let direction = SIMD2<Float>(sin(angle), cos(angle))
             let centre = SIMD2(Float(stone.position.x), Float(stone.position.z))
 
-            // Three rings, not two. A single span from the stone straight to
-            // the turf is a cone, and a cone has a hard rim where it lands. The
-            // middle ring lets the profile be concave — steep against the stone
-            // and almost flat where it meets the grass, which is the shape
-            // water and worms actually leave.
+            // Four rings and a centre, so the mound is a **closed** surface.
+            //
+            // It used to start at the stone's face and run outward — an annulus
+            // with a hole where the stone stands. That is fine only if the
+            // stone exactly fills the hole, and it does not: `StoneMeshBuilder`
+            // displaces its surface by noise, so wherever the rock pulls inward
+            // the mound's inner edge was left open and you saw straight through
+            // the top of the bank. The same shape of fault as the stones' own
+            // winding bug, and invisible from most angles for the same reason.
+            //
+            // The innermost ring is now well inside the stone's footprint and
+            // capped by a centre vertex, so the mound is a disc with a raised
+            // rim. The buried part is never seen; it is there so there is no
+            // edge to see through.
             let rings: [(distance: Float, lift: Float, flatness: Float)] = [
-                (footprint - 0.02, height, 0.0),
+                (footprint * 0.45, height, 0.0),
+                (footprint * 0.98, height, 0.0),
                 (footprint + outward * 0.38, height * 0.34, 0.5),
                 (footprint + outward, 0.004, 1.0)
             ]
@@ -126,22 +147,37 @@ public enum SoilSkirt {
                 let outwardTilt = 0.6 * (1 - ring.flatness)
                 normals.append(normalize(SIMD3(direction.x * outwardTilt, 1,
                                                direction.y * outwardTilt)))
+                blends.append(ring.flatness)
             }
         }
 
+        // The cap. One vertex at the centre, at the inner ring's height, fanned
+        // to the innermost ring — this is what actually closes the top.
+        let centreGround = groundHeight(Float(stone.position.x), Float(stone.position.z))
+        let capHeight = rise * bulk
+        positions.append(SIMD3(Float(stone.position.x),
+                               max(base, centreGround) + capHeight,
+                               Float(stone.position.z)))
+        normals.append(SIMD3(0, 1, 0))
+        blends.append(0)
+        let cap = UInt32(positions.count - 1)
+
+        let ringCount = 4
         for segment in 0..<segments {
-            let i = UInt32(segment * 3)
-            let next = UInt32((segment + 1) * 3)
+            let i = UInt32(segment * ringCount)
+            let next = UInt32(((segment + 1) % segments) * ringCount)
             // Counter-clockwise seen from above, matching every other mesh here
             // — the winding convention this project learned the hard way.
-            for band in 0..<2 {
+            indices += [cap, i, next]
+            for band in 0..<(ringCount - 1) {
                 let a = i + UInt32(band), b = next + UInt32(band)
                 indices += [a, a + 1, b,
                             a + 1, b + 1, b]
             }
         }
 
-        return Mesh(positions: positions, normals: normals, indices: indices)
+        return Mesh(positions: positions, normals: normals, indices: indices,
+                    blends: blends)
     }
 
     /// A stone stands on the ground when its centre is about half its own

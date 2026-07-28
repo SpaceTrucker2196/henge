@@ -7,11 +7,15 @@ public struct Mesh: Sendable {
     public var positions: [SIMD3<Float>]
     public var normals: [SIMD3<Float>]
     public var indices: [UInt32]
+    /// Optional per-vertex blend, 0 bare soil to 1 turf. Empty on every mesh
+    /// but the soil banks, which use it to fade into the grass they sit in.
+    public var blends: [Float]
 
     public init(positions: [SIMD3<Float>] = [], normals: [SIMD3<Float>] = [],
-                indices: [UInt32] = []) {
+                indices: [UInt32] = [], blends: [Float] = []) {
         self.positions = positions
         self.normals = normals
+        self.blends = blends
         self.indices = indices
     }
 

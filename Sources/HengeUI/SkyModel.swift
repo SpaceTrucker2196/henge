@@ -258,8 +258,10 @@ public final class SkyModel {
     /// the sun. See `SceneState.windTime`.
     public var windTime: Double = 0
 
-    /// How hard it is blowing, m/s. Zero for a still day.
-    public var windSpeed: Double = 4.5
+    /// How hard it is blowing at the top of the sward, m/s. Zero for a still
+    /// day. See `SceneState.windSpeed` for why this is so much smaller than any
+    /// figure a weather station would give.
+    public var windSpeed: Double = 0.45
 
     public var sceneState: SceneState {
         var state = SceneState.at(time, site: site, camera: camera)
