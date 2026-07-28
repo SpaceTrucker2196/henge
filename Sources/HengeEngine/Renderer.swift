@@ -465,7 +465,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     static func cascadeMatrix(camera: Camera, aspect: Float,
                               near: Float, far: Float,
                               lightDirection: SIMD3<Float>,
-                              resolution: Int) -> float4x4 {
+                              resolution: Int) -> (matrix: float4x4, radius: Float) {
         let forward = normalize(camera.target - camera.position)
         let right = normalize(cross(forward, SIMD3<Float>(0, 1, 0)))
         let up = cross(right, forward)
@@ -509,7 +509,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         let projection = MetalMath.orthographic(left: -radius, right: radius,
                                                 bottom: -radius, top: radius,
                                                 near: 0.1, far: radius * 4.5)
-        return projection * view
+        return (projection * view, radius)
     }
 
     func buildFrameUniforms(aspect: Float) -> FrameUniforms {
@@ -520,6 +520,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         let splits = SIMD4<Float>(24, 90, 320, 0)
         var matrices = (matrix_identity_float4x4, matrix_identity_float4x4, matrix_identity_float4x4)
+        var radii = SIMD4<Float>(splits.x, splits.y, splits.z, 0)
 
         // Only fit cascades when the sun is actually up; below the horizon the
         // light direction degenerates and the fit produces garbage.
@@ -536,7 +537,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                         near: splits.y, far: splits.z,
                                         lightDirection: sunDirection,
                                         resolution: shadowResolution)
-            matrices = (m0, m1, m2)
+            matrices = (m0.matrix, m1.matrix, m2.matrix)
+            radii = SIMD4(m0.radius, m1.radius, m2.radius, 0)
         }
 
         let radiance = state.sunRadiance
@@ -553,7 +555,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             skyParameters: SIMD4(state.turbidity, state.exposure, 0,
                                  1.0 / Float(shadowResolution)),
             moonDirection: SIMD4(state.moonDirection, Float(state.moonAngularRadius)),
-            moonLight: SIMD4(state.moonRadiance, Float(state.moonIllumination))
+            moonLight: SIMD4(state.moonRadiance, Float(state.moonIllumination)),
+            cascadeRadii: radii
         )
     }
 

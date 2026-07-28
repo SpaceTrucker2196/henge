@@ -588,3 +588,82 @@ language, weather and season dressing, sound, ceremony mode, MetalFX and 120 Hz,
 the accessibility audit, moon shadow cascades, and PCSS penumbra matched to the
 sun's real 0.53°.
 
+## 2026-07-28 — M5: PCSS, and the penumbra that follows the sun
+
+The oldest deferred item in the project. `sampleShadow` had carried a note since
+M1 saying the 3×3 filter would become PCSS "whose penumbra widens to match the
+sun's real 0.53°". It does now, and — the part that matters — **nothing in it is
+a tuned radius.**
+
+The sun subtends about half a degree, so every shadow edge on the plain is a
+penumbra whose width is set by how far its caster stands above the ground it
+darkens. A stone 4 m up softens its edge by about 4 cm; the same stone at a low
+midwinter sun, throwing a shadow forty metres, softens it to nearly 40 cm. You
+can watch that happen at the monument. A fixed blur looks wrong at every hour
+except the one it was tuned for.
+
+`sunRadiance.w` already carried the sun's angular radius — the same number the
+disc is drawn with — and a new `cascadeRadii` uniform converts shadow-map depth
+back to metres and penumbra width back to UV. Change the sun's size and the
+shadows follow, which `testTheSoftnessFollowsTheSunsAngularSize` asserts by
+quadrupling it.
+
+**Three failures on the way, and all three were the measurement, not the code.**
+This is now so consistent it deserves to be treated as the project's normal
+condition rather than a run of bad luck.
+
+1. **The ruler was coarser than the thing measured.** The suite framed the whole
+   shadow: 120 m across 512 pixels, one pixel 0.23 m, measuring a 0.17 m
+   penumbra. Every reading came back as the same three pixels whatever the sun's
+   size — which reads exactly like PCSS not working. The camera now frames the
+   shadow *tip*, twelve metres across.
+2. **The camera was in the wrong cascade.** At 120 m up the ground selects
+   cascade 2, where one shadow texel covers 0.2 m — a 4 cm penumbra cannot be
+   represented there at all, so both stone heights clamped to the texel floor
+   and returned byte-identical numbers. Dropped to 20 m, inside cascade 0, where
+   a texel is 1.4 cm.
+3. **The blocker search capped the filter.** A fixed eight-texel search meant a
+   4× sun widened the penumbra by only a third: the filter may never exceed the
+   region the blocker was found in. The search radius is now derived the same
+   way the penumbra is — a blocker within one cascade radius gives at most
+   tan(θ)/2 in UV, independent of the radius, so tan(θ) covers it with headroom.
+   At 0.53° that is about nine texels at 2048, near enough to the constant it
+   replaces, but it now scales with the light.
+
+The shadow-agreement test still passes unchanged at its M1 tolerance, which is
+the result worth having: softening the edge did not move it. The penumbra's
+midpoint sits where the hard edge was, so the calendar is still measuring what
+it was measuring.
+
+### Lore panels, accessibility, and where this stops
+
+`LoreView` gives the tier system somewhere to be read. Every panel wears its
+tier and its sources — one tap away rather than always open, because a wall of
+citations under every paragraph turns the register from bardic into
+bibliographic, but never further than one tap. The badge is deliberately neither
+subtle nor alarming: "modern tradition" is not a warning. Beltane is a real
+thing that real people really do. It is simply not Neolithic, and the reader
+gets to know which they are holding.
+
+Accessibility is invariant 7, so it is not an M5 nicety. Reduce Motion caps the
+time-lapse at 100× rather than removing it — the calendar still runs, it just
+does not spin — and clamps on the way in so a restored rate cannot outrun the
+setting. The readout's fixed 210-point rows clipped at the larger Dynamic Type
+sizes and now size themselves.
+
+**M5 is partly landed and I am stopping here rather than pretending otherwise.**
+Done: PCSS, lore panels, reduced motion, Dynamic Type. Not done: ambient sound,
+torchlit ceremony mode, weather and season dressing, the "Mistletoe & Oak"
+design language as an actual design rather than a functional layout, MetalFX,
+120 Hz profiling, and moon shadow cascades — moonlight is still unshadowed and
+kept dim enough that the absence does not read as a bug. None of those is
+blocked; they are simply unbuilt.
+
+Two things remain blocked on a decision, and neither has been taken
+unilaterally: **vendoring the Hipparcos catalogue** for the star field, which
+invariant 5 makes a stops-and-asks, and whether the **Milky Way** is worth a
+licensed texture or should be dropped the way constellation figures were.
+
+Nothing in this repository has been pushed. Eighteen commits sit local past
+`v0.0.1`, awaiting the owner's word.
+

@@ -30,6 +30,14 @@ public struct FrameUniforms {
     public var moonDirection: SIMD4<Float>
     /// rgb: moonlight radiance. w: illuminated fraction, 0 new to 1 full.
     public var moonLight: SIMD4<Float>
+    /// Half-extent in metres of each cascade's orthographic box, w unused.
+    ///
+    /// PCSS needs it twice over: to turn a shadow-map depth difference back
+    /// into metres of blocker-to-receiver distance, and to turn the resulting
+    /// penumbra width back into UV. Without it the softening would have to be
+    /// a tuned constant, which is exactly what it must not be — the whole
+    /// point is that the penumbra follows from the sun's angular size.
+    public var cascadeRadii: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -43,7 +51,8 @@ public struct FrameUniforms {
                 cascadeSplits: SIMD4<Float> = SIMD4(20, 60, 200, 0),
                 skyParameters: SIMD4<Float> = SIMD4(2.2, 1, 0, 1.0 / 2048.0),
                 moonDirection: SIMD4<Float> = SIMD4(0, -1, 0, 0.0045),
-                moonLight: SIMD4<Float> = .zero) {
+                moonLight: SIMD4<Float> = .zero,
+                cascadeRadii: SIMD4<Float> = SIMD4(24, 90, 320, 0)) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -56,6 +65,7 @@ public struct FrameUniforms {
         self.skyParameters = skyParameters
         self.moonDirection = moonDirection
         self.moonLight = moonLight
+        self.cascadeRadii = cascadeRadii
     }
 }
 

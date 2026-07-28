@@ -24,6 +24,7 @@ struct FrameUniforms {
     float4   skyParameters;  // x turbidity, y exposure, z time, w shadow texel
     float4   moonDirection;  // toward the moon, w = angular radius
     float4   moonLight;      // rgb radiance, w = illuminated fraction
+    float4   cascadeRadii;   // half-extent in metres of each cascade's ortho box
 };
 
 struct DrawUniforms {
@@ -96,9 +97,40 @@ static float3 fresnelSchlick(float cosTheta, float3 f0)
     return f0 + (1.0 - f0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-// Percentage-closer filtering over a 3×3 tap. M2 replaces this with PCSS whose
-// penumbra widens to match the sun's real 0.53° — the widening is deliberate,
-// and the shadow-agreement test is calibrated against this hard edge first.
+// Percentage-closer *soft* shadows, with the penumbra derived rather than dialled.
+//
+// The sun is not a point. It subtends about 0.53°, so every shadow edge on
+// Salisbury Plain is a penumbra whose width is set by one thing: how far the
+// blocker stands above the surface catching its shadow. A stone 4 m above the
+// ground casts an edge about 4 × tan(0.53°) ≈ 3.7 cm soft; the same stone at a
+// low midwinter sun, throwing a shadow forty metres, softens that edge to
+// nearly 40 cm. You can watch that happen at the monument, and it is why a
+// fixed blur looks wrong at every hour except the one it was tuned for.
+//
+// So nothing here is a tuned radius. `sunRadiance.w` carries the sun's angular
+// radius in radians — the same number the disc is drawn with — and
+// `cascadeRadii` converts shadow-map units back to metres and out again. Change
+// the sun's size and the shadows follow.
+//
+// Three steps, the standard PCSS shape (Fernando 2005):
+//   1. search a small neighbourhood for anything blocking, and average its depth
+//   2. that gives blocker-to-receiver distance, and thus the penumbra width
+//   3. filter over exactly that width
+//
+// Step 1 is the expensive one and the reason the search radius is capped: an
+// unbounded search over a 15 km ground plane would sample the far cascade's
+// entire texture for a pixel at the horizon.
+constant float2 kPoissonDisk[16] = {
+    float2(-0.613392,  0.617481), float2( 0.170019, -0.040254),
+    float2(-0.299417,  0.791925), float2( 0.645680,  0.493210),
+    float2(-0.651784,  0.717887), float2( 0.421003,  0.027070),
+    float2(-0.817194, -0.271096), float2(-0.705374, -0.668203),
+    float2( 0.977050, -0.108615), float2( 0.063326,  0.142369),
+    float2( 0.203528,  0.214331), float2(-0.667531,  0.326090),
+    float2(-0.098422, -0.295755), float2(-0.885922,  0.215369),
+    float2( 0.566637,  0.605213), float2( 0.039766, -0.396100)
+};
+
 static float sampleShadow(depth2d_array<float> shadowMap,
                           sampler shadowSampler,
                           float3 worldPosition,
@@ -130,15 +162,57 @@ static float sampleShadow(depth2d_array<float> shadowMap,
     float bias = mix(0.00035, 0.00004, clamp(ndotl, 0.0, 1.0));
 
     float texel = frame.skyParameters.w;
-    float sum = 0.0;
-    for (int dx = -1; dx <= 1; ++dx) {
-        for (int dy = -1; dy <= 1; ++dy) {
-            float2 offset = float2(dx, dy) * texel;
-            float depth = shadowMap.sample(shadowSampler, uv + offset, cascade);
-            sum += (projected.z - bias) <= depth ? 1.0 : 0.0;
+    float radius = frame.cascadeRadii[cascade];      // metres, half the ortho box
+    // The ortho box spans 2r across and 4.5r deep — see `cascadeMatrix`. So one
+    // unit of depth is 4.5r metres, and one unit of UV is 2r metres.
+    float metresPerDepth = radius * 4.5;
+    float metresPerUV    = radius * 2.0;
+
+    // ── 1. blocker search ───────────────────────────────────────────────────
+    //
+    // The search radius follows the sun too, and it has to. A fixed eight-texel
+    // search caps the filter: quadruple the sun's angular size and the penumbra
+    // widens by only a third, because the clamp below never lets the filter
+    // exceed the region the blocker was found in.
+    //
+    // The right radius falls out of the geometry. A blocker at distance d gives
+    // a penumbra of half-width d·tan(θ) metres, which in UV is d·tan(θ)/(2r).
+    // For a blocker within one cascade radius — d ≤ r — that is at most
+    // tan(θ)/2, independent of r. Doubling it for headroom on nearer cascades
+    // gives tan(θ), which at 0.53° is about nine texels at 2048: near enough to
+    // the constant it replaces, but now it scales with the light.
+    float searchUV = clamp(tan(frame.sunRadiance.w), 2.0 * texel, 0.05);
+    float blockerSum = 0.0;
+    float blockerCount = 0.0;
+    for (int i = 0; i < 16; ++i) {
+        float depth = shadowMap.sample(shadowSampler,
+                                       uv + kPoissonDisk[i] * searchUV, cascade);
+        if (depth < projected.z - bias) {          // something is in the way
+            blockerSum += depth;
+            blockerCount += 1.0;
         }
     }
-    return sum / 9.0;
+    if (blockerCount == 0.0) { return 1.0; }       // fully lit, nothing to filter
+
+    // ── 2. penumbra width from the sun's actual angular size ────────────────
+    float blockerDepth = blockerSum / blockerCount;
+    float distanceMetres = max((projected.z - blockerDepth) * metresPerDepth, 0.0);
+    // Full angular diameter: sunRadiance.w is the radius.
+    float penumbraMetres = distanceMetres * tan(frame.sunRadiance.w) * 2.0;
+    float penumbraUV = penumbraMetres / metresPerUV;
+    // Never narrower than one texel — below that the filter is just aliasing —
+    // and never wider than the search that found the blocker, or the estimate
+    // would be filtering over casters it never looked at.
+    float filterUV = clamp(penumbraUV * 0.5, texel, searchUV);
+
+    // ── 3. filter over exactly that width ───────────────────────────────────
+    float sum = 0.0;
+    for (int i = 0; i < 16; ++i) {
+        float depth = shadowMap.sample(shadowSampler,
+                                       uv + kPoissonDisk[i] * filterUV, cascade);
+        sum += (projected.z - bias) <= depth ? 1.0 : 0.0;
+    }
+    return sum / 16.0;
 }
 
 // ── the sky ─────────────────────────────────────────────────────────────────

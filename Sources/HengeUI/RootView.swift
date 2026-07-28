@@ -15,6 +15,13 @@ public struct RootView: View {
     /// that into a per-frame delta. Without it a slow drag accelerates.
     @State private var lastDrag: CGSize = .zero
     @State private var lastZoom: CGFloat = 1
+    @State private var showingLore = false
+    /// MISSION.md invariant 7. Time-lapse is the app's one continuous motion,
+    /// and at 100,000× the whole sky wheels — which is exactly the kind of
+    /// thing this setting exists to stop. Honoured by capping the rate rather
+    /// than by disabling the feature: the calendar still runs, it just does
+    /// not spin.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init() {}
 
@@ -50,6 +57,11 @@ public struct RootView: View {
         }
         .overlay(alignment: .topLeading) { readout.padding(20) }
         .task { await runClock() }
+        .sheet(isPresented: $showingLore) {
+            // The coming station first, then the monument itself — so the panel
+            // opens on whatever the user was just looking at.
+            LoreView(notes: [model.stationNote] + Lore.monument)
+        }
     }
 
     // ── the almanac readout ─────────────────────────────────────────────────
@@ -126,7 +138,10 @@ public struct RootView: View {
                 .font(.system(.caption, design: .monospaced))
                 .monospacedDigit()
         }
-        .frame(width: 210)
+        // No fixed width: at the larger Dynamic Type sizes a 210-point row
+        // clipped the value. The label and value now size themselves and the
+        // panel grows, which is what Dynamic Type is for.
+        .frame(maxWidth: 260, alignment: .leading)
     }
 
     // ── time and camera ─────────────────────────────────────────────────────
@@ -171,6 +186,9 @@ public struct RootView: View {
                 .accessibilityLabel(model.isPlaying ? "Pause time" : "Run time forward")
 
                 Button("Now") { model.time = JulianDay(Date()) }
+                Button("Lore") { showingLore = true }
+                    .accessibilityHint("What is known, what is argued, and what is "
+                                       + "modern tradition — each with its sources")
                 Button("Recentre") { model.recentre() }
 
                 Button("−1 day") { model.jump(toDaysFromNow: -1) }
@@ -185,7 +203,10 @@ public struct RootView: View {
                 Slider(value: Binding(
                     get: { log10(max(model.rate, 1)) },
                     set: { model.rate = pow(10, $0) }
-                ), in: 0...5)
+                ), in: 0...(reduceMotion ? 2 : 5))
+                .accessibilityHint(reduceMotion
+                    ? "Limited to 100× because Reduce Motion is on"
+                    : "How fast time runs, up to a hundred thousand times")
             }
 
             if model.station == .aerial {
@@ -317,6 +338,9 @@ public struct RootView: View {
             let now = Date()
             let elapsed = now.timeIntervalSince(lastTick)
             lastTick = now
+            // Clamp on the way in too, so a rate restored from a previous
+            // session cannot outrun the setting.
+            if reduceMotion { model.rate = min(model.rate, 100) }
             model.advance(byRealSeconds: elapsed)
         }
     }
