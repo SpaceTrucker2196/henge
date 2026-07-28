@@ -1038,31 +1038,24 @@ and under 6% of a sarsen's height.
 Blade dimensions corrected while there: 4–16 cm tall (was 9–29, which is meadow
 rather than downland) and 2–4.5 mm wide (was 4–8).
 
-### Pending: the cottage in the landscape
+### The cottage: dropped
 
-Asked to model the local cottage from available photographs. Researched rather
-than guessed, and the result needs a decision before any geometry is written.
+Asked to model the local cottage from photographs, researched, and dropped at
+the owner's decision.
 
-The building most often meant is the custodian's cottage at **Stonehenge
-Bottom**, where the site's caretaker lived in the 1930s — no electricity, an
-outside earth closet — and it was **demolished in 1938** along with the
-Stonehenge Café, as part of clearing the setting. So it is not in the landscape
-now. The sources that record it describe its occupants rather than its fabric:
-no materials, storeys, roof form, chimney count or dimensions.
+Worth keeping the finding rather than only the outcome. The building usually
+meant is the custodian's cottage at **Stonehenge Bottom**, where the site's
+caretaker lived in the 1930s — no electricity, an outside earth closet — and it
+was **demolished in 1938** along with the Stonehenge Café as part of clearing
+the monument's setting. It is not in the landscape now. The sources that record
+it describe its occupants, not its fabric: no materials, storeys, roof form,
+chimney count or dimensions.
 
-I have not modelled it, for two reasons worth stating rather than working
-around. Invariant 8 says the monument is modelled from the archaeology and
-hypothetical reconstructions are badged as hypothesis; a cottage built from no
-recorded dimensions would be invention presented as landscape. And I cannot
-derive geometry from photographs I am unable to verify the provenance or licence
-of, which invariant 5 also covers.
-
-What can honestly be built, on the owner's word: a **massing reconstruction** at
-the recorded position, tiered `modernTradition` with its sources, shaped from
-the vernacular — a small brick-and-flint Wiltshire cottage of the period — and
-labelled in the app as a reconstruction rather than a record. Or, if a different
-building was meant (there are still structures in view from the monument), that
-one instead.
+So there was nothing to model from, and building one anyway would have put
+invention into the landscape under invariant 8, which is the rule this project
+exists to keep. Dropped cleanly rather than approximated — the second time this
+session that the right answer was to build less (constellation figures were the
+first), and both are better calls than the alternative.
 
 180 tests, both platforms warning-clean.
 
