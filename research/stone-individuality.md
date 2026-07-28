@@ -110,5 +110,13 @@ zonation. Re-run that strand before implementing anything that claims to model
 sarsen specifically rather than generic weathered rock, and treat any figure
 recovered from that run as needing a citation check.
 
+**Update, 28 July 2026 (later).** The strand was re-run clean —
+injection-hardened, with an independent citation audit that verified the
+load-bearing figures against primary texts and found no injection this time.
+The result is `sarsen-geology.md` in this directory. The parameter ranges in
+the shipped mesh individuality remain the generic-rock artistic reading;
+applying the sarsen-specific figures is deliberately parked as its own future
+order, per the owner.
+
 Anything derived from this file that is an artistic choice rather than an
 archaeological claim must be labelled as such — see MISSION.md invariant 3.

@@ -53,10 +53,16 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       deferred item in the project, flagged in M1 and closed here. Lore panels
       with the tier badge and sources at the point of reading. Reduced-motion
       support (the time-lapse caps at 100× rather than disappearing) and a
-      Dynamic Type pass on the readout.
+      Dynamic Type pass on the readout. *Landed 2026-07-28:* golden-hour light
+      shafts marched against the real shadow cascades (the first piece of
+      weather dressing); per-seed individual stone meshes over a multifractal,
+      with variance-preserving texture blending and micro-shadowing; the
+      geometry overlay and gold Aubrey-marker modes, tier-badged on screen;
+      the almanac as a top strip with phase glyphs.
 
       **Not done, and why.** Ambient sound and torchlit ceremony mode are real
-      work with no blocker other than time. Weather and season dressing likewise.
+      work with no blocker other than time. Weather dressing beyond the haze
+      (cloud, rain, frost) likewise.
       "Mistletoe & Oak" as a full design language is unstarted — what exists is
       a functional layout, not a designed one. Hosek–Wilkie still waits on its
       data licence. MetalFX is unexplored; 120 Hz is set on the view but has not
