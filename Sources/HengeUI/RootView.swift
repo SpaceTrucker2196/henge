@@ -90,6 +90,12 @@ public struct RootView: View {
             Divider().frame(width: 190).padding(.vertical, 6)
 
             row("Next", model.formattedNextStation)
+            // The Aubrey counter, in the ring's own units. "Holes to a node" is
+            // the only thing it can honestly say, so it is the only thing shown.
+            row("Aubrey", String(format: "%.1f holes to node", model.aubrey.sunToNode))
+            if model.isAubreyEclipseSeason {
+                row("", "eclipse season — hypothesis")
+            }
 
             if let deviation = model.axisDeviation {
                 row("Off the axis", String(format: "%.2f°", deviation.degrees))
@@ -144,6 +150,7 @@ public struct RootView: View {
             .accessibilityHint("Switch between the completed monument and the ruin")
 
             wheel
+            ribbon
 
             HStack(spacing: 14) {
                 Button {
@@ -223,6 +230,49 @@ public struct RootView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("\(note.title). \(note.tier.rawValue).")
         }
+    }
+
+    /// What is coming, in the order it comes.
+    ///
+    /// Scrolls rather than truncates: an eclipse season puts three events in a
+    /// fortnight and a quiet stretch puts four in as many months, and flattening
+    /// that to a fixed count would hide exactly the clustering that makes the
+    /// sky legible.
+    private var ribbon: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(model.upcoming.prefix(24)) { event in
+                    ribbonButton(for: event)
+                }
+            }
+            .padding(.horizontal, 2)
+        }
+        .frame(height: 44)
+    }
+
+    /// Split out of `ribbon` because the type-checker times out on the label
+    /// builder when the string formatting is inlined into the ForEach.
+    private func ribbonButton(for event: AstronomicalEvent) -> some View {
+        let days = Int((event.instant.value - model.time.value).rounded())
+        return Button {
+            model.time = event.instant
+        } label: {
+            VStack(spacing: 1) {
+                Text(event.kind.name)
+                    .font(.caption2)
+                Text("\(days) d")
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.bordered)
+        .tint(isEclipse(event) ? Color.orange : Color.accentColor)
+        .accessibilityLabel("\(event.kind.name), in \(days) days")
+    }
+
+    private func isEclipse(_ event: AstronomicalEvent) -> Bool {
+        if case .eclipsePossible = event.kind { return true }
+        return false
     }
 
     private func tint(for tier: LoreTier) -> some ShapeStyle {

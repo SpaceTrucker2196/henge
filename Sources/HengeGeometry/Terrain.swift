@@ -63,7 +63,10 @@ public struct TerrainModel: Sendable {
         guard w > 0, h > 0, data.count >= expected else { throw LoadError.truncated }
 
         var grid = [Int16](repeating: 0, count: w * h)
-        grid.withUnsafeMutableBytes { destination in
+        // `copyBytes` returns the count it wrote and `withUnsafeMutableBytes`
+        // hands that back as its own result, so discarding it has to be said
+        // out loud. The guard above already establishes the range is there.
+        _ = grid.withUnsafeMutableBytes { destination in
             data.copyBytes(to: destination,
                            from: data.startIndex + 20 ..< data.startIndex + expected)
         }

@@ -476,3 +476,63 @@ bug taught in a different key: **a check nobody has watched fail is not a check.
 The winding bug survived a green suite because no test read back depth; this one
 survived because nobody ever broke the build on purpose to see what the gate did.
 
+## 2026-07-27 — M4 continues: the events engine and the Aubrey ring
+
+**`Events`** solves what is coming rather than tabulating it: moon phases by
+Newton on the elongation, eclipse seasons by Meeus's ecliptic limits, the
+standstills by bisecting the declination envelope's own turning points rather
+than reading the node's longitude. The distinction is not academic — a mean
+lunation of 29.530588 days is right on average and wrong by up to fourteen hours
+for any particular new moon, and an eclipse season turns on a few degrees.
+
+The test that matters asks for 2026's eclipse seasons without being told when
+they are, and gets February's annular solar, March's total lunar and August's
+total solar. A second test checks the flags against the node distance in both
+directions, so the plumbing cannot drift from the definition.
+
+**Time scales, crossed once.** The ephemeris works in TT and the calendar reads
+UT, and every solver here now takes TT and returns TT with the conversion done
+at the boundary in `Events.upcoming`. Getting that wrong is invisible today —
+ΔT is about a minute — and hours out in the builders' era, which is to say it
+would be correct everywhere except the epoch the app exists for. There is a deep
+time test that converts a full moon's UT instant back to TT and asserts the
+elongation is still 180°.
+
+**The Aubrey ring** ships as the hypothesis it is. Rather than simulating
+Hoyle's marker-shuffling — which would be a simulation of an argument — it
+projects the real computed sun, moon and node onto the 56 holes and lets the
+alignment arrive. That choice makes the toy *testable against the ephemeris*,
+which the marker game is not, and the score is worth stating: over the decade
+from 2020, from 247 syzygies, the ring **caught 42 eclipse seasons, missed none,
+and cried wolf 9 times**. Perfect recall and a 4% false-alarm rate, from three
+holes of tolerance.
+
+That is a better argument for Hoyle than a hand-wave and a better argument
+against him than a dismissal, and the readout says only what the ring can say —
+"holes to node" — never a prediction. `AubreyRing.note` is `debated` and carries
+both Hoyle's paper and Ruggles' rebuttal; a test asserts both are present.
+
+One bug, and it is instructive. The ring initially measured to the ascending
+node alone, so with the sun at the *descending* node it read 28 holes and saw
+nothing: recall 52%, and every miss was a real eclipse. The fix folds to the
+nearer node. Worth noting that a self-consistency test would have passed this
+happily — it took scoring the toy against the ephemeris to see it.
+
+The UI gets a scrolling ribbon of what is coming, eclipse entries tinted, each
+one a jump; and the Aubrey row.
+
+**Remaining in M4:** alignment moments — the notification that the sun is *on*
+the axis right now rather than merely near it.
+
+### The gate immediately earned its keep
+
+First `make build` after the fix surfaced a warning in `Terrain.swift` that
+`tail -5` had been swallowing since the heightfield landed — `withUnsafeMutableBytes`
+returning `copyBytes`' byte count into a discarded result. Harmless in itself,
+and fixed with an explicit `_ =` and a comment saying why.
+
+The point is the correction it forces to this file: **"both platforms
+warning-clean" was not true**, in this entry or in several before it. It was a
+claim resting on a check that could not fail and a filter that could not report.
+It is true now, and now it means something.
+

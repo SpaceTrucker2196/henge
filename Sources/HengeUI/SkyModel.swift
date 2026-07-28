@@ -349,6 +349,29 @@ public final class SkyModel {
         time = time + (seconds * rate) / 86400.0
     }
 
+    // ── what is coming ──────────────────────────────────────────────────────
+
+    /// The next few months of sky, solved fresh from the current moment.
+    ///
+    /// Not cached: the model's whole job is that the time can be anywhere in
+    /// five millennia, and a cache keyed on "now" would be wrong the moment
+    /// anyone scrubbed. A hundred and twenty days costs a few milliseconds.
+    public var upcoming: [AstronomicalEvent] {
+        Events.upcoming(from: time, days: 120)
+    }
+
+    /// Where the sun, moon and lunar nodes fall on the fifty-six holes, and
+    /// whether the ring would call this an eclipse season.
+    ///
+    /// A toy, and labelled one wherever it appears — see `AubreyRing`.
+    public var aubrey: AubreyRing.Markers {
+        AubreyRing.markers(at: time.terrestrialTime)
+    }
+
+    public var isAubreyEclipseSeason: Bool {
+        AubreyRing.isEclipseSeason(at: time.terrestrialTime)
+    }
+
     // ── the wheel of the year ───────────────────────────────────────────────
 
     /// The next station of the year, and how far off it is.
