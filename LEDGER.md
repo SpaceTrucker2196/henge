@@ -14,3 +14,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 5c07a2e | 2026-07-28T18:39:44Z | claude-fable-5 | 116 | 113580 | 19506289 | 118711 | 27.5607 | Stone individuality: per-seed mesh shapes, multifractal, variance-preserving ble |
 | 520872f | 2026-07-28T18:55:53Z | claude-fable-5 | 104 | 99375 | 20049541 | 187613 | 28.7716 | Review fixes: haze/cascade contract, marker disc phase, rebuild throttle, on-scr |
 | 6279eec | 2026-07-28T18:56:52Z | claude-fable-5 | 10 | 3242 | 2053360 | 6206 | 2.3397 | Session instrumentation: metrics + progress |
+| b44152e | 2026-07-28T20:29:29Z | claude-fable-5 | 59 | 24443 | 13145388 | 83423 | 16.0366 | Sarsen geology research re-run (clean), roadmap update; weathering work ended pe |
