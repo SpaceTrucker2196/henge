@@ -851,6 +851,13 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
                                sampler shadowSampler [[sampler(0)]],
                                sampler surfaceSampler [[sampler(1)]])
 {
+    // Overlay geometry: a diagram drawn in the world, not a thing in the
+    // light. Flat colour, no sun, no fog — legible at midnight, which is
+    // when the moon lines matter most.
+    if (draw.reflectance.w > 0.5) {
+        return float4(draw.albedo.rgb, 1.0);
+    }
+
     float3 geometricNormal = normalize(in.worldNormal);
 
     // The untextured branch has to be a branch, not merely an unbound texture.

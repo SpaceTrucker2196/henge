@@ -25,6 +25,7 @@ public struct HengeSceneView: PlatformViewRepresentable {
     public final class Coordinator {
         var renderer: HengeRenderer?
         var loadedState: Monument.State?
+        var overlayKey: Int = 0
         var failure: String?
     }
 
@@ -67,6 +68,12 @@ public struct HengeSceneView: PlatformViewRepresentable {
         if context.coordinator.loadedState != model.monumentState {
             try? renderer.load(scene: model.scene)
             context.coordinator.loadedState = model.monumentState
+        }
+        // The overlay rebuilds only when its key moves — a mode switch, a
+        // marker changing hole, a bearing drifting past a quarter degree.
+        if context.coordinator.overlayKey != model.overlayKey {
+            renderer.loadOverlay(model.overlayPieces())
+            context.coordinator.overlayKey = model.overlayKey
         }
     }
 

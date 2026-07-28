@@ -287,6 +287,9 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     private let inFlightSemaphore = DispatchSemaphore(value: HengeRenderer.framesInFlight)
 
     private var drawItems: [DrawItem] = []
+    /// The geometry overlay's pieces, kept apart from the monument so a mode
+    /// switch can swap them without rebuilding eighty stones.
+    private var overlayItems: [DrawItem] = []
     private var aspectRatio: Float = 16.0 / 9.0
 
     public init(device: MTLDevice? = nil,
@@ -569,6 +572,23 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         drawItems = items
         loadGrass()
+    }
+
+    /// Load (or clear, with an empty array) the geometry overlay.
+    ///
+    /// Overlay pieces render unlit — `reflectance.w` is the flag the shader
+    /// reads — and cast no shadows: a diagram must not move a penumbra the
+    /// agreement suite is measuring, and gold lines throwing gold shade
+    /// would claim a physicality the overlay exactly does not have.
+    public func loadOverlay(_ pieces: [GeometryOverlay.Piece]) {
+        overlayItems = pieces.compactMap { piece in
+            guard var item = try? makeDrawItem(mesh: piece.mesh,
+                                               albedo: piece.colour,
+                                               label: piece.name,
+                                               castsShadow: false) else { return nil }
+            item.uniforms.reflectance.w = 1
+            return item
+        }
     }
 
     /// Build the blade mesh and scatter the field.
@@ -998,7 +1018,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         encoder.setFragmentSamplerState(shadowSampler, index: 0)
         encoder.setFragmentSamplerState(surfaceSampler, index: 1)
 
-        for item in drawItems {
+        for item in drawItems + overlayItems {
             var draw = item.uniforms
 
             // Bind whichever material set this item wants. When the textures

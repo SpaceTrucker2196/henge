@@ -118,7 +118,8 @@ public struct DrawUniforms {
     public var weather: SIMD4<Float>
     /// x: specular strength, 1 for a solid surface and much less for grass.
     /// y: the lowest roughness this surface may reach. z: 1 if the wind moves
-    /// it. w: spare.
+    /// it. w: 1 renders the item as an unlit overlay — flat colour, no light,
+    /// no fog.
     public var reflectance: SIMD4<Float>
 
 

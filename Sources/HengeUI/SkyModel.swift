@@ -132,6 +132,64 @@ public final class SkyModel {
         MonumentScene.complete(state: monumentState)
     }
 
+    // ── the geometry overlay ────────────────────────────────────────────────
+
+    /// Whether the researched lines — cardinals, axis, station rectangle,
+    /// Avenue, and the live sun and moon bearings — are drawn on the turf.
+    public var showsAlignmentOverlay = false
+    /// Whether Hoyle's gold markers stand in the Aubrey holes. A modern
+    /// hypothesis, badged as one — see `Lore` and research/lunar-markers.md.
+    public var showsLunarMarkers = false
+
+    /// Changes exactly when the overlay's geometry must be rebuilt: on a mode
+    /// switch, when a marker changes hole, or when a bearing line has drifted
+    /// a quarter of a degree — finer than the ribbon is wide at its far end.
+    /// The renderer rebuilds a few hundred vertices when this moves, so the
+    /// trigger is deliberately coarse rather than per-frame.
+    public var overlayKey: Int {
+        guard showsAlignmentOverlay || showsLunarMarkers else { return 0 }
+        var hasher = Hasher()
+        hasher.combine(showsAlignmentOverlay)
+        hasher.combine(showsLunarMarkers)
+        if showsAlignmentOverlay {
+            hasher.combine(sun.altitude.degrees > -0.8
+                           ? Int((sun.azimuth.degrees * 4).rounded()) : -1)
+            hasher.combine(moon.altitude.degrees > -0.8
+                           ? Int((moon.azimuth.degrees * 4).rounded()) : -1)
+        }
+        if showsLunarMarkers {
+            let markers = aubrey
+            hasher.combine(Int(markers.sun.rounded()))
+            hasher.combine(Int(markers.moon.rounded()))
+            hasher.combine(Int(markers.node.rounded()))
+        }
+        return hasher.finalize()
+    }
+
+    /// Everything the overlay currently draws.
+    public func overlayPieces() -> [GeometryOverlay.Piece] {
+        guard showsAlignmentOverlay || showsLunarMarkers else { return [] }
+        var pieces: [GeometryOverlay.Piece] = []
+        if showsAlignmentOverlay {
+            pieces += GeometryOverlay.surveyPieces(ground: groundHeight)
+            // A bearing line for a body below the horizon would point at
+            // nothing you could check by looking.
+            if sun.altitude.degrees > -0.8 {
+                pieces.append(GeometryOverlay.sunRay(azimuth: sun.azimuth,
+                                                     ground: groundHeight))
+            }
+            if moon.altitude.degrees > -0.8 {
+                pieces.append(GeometryOverlay.moonRay(azimuth: moon.azimuth,
+                                                      ground: groundHeight))
+            }
+        }
+        if showsLunarMarkers {
+            pieces += GeometryOverlay.markerStones(at: time.terrestrialTime,
+                                                   ground: groundHeight)
+        }
+        return pieces
+    }
+
     /// Salisbury Plain. Loaded once — a 1.18 MB heightfield is not something to
     /// re-read on every view update.
     public static let terrain: TerrainModel? = try? TerrainModel.salisburyPlain()

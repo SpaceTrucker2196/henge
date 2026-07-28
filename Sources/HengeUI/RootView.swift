@@ -62,7 +62,16 @@ public struct RootView: View {
                     .padding(.trailing, 72)
             }
         }
-        .overlay(alignment: .topTrailing) { HengeGlass { almanacToggle }.padding(16) }
+        .overlay(alignment: .topTrailing) {
+            HengeGlass {
+                VStack(spacing: 8) {
+                    almanacToggle
+                    overlayToggle
+                    markerToggle
+                }
+            }
+            .padding(16)
+        }
         .foregroundStyle(Henge.stone)
         .tint(Henge.bronze)
         .task { await runClock() }
@@ -337,6 +346,42 @@ public struct RootView: View {
     /// out before the columns do. Dynamic Type is served the same way as
     /// before: nothing has a fixed width, so a column grows and the strip
     /// simply scrolls sooner.
+    /// The researched lines, drawn on the turf.
+    private var overlayToggle: some View {
+        Button {
+            model.showsAlignmentOverlay.toggle()
+        } label: {
+            Image(systemName: "safari")
+                .frame(width: 36, height: 32)
+        }
+        .buttonStyle(.plain)
+        .hengeControl(isSelected: model.showsAlignmentOverlay)
+        .foregroundStyle(model.showsAlignmentOverlay ? Henge.bronze : Henge.stone)
+        .accessibilityLabel(model.showsAlignmentOverlay
+                            ? "Hide the alignment lines" : "Show the alignment lines")
+        .accessibilityHint("Cardinal directions, the solstice axis, the Avenue, "
+                           + "and the Station Stone rectangle — the lore panel "
+                           + "says which lines are established and which argued")
+    }
+
+    /// Hoyle's markers, standing gold in the Aubrey holes.
+    private var markerToggle: some View {
+        Button {
+            model.showsLunarMarkers.toggle()
+        } label: {
+            Image(systemName: "record.circle")
+                .frame(width: 36, height: 32)
+        }
+        .buttonStyle(.plain)
+        .hengeControl(isSelected: model.showsLunarMarkers)
+        .foregroundStyle(model.showsLunarMarkers ? Henge.bronze : Henge.stone)
+        .accessibilityLabel(model.showsLunarMarkers
+                            ? "Hide the eclipse markers" : "Show the eclipse markers")
+        .accessibilityHint("Gold markers on the Aubrey ring at the real positions "
+                           + "of the sun, moon and nodes — a modern hypothesis, "
+                           + "shown as one")
+    }
+
     private var almanac: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 14) {

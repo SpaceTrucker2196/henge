@@ -221,7 +221,27 @@ public enum Lore {
                 """,
             tier: .debated,
             citations: [Citation("Ruggles, Astronomy in Prehistoric Britain and Ireland", "ch. 3"),
-                        Citation("Thom, Thom & Thom, 'Stonehenge as a possible lunar observatory'", "JHA 6, 1975")])
+                        Citation("Thom, Thom & Thom, 'Stonehenge as a possible lunar observatory'", "JHA 6, 1975")]),
+
+        LoreNote(
+            id: "monument.overlay",
+            title: "The drawn lines and the gold markers",
+            body: """
+                The overlay draws the monument's researched geometry on the \
+                turf. The cardinal strokes, the solstice axis and the Avenue \
+                are established survey. The Station-Stone rectangle's lunar \
+                long sides are a serious, contested reading. The gold markers \
+                act out the Aubrey-hole eclipse machine proposed by Hoyle in \
+                1966 — placed here at the real computed positions of sun, \
+                moon and nodes, because the shuffling of counters is the part \
+                nothing excavated supports: the holes held cremated human \
+                remains. Gold means moving, and moving means hypothesis.
+                """,
+            tier: .debated,
+            citations: [Citation("Hoyle, 'Stonehenge — an eclipse predictor'", "Nature 211, 1966"),
+                        Citation("Newham, The Enigma of Stonehenge", "1964"),
+                        Citation("Ruggles, Astronomy in Prehistoric Britain and Ireland", "ch. 3"),
+                        Citation("Parker Pearson et al., 'Who was buried at Stonehenge?'", "Antiquity 83, 2009")])
     ]
 
     /// Everything the app can say, each note once.
