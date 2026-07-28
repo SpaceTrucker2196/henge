@@ -24,10 +24,16 @@ public enum SoilSkirt {
 
     /// How far the mound reaches out from the stone's face, metres, before the
     /// per-stone variation is applied.
-    public static let reach: Float = 0.42
+    /// Broadened from 0.42. A short skirt met the turf at a visible break — it
+    /// read as a collar sitting on the grass rather than earth that had crept
+    /// there. Soil banked against a stone over four thousand years feathers out
+    /// over a metre or more, and the far edge is imperceptible.
+    public static let reach: Float = 1.15
 
     /// How high it climbs the stone at its thickest.
-    public static let rise: Float = 0.17
+    /// Lowered with the widening: the same volume of earth spread further is
+    /// flatter, and a tall narrow mound is the shape that reads as a collar.
+    public static let rise: Float = 0.13
 
     /// Build the mound around one stone.
     ///
@@ -96,30 +102,43 @@ public enum SoilSkirt {
             let height: Float = rise * bulk * max(heightVariation, 0.15)
 
             let direction = SIMD2<Float>(sin(angle), cos(angle))
+            let centre = SIMD2(Float(stone.position.x), Float(stone.position.z))
 
-            // Inner ring: against the stone, part-way up it.
-            let innerXZ = SIMD2(Float(stone.position.x), Float(stone.position.z))
-                + direction * (footprint - 0.02)
-            let innerGround = groundHeight(innerXZ.x, innerXZ.y)
-            positions.append(SIMD3(innerXZ.x, max(base, innerGround) + height, innerXZ.y))
-            normals.append(SIMD3(0, 1, 0))
+            // Three rings, not two. A single span from the stone straight to
+            // the turf is a cone, and a cone has a hard rim where it lands. The
+            // middle ring lets the profile be concave — steep against the stone
+            // and almost flat where it meets the grass, which is the shape
+            // water and worms actually leave.
+            let rings: [(distance: Float, lift: Float, flatness: Float)] = [
+                (footprint - 0.02, height, 0.0),
+                (footprint + outward * 0.38, height * 0.34, 0.5),
+                (footprint + outward, 0.004, 1.0)
+            ]
 
-            // Outer ring: feathered out to nothing on the turf.
-            let outerXZ = SIMD2(Float(stone.position.x), Float(stone.position.z))
-                + direction * (footprint + outward)
-            let outerGround = groundHeight(outerXZ.x, outerXZ.y)
-            positions.append(SIMD3(outerXZ.x, outerGround + 0.004, outerXZ.y))
-            // Slope the outer normal outward and up, so the mound catches light
-            // along its flank rather than reading as a flat washer.
-            normals.append(normalize(SIMD3(direction.x * 0.55, 1, direction.y * 0.55)))
+            for ring in rings {
+                let xz = centre + direction * ring.distance
+                let ground = groundHeight(xz.x, xz.y)
+                let floorY = ring.flatness > 0.9 ? ground : max(base, ground)
+                positions.append(SIMD3(xz.x, floorY + ring.lift, xz.y))
+                // Flatten the normal toward straight up as the mound feathers,
+                // so its outer edge shades like the turf it is becoming rather
+                // than announcing itself with a rim of different lighting.
+                let outwardTilt = 0.6 * (1 - ring.flatness)
+                normals.append(normalize(SIMD3(direction.x * outwardTilt, 1,
+                                               direction.y * outwardTilt)))
+            }
         }
 
         for segment in 0..<segments {
-            let i = UInt32(segment * 2)
+            let i = UInt32(segment * 3)
+            let next = UInt32((segment + 1) * 3)
             // Counter-clockwise seen from above, matching every other mesh here
             // — the winding convention this project learned the hard way.
-            indices += [i, i + 1, i + 2,
-                        i + 1, i + 3, i + 2]
+            for band in 0..<2 {
+                let a = i + UInt32(band), b = next + UInt32(band)
+                indices += [a, a + 1, b,
+                            a + 1, b + 1, b]
+            }
         }
 
         return Mesh(positions: positions, normals: normals, indices: indices)

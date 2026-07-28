@@ -367,9 +367,54 @@ static Surface sampleGround(float3 worldPosition, float3 n,
     float3 far  = albedoMap.sample(surfaceSampler, uv * 0.137).rgb;
     float3 colour = near * mix(1.0, far / kGrassMean, 0.55);
 
+    // Mottling, at the scale a person actually reads the ground at.
+    //
+    // Downland is not one green. It is a patchwork a few metres across: thin
+    // worn turf where the chalk comes through pale, rank tussocky growth where
+    // it does not, molehills, old spoil, the scars of a century of feet. The
+    // texture supplies centimetres of grain and the second sample supplies
+    // tens of metres of drift, and between the two sat a gap at exactly the
+    // scale the eye checks — which is why the ground read as a uniform mat
+    // right where you look hardest, around the feet of the stones.
+    //
+    // Two bands. The broad one moves the tone; the finer one both lightens and
+    // desaturates toward chalk, because a worn patch is not simply a brighter
+    // green — it is a different substance showing through.
+    float broadMottle = fbm(float3(worldPosition.x * 0.22, 3.0, worldPosition.z * 0.22));
+    float fineMottle = fbm(float3(worldPosition.x * 0.85, 7.0, worldPosition.z * 0.85));
+
+    colour *= 0.78 + 0.44 * broadMottle;
+    float wear = smoothstep(0.52, 0.86, fineMottle * 0.65 + broadMottle * 0.35);
+    const float3 chalk = float3(0.74, 0.72, 0.63);
+    colour = mix(colour, colour * 0.55 + chalk * kGrassMean * 0.85, wear * 0.55);
+
     float3 t = normalMap.sample(surfaceSampler, uv).xyz * 2.0 - 1.0;
     float strength = draw.surface.z;
     float3 bent = normalize(n + float3(t.x, 0.0, t.y) * strength);
+
+    // Give the mottling *form*, not just colour.
+    //
+    // The texture's own normal map carries centimetres of grain, which at any
+    // distance averages away to nothing — so the ground was a flat plane
+    // wearing a patterned coat, and at a low sun it stayed flat while
+    // everything around it grew long shadows. Downland is not flat at metre
+    // scale: it is tussock and hollow, molehill and old spoil, and that relief
+    // is most of what you see when the light comes in sideways.
+    //
+    // The mottle field already describes where the ground is rough. Taking its
+    // gradient by finite difference turns that description into a surface: the
+    // same patches that read paler now also tilt, so they catch the light and
+    // shade their own lee sides. Two samples, and the ground acquires a shape
+    // that answers the sun's direction instead of ignoring it.
+    const float step = 0.6;             // metres between samples
+    const float relief = 0.55;          // how strongly the field tilts
+    float hereMottle = fbm(float3(worldPosition.x * 0.22, 3.0, worldPosition.z * 0.22));
+    float eastMottle = fbm(float3((worldPosition.x + step) * 0.22, 3.0,
+                                  worldPosition.z * 0.22));
+    float southMottle = fbm(float3(worldPosition.x * 0.22, 3.0,
+                                   (worldPosition.z + step) * 0.22));
+    float3 slope = float3(-(eastMottle - hereMottle), 0.0, -(southMottle - hereMottle));
+    bent = normalize(bent + slope * relief);
 
     Surface out;
     out.albedo = draw.albedo.rgb * (colour / kGrassMean);

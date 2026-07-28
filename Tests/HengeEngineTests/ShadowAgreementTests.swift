@@ -379,7 +379,8 @@ final class OpacityTests: XCTestCase {
         // photographic grain would put variation into exactly the pixel
         // comparison that answers it.
         let state = SceneState(sun: sun, camera: camera, turbidity: 2.2, exposure: 1.5,
-                               surfaceTexturing: false, grassBlades: false)
+                               surfaceTexturing: false, grassBlades: false,
+                               soilBanks: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 1024)
         try renderer.load(scene: MonumentScene(state: .asItWas, stones: stones),
                           subdivisions: 12)

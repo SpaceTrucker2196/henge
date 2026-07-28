@@ -8,6 +8,16 @@ import HengeGeometry
 /// Everything the renderer needs to know about the moment being drawn.
 public struct SceneState: Sendable {
 
+    /// Whether earth is banked against the stones' feet.
+    ///
+    /// Off in the opacity suite, which asks whether a stone's silhouette has
+    /// holes in it by comparing pixels against the background. A soil bank in
+    /// front of the base is a different colour from the stone and counts as a
+    /// hole — the fourth detail layer to interfere with that measurement, and
+    /// the reason each one gets its own switch rather than one blanket "plain"
+    /// mode: a suite should turn off exactly what it must and no more.
+    public var soilBanks: Bool
+
     /// Whether individual blades are drawn near the viewer.
     ///
     /// Off in the rendering tests, which measure ground luminance and would
@@ -91,6 +101,7 @@ public struct SceneState: Sendable {
                 weathering: Bool = true,
                 windSpeed: Float = 1.8,
                 grassBlades: Bool = true,
+                soilBanks: Bool = true,
                 windBearing: Double = 250,
                 windTime: Double = 0) {
         self.sun = sun
@@ -105,6 +116,7 @@ public struct SceneState: Sendable {
         self.weathering = weathering
         self.windSpeed = windSpeed
         self.grassBlades = grassBlades
+        self.soilBanks = soilBanks
         self.windBearing = windBearing
         self.windTime = windTime
     }
@@ -470,9 +482,11 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             mesh = Self.seat(mesh, of: stone, on: terrain)
             // The soil banked against its foot, as its own small mesh so it
             // can take the ground material rather than the stone's.
-            let skirt = SoilSkirt.build(around: stone, groundHeight: { x, z in
-                Float(terrain?.groundHeight(east: Double(x), south: Double(z)) ?? 0)
-            })
+            let skirt = state.soilBanks
+                ? SoilSkirt.build(around: stone, groundHeight: { x, z in
+                    Float(terrain?.groundHeight(east: Double(x), south: Double(z)) ?? 0)
+                })
+                : Mesh()
             if !skirt.indices.isEmpty,
                let soil = try makeDrawItem(mesh: skirt,
                                            albedo: SurfaceMaterial.soil,

@@ -1059,3 +1059,50 @@ first), and both are better calls than the alternative.
 
 180 tests, both platforms warning-clean.
 
+## 2026-07-28 — Mottling, relief, wider banks, thicker sward
+
+Four adjustments, all to the same complaint in different forms: the ground was
+a flat plane wearing a patterned coat, and the things standing on it announced
+their own edges.
+
+**Mottling at the scale the eye checks.** The texture supplied centimetres of
+grain and the second incommensurate sample supplied tens of metres of drift, and
+between them sat a gap at exactly the few-metre scale a person reads ground at —
+which is why the turf looked uniform right where you look hardest, around the
+feet of the stones. Two noise bands now: a broad one that moves the tone, and a
+finer one that lightens *and* desaturates toward chalk, because a worn patch is
+not a brighter green, it is a different substance showing through.
+
+**The mottling has form.** Colour alone left the ground flat under a low sun
+while everything around it grew long shadows. Taking the finite-difference
+gradient of the mottle field turns the description into a surface: the same
+patches that read paler now tilt, catch the light and shade their own lee sides.
+Two extra samples, and the ground answers the sun's direction instead of
+ignoring it — which at sunrise is most of what there is to see.
+
+**Soil banks feathered from 0.42 m to 1.15 m, and three rings instead of two.**
+A single span from stone to turf is a cone, and a cone lands on a hard rim. The
+middle ring lets the profile be concave — steep against the stone, almost flat
+where it meets the grass — which is the shape water and worms actually leave.
+The outer normal flattens toward vertical as it feathers, so the edge shades
+like the turf it is becoming instead of announcing itself with a rim of
+different lighting.
+
+**Thicker sward: 45 blades per square metre to 130.** At 45 the textured ground
+showed through everywhere rather than only in the worn patches, so it read as
+grass scattered *on* the plain instead of grass *being* it. About 320,000 blades
+now, some 2.2 million triangles — a lot, but tiny, unshadowed, and one instanced
+call. If it ever has to come down, take the radius before the density: a thin
+sward is more obviously wrong than a short one. Blades widened to 2.5–5 mm, the
+upper half of the real range, because at distance a 2 mm blade is under a pixel
+and simply vanishes. The blade fade widened from 6 m to 10 so the handover
+between the two grass models never has a line in it.
+
+**A fourth switch.** `soilBanks` joins `surfaceTexturing`, `weathering` and
+`grassBlades` as something a suite can turn off — the broadened banks now cover
+part of a stone's base, and the opacity test reads that as a hole in the
+silhouette. Four separate flags rather than one blanket "plain" mode, on the
+principle that a suite should turn off exactly what it must and no more.
+
+180 tests, both platforms warning-clean.
+

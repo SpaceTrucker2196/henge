@@ -36,15 +36,16 @@ final class SoilSkirtTests: XCTestCase {
         let mesh = SoilSkirt.build(around: stone)
         XCTAssertFalse(mesh.indices.isEmpty)
 
-        // Odd vertices are the outer ring.
-        let outer = stride(from: 1, to: mesh.positions.count, by: 2).map { mesh.positions[$0] }
+        // Three rings per segment now — inner, middle, feathered outer — so
+        // the outer ring is every third vertex starting at 2.
+        let outer = stride(from: 2, to: mesh.positions.count, by: 3).map { mesh.positions[$0] }
         let radii = outer.map { simd_length(SIMD2($0.x, $0.z)) }
         let spread = (radii.max() ?? 0) - (radii.min() ?? 0)
-        XCTAssertGreaterThan(spread, 0.15,
+        XCTAssertGreaterThan(spread, 0.3,
                              "the outer edge varies by only \(spread) m — that is a collar")
 
         // And the height varies too, not just the reach.
-        let inner = stride(from: 0, to: mesh.positions.count, by: 2).map { mesh.positions[$0].y }
+        let inner = stride(from: 0, to: mesh.positions.count, by: 3).map { mesh.positions[$0].y }
         XCTAssertGreaterThan((inner.max() ?? 0) - (inner.min() ?? 0), 0.02)
     }
 
@@ -53,7 +54,7 @@ final class SoilSkirtTests: XCTestCase {
     func testNoTwoMoundsAreTheSame() {
         let shapes = (1...12).map { seed -> [Float] in
             let mesh = SoilSkirt.build(around: upright(id: "s\(seed)", seed: UInt64(seed)))
-            return stride(from: 1, to: mesh.positions.count, by: 2)
+            return stride(from: 2, to: mesh.positions.count, by: 3)
                 .map { simd_length(SIMD2(mesh.positions[$0].x, mesh.positions[$0].z)) }
         }
         for (i, a) in shapes.enumerated() {
@@ -89,7 +90,7 @@ final class SoilSkirtTests: XCTestCase {
     func testTheMoundFollowsTheGround() {
         let slope: (Float, Float) -> Float = { x, _ in x * 0.15 }
         let mesh = SoilSkirt.build(around: upright(), groundHeight: slope)
-        let outer = stride(from: 1, to: mesh.positions.count, by: 2).map { mesh.positions[$0] }
+        let outer = stride(from: 2, to: mesh.positions.count, by: 3).map { mesh.positions[$0] }
 
         for point in outer {
             XCTAssertEqual(point.y, slope(point.x, point.z), accuracy: 0.02,

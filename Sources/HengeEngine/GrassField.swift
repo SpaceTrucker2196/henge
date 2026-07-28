@@ -66,13 +66,25 @@ public enum GrassField {
     /// Blades per square metre.
     ///
     /// Real chalk downland runs to thousands of shoots per square metre; this
-    /// is not that and cannot be. At 45 the field reads as continuous once the
-    /// textured ground shows through between blades, which is what the ground
-    /// is doing underneath them.
-    public static let density: Float = 45
+    /// is not that and cannot be. But 45 was too sparse to read as sward — the
+    /// textured ground showed through between blades everywhere rather than
+    /// only in the worn patches, so it looked like grass *scattered on* the
+    /// plain instead of grass *being* the plain.
+    ///
+    /// 130 puts about 320,000 blades in the disc, which is around 2.2 million
+    /// triangles — a lot, but they are tiny, unshadowed and drawn in one
+    /// instanced call. If this ever needs to come down, take the radius before
+    /// the density: a thin sward is more obviously wrong than a short one.
+    public static let density: Float = 130
 
     /// How far the blades fade back into the textured ground, metres.
-    public static let fade: Float = 6
+    ///
+    /// Ten, not six. The blades and the shaded ground are two different models
+    /// of the same thing and the handover has to be long enough that no frame
+    /// contains both an obviously-bladed foreground and an obviously-flat
+    /// middle distance with a line between them. A third of the field's radius
+    /// is about right; shorter and the edge finds you when you turn.
+    public static let fade: Float = 10
 
     // ── the blade ───────────────────────────────────────────────────────────
 
@@ -162,8 +174,11 @@ public enum GrassField {
                     root: SIMD3(x, ground, z),
                     yaw: random.nextFloat() * 2 * .pi,
                     height: height,
-                    // 2 to 4.5 mm — a real grass blade, measured.
-                    width: 0.002 + random.nextFloat() * 0.0025,
+                    // 2.5 to 5 mm. Real fescue and rye blades on downland run
+                    // 2–5 mm; the upper half of that range reads better at a
+                    // distance where a 2 mm blade is under a pixel wide and
+                    // simply disappears.
+                    width: 0.0025 + random.nextFloat() * 0.0025,
                     stiffness: 0.6 + random.nextFloat() * 0.8,
                     phase: random.nextFloat() * 2 * .pi,
                     tint: 0.82 + random.nextFloat() * 0.36))
