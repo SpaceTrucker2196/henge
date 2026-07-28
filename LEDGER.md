@@ -13,3 +13,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 6366532 | 2026-07-28T18:29:48Z | claude-fable-5 | 90 | 92558 | 13031967 | 142306 | 20.5069 | Geometry overlay mode + gold Hoyle markers on the Aubrey ring |
 | 5c07a2e | 2026-07-28T18:39:44Z | claude-fable-5 | 116 | 113580 | 19506289 | 118711 | 27.5607 | Stone individuality: per-seed mesh shapes, multifractal, variance-preserving ble |
 | 520872f | 2026-07-28T18:55:53Z | claude-fable-5 | 104 | 99375 | 20049541 | 187613 | 28.7716 | Review fixes: haze/cascade contract, marker disc phase, rebuild throttle, on-scr |
+| 6279eec | 2026-07-28T18:56:52Z | claude-fable-5 | 10 | 3242 | 2053360 | 6206 | 2.3397 | Session instrumentation: metrics + progress |
