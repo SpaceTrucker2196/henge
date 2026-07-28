@@ -9,3 +9,4 @@ the whole ledger: `ledger.py --energy-total`.
 |--------|------|----------|------:|-------:|-----------:|------------:|---------:|---------|
 <!-- ledger rows appended here -->
 | 138718c | 2026-07-28T18:17:47Z | claude-fable-5 | 303 | 300405 | 24096002 | 619947 | 51.5182 | Light shafts: volumetric haze pass with shadow-cascade beams at sunrise/sunset |
+| 7c0f65b | 2026-07-28T18:21:44Z | claude-fable-5 | 56 | 30094 | 7337860 | 32904 | 9.5012 | Top-strip almanac, phase glyphs, lunar-marker research note |
