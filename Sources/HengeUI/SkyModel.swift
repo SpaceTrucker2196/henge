@@ -349,6 +349,48 @@ public final class SkyModel {
         time = time + (seconds * rate) / 86400.0
     }
 
+    // ── alignment ───────────────────────────────────────────────────────────
+
+    /// The horizon the monument actually looks at, along a given bearing.
+    ///
+    /// Only meaningful at the real site; anywhere else the heightfield is the
+    /// wrong hill.
+    public func horizon(along bearing: HengeAstro.Angle) -> HengeAstro.Angle {
+        guard viewpoint == .stonehenge else { return .zero }
+        return SkyModel.terrain?.horizonAltitude(azimuth: bearing) ?? .zero
+    }
+
+    /// How far each alignment is from true today, and whether it is on.
+    ///
+    /// Recomputed per read like `upcoming`, and for the same reason: the date
+    /// can be anywhere in five millennia.
+    public var alignments: [(alignment: HengeGeometry.Alignment,
+                             deviation: HengeAstro.Angle, isOn: Bool)] {
+        // Qualified because SwiftUI has an `Alignment` of its own — the same
+        // collision `Angle` has, handled the same way rather than by an import
+        // order that could change under someone.
+        HengeGeometry.Alignment.allCases.compactMap { alignment in
+            let horizon = horizon(along: alignment.bearing)
+            guard let deviation = AlignmentSolver.deviation(
+                of: alignment, on: calendarDate, site: site,
+                horizonAltitude: horizon) else { return nil }
+            return (alignment, deviation,
+                    deviation.degrees <= AlignmentSolver.solarDiameter.degrees)
+        }
+    }
+
+    /// Jump to the morning the sun reaches its extreme — the day the monument
+    /// is built around, found rather than assumed.
+    public func jumpToExtreme(of alignment: HengeGeometry.Alignment) {
+        let horizon = horizon(along: alignment.bearing)
+        guard let extreme = AlignmentSolver.extreme(
+            for: alignment, year: calendarDate.year,
+            site: site, horizonAltitude: horizon) else { return }
+        time = RiseSet.time(of: alignment.isRising ? .rise : .set,
+                            on: extreme.date, site: site,
+                            horizonAltitude: horizon) ?? JulianDay(extreme.date)
+    }
+
     // ── what is coming ──────────────────────────────────────────────────────
 
     /// The next few months of sky, solved fresh from the current moment.

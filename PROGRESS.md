@@ -536,3 +536,55 @@ warning-clean" was not true**, in this entry or in several before it. It was a
 claim resting on a check that could not fail and a filter that could not report.
 It is true now, and now it means something.
 
+## 2026-07-28 — M4 closes: alignment moments, and the definition of done as a test
+
+`Alignment` finishes M4. The type exists because an alignment is a fact about a
+*moment*, not about a day: "the sun rises on the axis at midsummer" is true to
+about a degree for a week either side, because the sun's declination barely
+moves at the turn — that is what a solstice is. The readout now says how far off
+the line the sun is right now.
+
+**ROADMAP.md's definition of done is now a test.** It renders the 21 June 2026
+sunrise against the baked terrain and asserts the bearing is within a solar
+diameter of the surveyed axis and that the first shadow runs down the Avenue.
+It passed on the first run, which is the first time this project's acceptance
+criterion has been a computation rather than a paragraph.
+
+Three assumptions of mine failed, and all three were mine rather than the code's.
+
+**"Closest approach" was the wrong question.** `bestDay` searched for the morning
+the sunrise came nearest the axis and walked straight to the edge of its window
+— a fortnight before the solstice. The sunrise bearing never quite *equals* the
+axis; it comes within about half a degree and turns back, so "closest" has its
+minimum wherever you stop looking. What the monument marks is where the sun
+**stops**. Rewritten as `extreme`, solving the turning point in declination.
+
+**The tidy deep-time story is not true.** I expected the axis to fit 2500 BC
+better than today — obliquity was greater, the sun rose further north. The first
+half is right and the app derives it: measured on the same horizon, the
+builders' midsummer sun rose **1.03° north of ours**. But against the surveyed
+49.9° the modern sunrise sits 0.41° south of the axis and the builders' 0.62°
+north of it. The axis lands *between* the two eras, inside a solar diameter of
+each. Which is exactly why the alignment cannot be used to date the monument —
+a point the literature makes, and one the app would have quietly contradicted if
+I had tuned the test until it agreed with me. It now asserts the honest version.
+
+**The line is not equally good read both ways.** Midsummer sunrise is 0.41° off
+the axis; midwinter sunset is 1.85° off its reciprocal. The two solstitial
+bearings are not 180° apart at this latitude — the horizon altitude differs
+between north-east and south-west, and refraction applies to opposite
+declinations — so one straight axis cannot catch both. The test pins that the
+sunset fit is the *worse* one rather than pretending to a symmetry the sky does
+not have.
+
+The pattern in all three is the same and worth naming, because it is the third
+time this project has produced it: **the test I wanted to write was a
+description of what I expected, and the useful test was a measurement of what
+happens.** The Metal winding bug, the Aubrey ring's 52% recall and these are one
+failure mode wearing three hats.
+
+M4 is complete. M5 remains: lore panels in a bardic register, the design
+language, weather and season dressing, sound, ceremony mode, MetalFX and 120 Hz,
+the accessibility audit, moon shadow cascades, and PCSS penumbra matched to the
+sun's real 0.53°.
+

@@ -97,6 +97,15 @@ public struct RootView: View {
                 row("", "eclipse season — hypothesis")
             }
 
+            Divider().frame(width: 190).padding(.vertical, 6)
+
+            // Live alignment: how far off the line the sun is right now, not
+            // whether today happens to be the right date.
+            ForEach(model.alignments, id: \.alignment) { entry in
+                row(entry.alignment.name + (entry.isOn ? " ●" : ""),
+                    String(format: "%.2f° off", entry.deviation.degrees))
+            }
+
             if let deviation = model.axisDeviation {
                 row("Off the axis", String(format: "%.2f°", deviation.degrees))
             }

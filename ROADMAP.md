@@ -30,7 +30,7 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       Way. Precession and deep-time mode — Thuban as pole star.
       **Blocked until `SECURITY.md`'s constellation-figure licence is settled.**
 
-- [ ] **M4 — The Calendar (M–L).** *In progress.* The Wheel of the Year has
+- [x] **M4 — The Calendar (M–L).** *In progress.* The Wheel of the Year has
       landed: eight stations solved from apparent solar longitude, festival
       jumps that land on the sunrise of the day rather than midnight of a
       calendar date, and the tier badge shown at the point of use. The lore
@@ -39,9 +39,12 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       aspirational. Note the honest number the wheel exposes: the customary
       cross-quarter dates run three to seven days ahead of the sun.
 
-      Still to come: lunar phases and standstill seasons as events, the today
-      ribbon, alignment moments, and the Aubrey 56 eclipse-prediction feature
-      badged as the modern hypothesis it is.
+      **Complete.** The events engine solves moon phases, eclipse seasons and
+      the standstills from position; the ribbon shows what is coming and jumps
+      to it; the Aubrey 56 counter ships badged as hypothesis and scored
+      against the ephemeris (42 caught, 0 missed, 9 false alarms over a
+      decade); and `Alignment` answers how far off the line the sun is right
+      now. The definition of done below is a passing test.
 
 - [ ] **M5 — The Soul (L).** Lore panels in a bardic register with every claim
       tiered and cited. "Mistletoe & Oak" design language. Weather and season
