@@ -940,9 +940,14 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             }(),
             shadowSource: SIMD4(moonCasts ? 1 : 0, 0, 0, 0),
             haze: {
-                // The boost reaches zero before the moon-cast handover, so the
-                // beams can never sample the moon's shadow map — the gate here
-                // is belt and braces on top of that arithmetic.
+                // The boost is hard zero at 0.2° altitude — above both the
+                // cascade-fit threshold and the moon-cast handover at ~0.011°
+                // (HazeTests pins the ordering) — so the beams can never
+                // march against identity matrices or the moon's shadow map.
+                // The gate here is belt and braces on top of that arithmetic,
+                // and unlike the curve it cannot cause a visible pop, because
+                // when it fires the curve has already been zero for a fifth
+                // of a degree.
                 let boost = moonCasts || !state.lightShafts
                     ? 0 : Haze.twilightBoost(sunAltitude: state.sun.altitude)
                 // 0.0085 m⁻¹ at full boost: an optical depth of about 0.4

@@ -25,12 +25,17 @@ public enum Haze {
     ///
     /// - 18° and above: 0. High sun, clear air.
     /// - 18° down to 3°: rises 0 → 1. The golden hour approaches.
-    /// - 3° down to 0.5°: 1. Full beams while the disc stands on the horizon.
-    /// - 0.5° down to −1.5°: falls 1 → 0. The disc is gone; beams need a sun
-    ///   to cast them. (The moon-lit night fits its cascades to the moon, and
-    ///   sun beams from a sun below the horizon would be sampling the wrong
-    ///   light's shadow map — the curve reaching zero before the handover is
-    ///   what keeps those two regimes from ever overlapping.)
+    /// - 3° down to 1.2°: 1. Full beams while the disc stands on the horizon.
+    /// - 1.2° down to 0.2°: falls 1 → 0, and 0.2° is a *contract*, not taste.
+    ///   The renderer fits its shadow cascades only while the sun stands
+    ///   above ~0.011° apparent altitude, and hands the shadow map to the
+    ///   moon at the same threshold when a bright moon is up. Beams marched
+    ///   below that line would sample identity matrices or the wrong light's
+    ///   shadows — so this curve must be exactly zero before the sun reaches
+    ///   it, with margin. The first version faded to −1.5° instead, and the
+    ///   review caught both consequences: an unshadowed golden veil in the
+    ///   window below 0.011°, and a one-frame pop at the moon handover on
+    ///   every bright-moon evening.
     ///
     /// `sunAltitude` is the *apparent* (refracted) altitude, the same one the
     /// sky is drawn with.
@@ -38,8 +43,8 @@ public enum Haze {
         let a = sunAltitude.degrees
         if a >= 18 { return 0 }
         if a >= 3 { return smoothstep((18 - a) / 15) }
-        if a >= 0.5 { return 1 }
-        if a >= -1.5 { return smoothstep((a + 1.5) / 2) }
+        if a >= 1.2 { return 1 }
+        if a >= 0.2 { return smoothstep((a - 0.2) / 1.0) }
         return 0
     }
 

@@ -142,10 +142,16 @@ public final class SkyModel {
     public var showsLunarMarkers = false
 
     /// Changes exactly when the overlay's geometry must be rebuilt: on a mode
-    /// switch, when a marker changes hole, or when a bearing line has drifted
-    /// a quarter of a degree — finer than the ribbon is wide at its far end.
-    /// The renderer rebuilds a few hundred vertices when this moves, so the
-    /// trigger is deliberately coarse rather than per-frame.
+    /// switch, when a marker changes *disc*, or when a bearing line has
+    /// drifted half a degree — about the ribbon's own width at its far end.
+    ///
+    /// Two lessons from review are load-bearing here. The markers hash the
+    /// same `discIndex` rounding the geometry uses — hashing the raw hole
+    /// value left the moon's marker standing one hole behind its disc for
+    /// three quarters of every cycle, because the two roundings transition at
+    /// different phases. And at time-lapse rates the bearings step every
+    /// tick, so `SceneView` additionally rate-limits rebuilds on the wall
+    /// clock; this key alone is not the whole throttle.
     public var overlayKey: Int {
         guard showsAlignmentOverlay || showsLunarMarkers else { return 0 }
         var hasher = Hasher()
@@ -153,17 +159,31 @@ public final class SkyModel {
         hasher.combine(showsLunarMarkers)
         if showsAlignmentOverlay {
             hasher.combine(sun.altitude.degrees > -0.8
-                           ? Int((sun.azimuth.degrees * 4).rounded()) : -1)
+                           ? Int((sun.azimuth.degrees * 2).rounded()) : -1)
             hasher.combine(moon.altitude.degrees > -0.8
-                           ? Int((moon.azimuth.degrees * 4).rounded()) : -1)
+                           ? Int((moon.azimuth.degrees * 2).rounded()) : -1)
         }
         if showsLunarMarkers {
             let markers = aubrey
-            hasher.combine(Int(markers.sun.rounded()))
-            hasher.combine(Int(markers.moon.rounded()))
-            hasher.combine(Int(markers.node.rounded()))
+            hasher.combine(GeometryOverlay.discIndex(forHole: markers.sun))
+            hasher.combine(GeometryOverlay.discIndex(forHole: markers.moon))
+            hasher.combine(GeometryOverlay.discIndex(forHole: markers.node))
         }
         return hasher.finalize()
+    }
+
+    /// The survey lines never move, and draping them samples the terrain a
+    /// thousand times — built once, not per rebuild. Ignored by observation
+    /// (a cache is not state the UI reacts to) and memoised by hand rather
+    /// than `lazy`, because a lazy initialiser runs outside the main-actor
+    /// isolation `groundHeight` needs.
+    @ObservationIgnored private var cachedSurveyPieces: [GeometryOverlay.Piece]?
+
+    private func surveyPieces() -> [GeometryOverlay.Piece] {
+        if let cached = cachedSurveyPieces { return cached }
+        let pieces = GeometryOverlay.surveyPieces(ground: groundHeight)
+        cachedSurveyPieces = pieces
+        return pieces
     }
 
     /// Everything the overlay currently draws.
@@ -171,7 +191,7 @@ public final class SkyModel {
         guard showsAlignmentOverlay || showsLunarMarkers else { return [] }
         var pieces: [GeometryOverlay.Piece] = []
         if showsAlignmentOverlay {
-            pieces += GeometryOverlay.surveyPieces(ground: groundHeight)
+            pieces += surveyPieces()
             // A bearing line for a body below the horizon would point at
             // nothing you could check by looking.
             if sun.altitude.degrees > -0.8 {

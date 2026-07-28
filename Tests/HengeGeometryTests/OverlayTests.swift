@@ -100,6 +100,30 @@ final class OverlayTests: XCTestCase {
         }
     }
 
+    func testTheAvenueBanksRunTheSurveyedCorridor() {
+        let pieces = GeometryOverlay.surveyPieces(ground: { _, _ in 0 })
+            .filter { $0.name == "avenue bank" }
+        XCTAssertEqual(pieces.count, 2, "an avenue has two banks")
+
+        // Independent restatement of the survey: the corridor is 22 m wide
+        // about the 49.9° axis, so each bank's vertices sit 11 m off the
+        // axis line, within half the ribbon's width.
+        let direction = SIMD2(sin(49.9 * .pi / 180), -cos(49.9 * .pi / 180))
+        for piece in pieces {
+            for p in piece.mesh.positions {
+                let point = SIMD2(Double(p.x), Double(p.z))
+                let offAxis = abs(point.x * direction.y - point.y * direction.x)
+                XCTAssertEqual(offAxis, 11.0, accuracy: 0.25,
+                               "a bank vertex sits \(offAxis) m off the axis — "
+                               + "the corridor is not the surveyed 22 m")
+                let along = point.x * direction.x + point.y * direction.y
+                XCTAssertLessThan(along, 501,
+                                  "the bank runs past the straight stretch — "
+                                  + "beyond the elbow the drawn line is invention")
+            }
+        }
+    }
+
     func testMarkersStandOnTheAubreyCircleWhereTheEphemerisPutsThem() {
         // Within a day of the March 2000 equinox the sun's apparent longitude
         // is within a degree of zero, so its marker occupies hole 0 — which

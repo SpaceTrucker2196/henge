@@ -50,6 +50,20 @@ public enum Monument {
     public static let heelStoneDistance = 77.0
     public static let heelStoneHeight = 4.7
 
+    /// The Avenue: the earthwork corridor running north-east on the axis,
+    /// about 22 m between its parallel banks (Cleal, Walker & Montague,
+    /// "Stonehenge in its landscape", 1995 — the figure varies a little with
+    /// whether banks or ditches are measured; 22 m is the customary
+    /// bank-to-bank round number). The straight stretch runs some 500 m
+    /// before the elbow toward Stonehenge Bottom; anything drawn beyond
+    /// `avenueStraightLength` is extrapolation, not survey.
+    ///
+    /// The shader's worn-path corridor in `Henge.metal` (`pathWear`) states
+    /// the same half-width by hand and must be kept in step — the same
+    /// arrangement `ShaderTypes.swift` has with the uniform structs.
+    public static let avenueWidth = 22.0
+    public static let avenueStraightLength = 500.0
+
     /// The five trilithons of the horseshoe, graded toward the Great Trilithon
     /// at the south-west apex.
     public enum Trilithon: Int, Sendable, CaseIterable {

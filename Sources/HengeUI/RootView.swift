@@ -42,6 +42,13 @@ public struct RootView: View {
 
             HengeGlass(spacing: 14) {
                 VStack(spacing: 10) {
+                    // The research note behind the marker mode is binding:
+                    // "the mode must say so on screen, every time." A lore
+                    // sheet the user may never open does not satisfy that,
+                    // and neither does a VoiceOver hint — this chip is the
+                    // on-screen badge, present exactly as long as the gold
+                    // stones are.
+                    if model.showsLunarMarkers { hypothesisBadge }
                     if showingAlmanac { events }
                     timeBar
                     stations
@@ -362,6 +369,21 @@ public struct RootView: View {
         .accessibilityHint("Cardinal directions, the solstice axis, the Avenue, "
                            + "and the Station Stone rectangle — the lore panel "
                            + "says which lines are established and which argued")
+    }
+
+    /// The badge that rides with the gold markers. Tier and source at the
+    /// point of use — invariant 3, applied to a whole mode rather than a
+    /// sentence.
+    private var hypothesisBadge: some View {
+        Label("Gold markers act out a modern hypothesis — Hoyle, 1966. Debated; see Lore.",
+              systemImage: "record.circle")
+            .font(Henge.body(.caption2))
+            .foregroundStyle(Henge.bronze)
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .hengePanel(cornerRadius: 12)
+            .accessibilityHint("The Aubrey holes held cremated human remains; "
+                               + "nothing excavated supports moving markers. "
+                               + "The lore panel has the sources.")
     }
 
     /// Hoyle's markers, standing gold in the Aubrey holes.

@@ -142,14 +142,19 @@ public enum GeometryOverlay {
         }
 
         // The Avenue's banks: two parallel strokes either side of the axis,
-        // 22 m apart, running out to the north-east.
+        // the surveyed width apart (`Monument.avenueWidth`, cited there),
+        // drawn from just past the entrance out to where the straight
+        // stretch ends at the elbow — beyond that the true Avenue bends
+        // away, and a line that kept going would be drawing invention with
+        // an established badge.
         let acrossAxis = (axis + Angle(degrees: 90)).normalized
         let acrossDirection = WorldAxes.direction(azimuth: acrossAxis)
-        let half = SIMD2(acrossDirection.x, acrossDirection.z) * 11.0
+        let half = SIMD2(acrossDirection.x, acrossDirection.z)
+            * (Monument.avenueWidth / 2)
         for side in [half, -half] {
             pieces.append(Piece(name: "avenue bank",
                                 mesh: ribbon(from: axisPoint(axis, 55) + side,
-                                             to: axisPoint(axis, 300) + side,
+                                             to: axisPoint(axis, Monument.avenueStraightLength) + side,
                                              width: 0.35, ground: ground),
                                 colour: chalkLine, tier: .established))
         }
@@ -189,8 +194,12 @@ public enum GeometryOverlay {
     /// `AubreyRing` anchors hole 0 to the monument's axis; the rendered discs
     /// are laid out from north. The marker belongs *in a hole* — Hoyle's
     /// scheme has no positions between them — so the ideal bearing snaps to
-    /// the nearest disc.
-    static func discIndex(forHole hole: Double) -> Int {
+    /// the nearest disc. Public because whoever decides *when* to rebuild the
+    /// markers must key on this exact rounding: the first cut keyed on the
+    /// raw hole value, whose rounding transition sits at a different phase,
+    /// and the moon's marker stood one hole behind its disc for three
+    /// quarters of every cycle.
+    public static func discIndex(forHole hole: Double) -> Int {
         let step = 360.0 / Double(AubreyRing.holeCount)
         let bearing = Monument.axisAzimuth.degrees + hole * step
         let index = Int((bearing / step).rounded()) % AubreyRing.holeCount

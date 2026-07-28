@@ -347,7 +347,10 @@ static float pathWear(float2 groundXZ)
     float circuit = 1.0 - smoothstep(0.0, 4.5, abs(radius - (35.0 + wander)));
 
     // The Avenue: a corridor on the monument's axis, 49.9° from north, running
-    // out to the north-east. World +X is east and +Z is south.
+    // out to the north-east. World +X is east and +Z is south. The axis and
+    // the 11 m half-width restate `Monument.axisAzimuth` and
+    // `Monument.avenueWidth / 2` by hand — MSL cannot import them — so a
+    // change there changes here, the ShaderTypes arrangement.
     const float axis = 49.9 * (M_PI_F / 180.0);
     float2 along = float2(sin(axis), -cos(axis));
     float2 across = float2(along.y, -along.x);

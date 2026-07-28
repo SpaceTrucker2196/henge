@@ -25,16 +25,23 @@ final class HazeTests: XCTestCase {
 
     func testTheDiscOnTheHorizonGetsFullBeams() {
         XCTAssertEqual(boost(2), 1)
-        XCTAssertEqual(boost(1), 1)
-        XCTAssertEqual(boost(0.5), 1)
+        XCTAssertEqual(boost(1.5), 1)
+        XCTAssertEqual(boost(1.2), 1)
     }
 
-    func testBeamsDieWithTheSet() {
-        // The set ramp runs 0.5° → −1.5°; midpoint −0.5°.
-        XCTAssertEqual(boost(-0.5), 0.5, accuracy: 1e-12)
-        XCTAssertEqual(boost(-1.5), 0)
-        XCTAssertEqual(boost(-6), 0, "no sun, no beams — the moon-cast night "
-                       + "must never sample sun beams out of its shadow map")
+    func testBeamsAreGoneBeforeTheCascadeGate() {
+        // The set ramp runs 1.2° → 0.2°; midpoint 0.7°.
+        XCTAssertEqual(boost(0.7), 0.5, accuracy: 1e-12)
+        XCTAssertEqual(boost(0.2), 0)
+        // The renderer stops fitting sun cascades — and may hand the shadow
+        // map to the moon — at ~0.011° apparent altitude. The curve must be
+        // hard zero at and below that line, or the beams march against
+        // identity matrices or the wrong light's shadows. 0.011° is the
+        // renderer's threshold restated here, not a derived value: if it
+        // moves there, this fixture is the alarm.
+        XCTAssertEqual(boost(0.012), 0)
+        XCTAssertEqual(boost(0), 0)
+        XCTAssertEqual(boost(-6), 0, "no sun, no beams")
     }
 
     func testTheCurveIsMonotoneOnEachRamp() {
@@ -45,8 +52,8 @@ final class HazeTests: XCTestCase {
                                         "rising ramp dipped at \(tenth)°")
             previous = value
         }
-        previous = boost(0.5)
-        for tenth in stride(from: 0.4, through: -1.5, by: -0.1) {
+        previous = boost(1.2)
+        for tenth in stride(from: 1.1, through: 0.1, by: -0.1) {
             let value = boost(tenth)
             XCTAssertLessThanOrEqual(value, previous,
                                      "setting ramp rose at \(tenth)°")

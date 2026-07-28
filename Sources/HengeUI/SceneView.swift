@@ -26,6 +26,7 @@ public struct HengeSceneView: PlatformViewRepresentable {
         var renderer: HengeRenderer?
         var loadedState: Monument.State?
         var overlayKey: Int = 0
+        var overlayRebuiltAt: Date = .distantPast
         var failure: String?
     }
 
@@ -70,10 +71,17 @@ public struct HengeSceneView: PlatformViewRepresentable {
             context.coordinator.loadedState = model.monumentState
         }
         // The overlay rebuilds only when its key moves — a mode switch, a
-        // marker changing hole, a bearing drifting past a quarter degree.
-        if context.coordinator.overlayKey != model.overlayKey {
+        // marker changing disc, a bearing drifting past half a degree — and
+        // never more than five times a second regardless. At a day a second
+        // the sun's bearing steps past the key's quantum on every tick, and
+        // without the wall-clock floor the diagram would rebuild meshes and
+        // reallocate buffers at frame rate for as long as the time-lapse ran.
+        let key = model.overlayKey
+        if context.coordinator.overlayKey != key,
+           Date().timeIntervalSince(context.coordinator.overlayRebuiltAt) > 0.2 {
             renderer.loadOverlay(model.overlayPieces())
-            context.coordinator.overlayKey = model.overlayKey
+            context.coordinator.overlayKey = key
+            context.coordinator.overlayRebuiltAt = Date()
         }
     }
 
