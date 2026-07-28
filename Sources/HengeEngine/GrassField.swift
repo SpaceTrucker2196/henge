@@ -146,16 +146,24 @@ public enum GrassField {
                     Float($0.groundHeight(east: Double(x), south: Double(z)))
                 } ?? 0
 
-                // Height is skewed: most blades short, a few standing proud.
-                // Squaring a uniform gives that without a second draw.
+                // **True scale, in metres, like everything else here.**
+                //
+                // Chalk downland is grazed sward, not prairie: 4 to 16 cm, and
+                // the tallest tussocks nowhere near knee height. Against a
+                // 4.1 m sarsen a blade is about a fortieth of its width, which
+                // is what it should look like.
+                //
+                // Skewed so most blades are short and a few stand proud;
+                // squaring a uniform gives that without a second draw.
                 let u = random.nextFloat()
-                let height = 0.09 + u * u * 0.20
+                let height = 0.04 + u * u * 0.12
 
                 blades.append(GrassBlade(
                     root: SIMD3(x, ground, z),
                     yaw: random.nextFloat() * 2 * .pi,
                     height: height,
-                    width: 0.004 + random.nextFloat() * 0.004,
+                    // 2 to 4.5 mm — a real grass blade, measured.
+                    width: 0.002 + random.nextFloat() * 0.0025,
                     stiffness: 0.6 + random.nextFloat() * 0.8,
                     phase: random.nextFloat() * 2 * .pi,
                     tint: 0.82 + random.nextFloat() * 0.36))

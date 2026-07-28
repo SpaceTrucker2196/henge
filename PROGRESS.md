@@ -1014,3 +1014,55 @@ a quarter of the frame and no longer depends on placing a band precisely.
 
 175 tests, both platforms warning-clean.
 
+## 2026-07-28 — The kaiju grass, and a new invariant
+
+The sward rendered at roughly four times life size. The cause was eight bytes:
+`GrassInstance` was declared in MSL with a `packed_float3` root, giving a stride
+of 40, while Swift's `SIMD3<Float>` is 16-byte aligned and made the same struct
+48. Every blade after the first read its fields from the wrong offsets, so
+heights and widths came out of neighbouring blades' bit patterns.
+
+**Nothing caught it, and nothing in the suite could have.** The geometry was
+valid. The winding was right. It drew, it lit, it received shadows correctly,
+and every assertion passed. It was simply the wrong size — and a scale error is
+the one class of fault that renders *correctly*.
+
+That is now **MISSION.md invariant 9**: everything is modelled at true physical
+scale, in metres — grass, soil, terrain, buildings, the sun's angular diameter,
+all of it — with tests asserting real-world dimensions rather than internal
+consistency, and any struct crossing the Swift/MSL boundary having its stride
+pinned by assertion on both sides. `GrassLayoutTests` does both: it fixes the
+stride at 48 and it asserts a blade is 4–16 cm, which is grazed chalk downland,
+and under 6% of a sarsen's height.
+
+Blade dimensions corrected while there: 4–16 cm tall (was 9–29, which is meadow
+rather than downland) and 2–4.5 mm wide (was 4–8).
+
+### Pending: the cottage in the landscape
+
+Asked to model the local cottage from available photographs. Researched rather
+than guessed, and the result needs a decision before any geometry is written.
+
+The building most often meant is the custodian's cottage at **Stonehenge
+Bottom**, where the site's caretaker lived in the 1930s — no electricity, an
+outside earth closet — and it was **demolished in 1938** along with the
+Stonehenge Café, as part of clearing the setting. So it is not in the landscape
+now. The sources that record it describe its occupants rather than its fabric:
+no materials, storeys, roof form, chimney count or dimensions.
+
+I have not modelled it, for two reasons worth stating rather than working
+around. Invariant 8 says the monument is modelled from the archaeology and
+hypothetical reconstructions are badged as hypothesis; a cottage built from no
+recorded dimensions would be invention presented as landscape. And I cannot
+derive geometry from photographs I am unable to verify the provenance or licence
+of, which invariant 5 also covers.
+
+What can honestly be built, on the owner's word: a **massing reconstruction** at
+the recorded position, tiered `modernTradition` with its sources, shaped from
+the vernacular — a small brick-and-flint Wiltshire cottage of the period — and
+labelled in the app as a reconstruction rather than a record. Or, if a different
+building was meant (there are still structures in view from the monument), that
+one instead.
+
+180 tests, both platforms warning-clean.
+

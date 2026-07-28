@@ -875,7 +875,13 @@ struct GrassVertexIn {
 };
 
 struct GrassInstance {
-    packed_float3 root;
+    // `float3`, not `packed_float3`, and the difference was visible from
+    // orbit. Swift's `SIMD3<Float>` is 16 bytes aligned to 16, giving this
+    // struct a stride of 48; `packed_float3` is 12, giving 40. Every blade
+    // after the first then read its fields from eight bytes off — heights and
+    // widths came out of neighbouring blades' bit patterns, and the field grew
+    // to the height of the trilithons. `GrassLayoutTests` now pins both sides.
+    float3 root;
     float yaw;
     float height;
     float width;

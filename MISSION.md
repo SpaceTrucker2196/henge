@@ -69,6 +69,23 @@ hold even when crossing them would help.
    never blended. Hypothetical restorations — the Heel Stone's lost companion,
    the Slaughter Stone's portal pair — are toggles badged as hypothesis.
 
+9. **Everything is modelled at true physical scale, in metres.** Not the stones
+   only — the grass, the soil banked at their feet, the terrain, the buildings
+   in the landscape, the sun's angular diameter, the moon's. One unit is one
+   metre everywhere in `HengeGeometry` and `HengeEngine`, and any quantity with
+   a physical size carries a comment saying what the real thing measures.
+
+   This is an invariant rather than a style note because scale errors are the
+   one class of fault that renders *correctly*. A grass blade at four times life
+   size is valid geometry, correctly wound, correctly lit, casting a correct
+   shadow — every test in the suite passes and the plain looks like a jungle. It
+   was a `packed_float3` in one struct and a `SIMD3<Float>` in the other, eight
+   bytes of stride, and nothing but an eye could see it.
+
+   So: tests assert real-world dimensions, not merely internal consistency, and
+   any struct shared across the Swift/MSL boundary has its stride pinned by
+   assertion on both sides.
+
 ## Non-goals
 
 Scope creep dies here, and an agent needs to know what *not* to propose.
