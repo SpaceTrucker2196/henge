@@ -66,7 +66,7 @@ final class ShadowAgreementTests: XCTestCase {
 
         let state = SceneState(sun: sun, sunAngularRadius: 0.00465,
                                camera: camera, turbidity: 2.2, exposure: 1.0,
-                               surfaceTexturing: false)
+                               surfaceTexturing: false, grassBlades: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 2048)
         try renderer.load(scene: scene, subdivisions: 8, roughness: 0, rounding: 0)
         return renderer
@@ -271,12 +271,12 @@ final class RendererSetupTests: XCTestCase {
     /// side without the other is exactly the bug this catches.
     func testUniformLayoutsAreTheExpectedSize() {
         // 7 matrices × 64 bytes + 9 float4s × 16 bytes: the last two are
-        // `cascadeRadii` (PCSS) and `wind`. This assertion has now caught three
+        // `cascadeRadii` (PCSS), `wind` and `grass`. This assertion has now caught three
         // separate field additions, which is the whole reason it is written as
         // arithmetic rather than a magic number — adding a field on one side
         // only silently reinterprets every uniform after it, and the result is
         // a plausible-looking render rather than a crash.
-        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 9 * 16)
+        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 10 * 16)
         // 2 matrices + albedo + `surface` (which map set, tile size, normal
         // strength) + `weather` (the stone's foot, lichen, damp, seed)
         // + `reflectance` (specular strength, roughness floor, takes wind).
@@ -379,7 +379,7 @@ final class OpacityTests: XCTestCase {
         // photographic grain would put variation into exactly the pixel
         // comparison that answers it.
         let state = SceneState(sun: sun, camera: camera, turbidity: 2.2, exposure: 1.5,
-                               surfaceTexturing: false)
+                               surfaceTexturing: false, grassBlades: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 1024)
         try renderer.load(scene: MonumentScene(state: .asItWas, stones: stones),
                           subdivisions: 12)
@@ -495,7 +495,8 @@ final class NearSurfaceTests: XCTestCase {
         camera.near = 0.2
         let state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: 40),
                                                          azimuth: Angle(degrees: 160)),
-                               camera: camera)
+                               camera: camera,
+                                   grassBlades: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 512)
         try renderer.load(scene: MonumentScene(state: .asItWas, stones: [stone]),
                           subdivisions: 10, roughness: 0, rounding: 0)

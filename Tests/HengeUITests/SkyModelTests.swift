@@ -1,4 +1,5 @@
 import XCTest
+import simd
 @testable import HengeUI
 import HengeAstro
 import HengeGeometry
@@ -116,5 +117,54 @@ final class SkyModelTests: XCTestCase {
 
         XCTAssertEqual(model.fieldOfView, 62, accuracy: 1e-9)
         XCTAssertEqual(model.cameraDistance, 92, accuracy: 1e-9)
+    }
+}
+
+extension SkyModelTests {
+
+    /// **The eye never goes under the plain.**
+    ///
+    /// Pitched far enough down, the orbit camera put the eye below Salisbury
+    /// Plain — and from under it you are looking at the back of a single-sided,
+    /// unlit terrain mesh, which reads as the world having been switched off.
+    /// On a heightfield "below ground" is a different number everywhere, so the
+    /// clamp asks the terrain rather than comparing against zero.
+    func testTheCameraCannotGoUnderground() {
+        let model = SkyModel()
+        model.viewpoint = .stonehenge
+        model.station = .aerial
+
+        // Drive the view as far down as the gestures allow, from several
+        // bearings and ranges — the clamp has to hold everywhere, not at the
+        // one spot it was tuned at.
+        for bearing in stride(from: 0.0, to: 360.0, by: 45) {
+            model.cameraAzimuth = bearing
+            for distance in [20.0, 90.0, 300.0] {
+                model.cameraDistance = distance
+                for _ in 0..<60 { model.drag(by: SIMD2(0, -60)) }
+
+                let camera = model.camera
+                let ground = model.groundHeight(east: Double(camera.position.x),
+                                                south: Double(camera.position.z))
+                XCTAssertGreaterThanOrEqual(
+                    Double(camera.position.y), ground + SkyModel.minimumClearance - 1e-4,
+                    "bearing \(bearing), range \(distance): eye at "
+                    + "\(camera.position.y) with ground at \(ground)")
+            }
+        }
+    }
+
+    /// Clamping must not swing the view. Raising the eye without raising what
+    /// it looks at would make the camera tip toward its own feet as it clamps.
+    func testClampingPreservesTheViewDirection() {
+        let model = SkyModel()
+        model.station = .aerial
+        model.cameraDistance = 40
+        for _ in 0..<60 { model.drag(by: SIMD2(0, -60)) }
+
+        let camera = model.camera
+        let direction = simd_normalize(camera.target - camera.position)
+        XCTAssertEqual(simd_length(direction), 1, accuracy: 1e-5)
+        XCTAssertLessThan(abs(direction.y), 0.999, "the camera is looking straight down")
     }
 }

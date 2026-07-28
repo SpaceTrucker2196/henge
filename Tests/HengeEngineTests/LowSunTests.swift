@@ -59,7 +59,8 @@ final class LowSunTests: XCTestCase {
         let sun = HorizontalCoordinate(altitude: Angle(degrees: sunAltitude),
                                        azimuth: Angle(degrees: 90))
         let state = SceneState(sun: sun, camera: camera, turbidity: 2.4, exposure: 1.6,
-                               surfaceTexturing: false, weathering: false)
+                               surfaceTexturing: false, weathering: false,
+                               grassBlades: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 2048)
         try renderer.load(scene: MonumentScene(stones: stones))
 

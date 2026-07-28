@@ -41,6 +41,9 @@ public struct FrameUniforms {
     /// xz: the unit direction the wind blows *toward*. y: speed in m/s.
     /// w: wind time in seconds — wall-clock, not the astronomical clock.
     public var wind: SIMD4<Float>
+    /// x: how far out individual blades are drawn, metres. y: how wide the
+    /// fade back into the textured ground is. zw spare.
+    public var grass: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -56,7 +59,8 @@ public struct FrameUniforms {
                 moonDirection: SIMD4<Float> = SIMD4(0, -1, 0, 0.0045),
                 moonLight: SIMD4<Float> = .zero,
                 cascadeRadii: SIMD4<Float> = SIMD4(24, 90, 320, 13),
-                wind: SIMD4<Float> = SIMD4(0, 0, 0, 0)) {
+                wind: SIMD4<Float> = SIMD4(0, 0, 0, 0),
+                grass: SIMD4<Float> = SIMD4(28, 6, 0, 0)) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -71,6 +75,7 @@ public struct FrameUniforms {
         self.moonLight = moonLight
         self.cascadeRadii = cascadeRadii
         self.wind = wind
+        self.grass = grass
     }
 }
 
@@ -142,6 +147,10 @@ public enum SurfaceMaterial {
     /// every slope facing a low sun — the hour this app is entirely about.
     public static let stoneReflectance = SIMD4<Float>(1.0, 0.14, 0, 0)
     public static let turfReflectance = SIMD4<Float>(0.22, 0.74, 1, 0)
+    /// The bank of earth heaped against a stone's foot. Browner and darker
+    /// than the turf around it: it is trodden, root-bound and often bare.
+    public static let soil = SIMD4<Float>(0.22, 0.21, 0.15, 0.97)
+
     /// Weathered chalk, for the Aubrey holes.
     public static let chalk = SIMD4<Float>(0.74, 0.72, 0.66, 0.92)
 

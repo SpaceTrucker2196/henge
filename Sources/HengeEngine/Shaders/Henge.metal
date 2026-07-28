@@ -28,6 +28,7 @@ struct FrameUniforms {
                              // box. w: how many radii deep that box runs
     float4   wind;           // xz: unit direction the wind blows toward,
                              // y: speed in m/s, w: seconds of wind time
+    float4   grass;          // x: blade radius in metres, y: fade width, zw spare
 };
 
 struct DrawUniforms {
@@ -851,4 +852,168 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
 
     sky = acesToneMap(sky * frame.skyParameters.y);
     return float4(sky, 1.0);
+}
+
+// ── individual blades ───────────────────────────────────────────────────────
+//
+// The shading model above is right for the middle distance: a hundred metres
+// out a blade is a hundredth of a pixel and drawing it is wasted work. But near
+// the viewer it reads as a pattern moving over a surface rather than as grass,
+// and this app stands you on the turf at eye height. So real blades within a
+// short radius, the shading model beyond, and a fade where they meet.
+//
+// One shared blade mesh, instanced tens of thousands of times. All the variety
+// — direction, length, stiffness, colour, phase — rides on the instance.
+//
+// This block sits at the end of the file because MSL has no forward
+// declarations and the fragment shader needs `preethamSky` and `acesToneMap`.
+// Buffer indices are 1 and 2, not 30 and 31: Metal's vertex buffer arguments
+// stop at 30, and 31 is a compile error rather than a silent misbinding.
+struct GrassVertexIn {
+    float height;            // 0 at the root, 1 at the tip
+    float side;              // -1 or +1 across the width, 0 at the tip
+};
+
+struct GrassInstance {
+    packed_float3 root;
+    float yaw;
+    float height;
+    float width;
+    float stiffness;
+    float phase;
+    float tint;
+    float pad;
+};
+
+struct GrassInOut {
+    float4 clipPosition [[position]];
+    float3 worldPosition;
+    float3 worldNormal;
+    float  viewDepth;
+    float  heightAlongBlade;
+    float  tint;
+    float  fade;
+};
+
+vertex GrassInOut grass_vertex(uint vertexID [[vertex_id]],
+                               uint instanceID [[instance_id]],
+                               constant GrassVertexIn *shape [[buffer(1)]],
+                               constant GrassInstance *blades [[buffer(2)]],
+                               constant FrameUniforms &frame [[buffer(0)]])
+{
+    GrassVertexIn v = shape[vertexID];
+    GrassInstance blade = blades[instanceID];
+
+    float t = v.height;
+    float3 root = float3(blade.root);
+
+    // The blade's own frame: `forward` is the way it leans, `across` is its
+    // width. Both from the instance's yaw, so no per-blade matrix is stored.
+    float sinYaw = sin(blade.yaw), cosYaw = cos(blade.yaw);
+    float3 across  = float3(cosYaw, 0.0, -sinYaw);
+    float3 forward = float3(sinYaw, 0.0,  cosYaw);
+
+    // ── how far it is laid over ─────────────────────────────────────────────
+    //
+    // Two parts, and they are different things. The *gust* is the travelling
+    // field the ground shading already uses, so blades and turf agree about
+    // where the wind is. The *flutter* is this blade's own oscillation, at its
+    // own phase — without it every blade inside a gust bends by exactly the
+    // same amount at exactly the same moment, and a field of grass becomes a
+    // vibrating carpet.
+    float gust = windField(root.xz, frame);
+    float speed = frame.wind.y;
+    float flutter = sin(frame.wind.w * (1.1 + 0.35 * blade.stiffness) * speed * 0.55
+                        + blade.phase);
+    float bend = clamp(gust * (0.72 + 0.28 * flutter), 0.0, 1.4) / blade.stiffness;
+
+    // Cantilever: a blade is anchored at the root and free at the tip, so
+    // deflection grows faster than linearly along it. t² is the standard cheap
+    // stand-in for the beam solution and is indistinguishable at this scale.
+    float lean = bend * t * t;
+
+    // Bending shortens a blade's reach as it curls over — a blade laid flat is
+    // no taller than it is long. Without this the tips stretch as the wind
+    // rises, which reads as growing rather than bending.
+    float rise = blade.height * t * cos(lean * 1.35);
+    float reach = blade.height * t * sin(lean * 1.35);
+
+    float3 downwind = normalize(float3(frame.wind.x, 0.0, frame.wind.z)
+                                + forward * 0.35);
+    float3 spine = root + float3(0.0, rise, 0.0) + downwind * reach;
+
+    // Taper: full width at the root, a point at the tip.
+    float halfWidth = blade.width * 0.5 * (1.0 - t * 0.85);
+    float3 position = spine + across * (v.side * halfWidth);
+
+    // The normal follows the blade's face, tilted with the lean. Bowing it
+    // outward across the width is what keeps a flat strip from reading as a
+    // strip: it gives each blade a rounded, waxy falloff instead of a facet.
+    float3 faceNormal = normalize(forward * cos(lean) + float3(0.0, sin(lean), 0.0));
+    float3 normal = normalize(faceNormal + across * v.side * 0.45);
+
+    // Fade the outermost blades into the textured ground rather than ending the
+    // field at a visible circle.
+    float distanceFromCentre = length(root.xz);
+    float fade = 1.0 - smoothstep(frame.grass.x - frame.grass.y, frame.grass.x,
+                                  distanceFromCentre);
+
+    GrassInOut out;
+    out.clipPosition = frame.viewProjection * float4(position, 1.0);
+    out.worldPosition = position;
+    out.worldNormal = normal;
+    out.viewDepth = length(frame.cameraPosition.xyz - position);
+    out.heightAlongBlade = t;
+    out.tint = blade.tint;
+    out.fade = fade;
+    return out;
+}
+
+fragment float4 grass_fragment(GrassInOut in [[stage_in]],
+                               constant FrameUniforms &frame [[buffer(0)]],
+                               depth2d_array<float> shadowMap [[texture(0)]],
+                               sampler shadowSampler [[sampler(0)]])
+{
+    float3 n = normalize(in.worldNormal);
+    float3 l = normalize(frame.sunDirection.xyz);
+    float3 v = normalize(frame.cameraPosition.xyz - in.worldPosition);
+
+    // Two-sided: a blade seen from behind is still lit. Grass is thin enough
+    // that which face you are looking at is close to arbitrary, and shading it
+    // one-sided makes half the field black.
+    float ndotl = abs(dot(n, l));
+
+    // Darker at the root, where a blade sits in the shade of its neighbours.
+    // This is doing the work an ambient-occlusion pass would, for nothing.
+    float3 base = float3(0.13, 0.17, 0.07);
+    float3 tipColour = float3(0.34, 0.42, 0.17);
+    float3 albedo = mix(base, tipColour, in.heightAlongBlade) * in.tint;
+
+    float shadow = sampleShadow(shadowMap, shadowSampler, in.worldPosition,
+                                frame, in.viewDepth, max(dot(n, l), 0.05));
+
+    // Translucency. A leaf held up to the sun glows, and in a field lit from
+    // behind that is most of what you see — the low-sun hours this app is about
+    // are exactly when it matters. Strongest when looking into the light and
+    // toward the thin tips.
+    float through = pow(clamp(dot(-v, l), 0.0, 1.0), 3.0)
+        * in.heightAlongBlade * 0.55;
+
+    float3 direct = albedo / M_PI_F * frame.sunRadiance.rgb
+        * (ndotl * shadow + through);
+
+    float3 skyColour = preethamSky(float3(0, 1, 0), l, frame.skyParameters.x);
+    // Only the upper part of a blade sees much sky; deeper in the sward it is
+    // enclosed. Same reasoning as the root darkening, and the two together are
+    // what give a field depth rather than a uniform green.
+    float3 ambient = albedo * skyColour * (0.16 + 0.34 * in.heightAlongBlade);
+
+    float distance = length(frame.cameraPosition.xyz - in.worldPosition);
+    float fogAmount = 1.0 - exp(-distance * 0.0016);
+    float3 fogColour = preethamSky(normalize(float3(v.x, max(v.y, 0.02), v.z) * -1.0),
+                                   l, frame.skyParameters.x);
+
+    float3 colour = mix(direct + ambient, fogColour, clamp(fogAmount, 0.0, 0.85));
+    colour = acesToneMap(colour * frame.skyParameters.y);
+    return float4(colour, in.fade);
 }

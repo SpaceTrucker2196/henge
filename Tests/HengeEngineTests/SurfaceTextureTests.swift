@@ -79,7 +79,8 @@ final class SurfaceTextureTests: XCTestCase {
         camera.near = 0.5
         let state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: 35),
                                                          azimuth: Angle(degrees: 140)),
-                               camera: camera)
+                               camera: camera,
+                                   grassBlades: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 1024)
         try renderer.load(scene: MonumentScene.complete(state: .asItWas))
 
@@ -125,13 +126,20 @@ final class SurfaceTextureTests: XCTestCase {
         let size = 256
 
         func rowLuminances(weathered: Bool) throws -> [Double] {
-            let stone = Stone(id: "probe", position: SIMD3(0, 0, 0),
-                              height: 6.0, width: 2.6, thickness: 1.2, material: .sarsen)
-            var camera = Camera(position: SIMD3(0, 3, 16), target: SIMD3(0, 3, 0))
-            camera.near = 0.3
+            // A short stone seen close. The damp course is a fixed 0.55 m, so
+            // on a six-metre upright it is 9% of the height — a sliver that
+            // every added detail (turf below, then the soil bank against the
+            // foot) pushed out of whatever band was being measured. On a
+            // two-metre stone it is over a quarter of the frame and no longer
+            // depends on placing a band precisely.
+            let stone = Stone(id: "probe", position: SIMD3(0, 1.0, 0),
+                              height: 2.0, width: 1.4, thickness: 0.9, material: .sarsen)
+            var camera = Camera(position: SIMD3(0, 1.1, 5), target: SIMD3(0, 1.0, 0))
+            camera.near = 0.2
             let state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: 45),
                                                              azimuth: Angle(degrees: 180)),
-                                   camera: camera, weathering: weathered)
+                                   camera: camera, weathering: weathered,
+                                   grassBlades: false)
             let renderer = try HengeRenderer(device: device, state: state,
                                              shadowResolution: 1024)
             try renderer.load(scene: MonumentScene(stones: [stone]))
@@ -162,8 +170,14 @@ final class SurfaceTextureTests: XCTestCase {
         let ratios = zip(wet, dry).map { $1 > 4 ? $0 / $1 : 1.0 }
 
         // Image rows run downward: the stone's top half is the upper rows.
-        let upper = Array(ratios[(size * 30 / 100)..<(size * 50 / 100)])
-        let lower = Array(ratios[(size * 58 / 100)..<(size * 68 / 100)])
+        let upper = Array(ratios[(size * 26 / 100)..<(size * 44 / 100)])
+        // The stone's whole lower half, and take the minimum rather than a
+        // mean. Hand-placing a narrow band kept breaking as the scene gained
+        // detail — first it straddled the turf, then the soil bank heaped
+        // against the foot moved the damp course out of it. The minimum is
+        // immune to both: soil is not weather-dependent, so those rows have a
+        // ratio of exactly 1 and can never be the darkest.
+        let lower = Array(ratios[(size * 52 / 100)..<(size * 74 / 100)])
 
         let darkest = lower.min() ?? 1
         XCTAssertLessThan(darkest, 0.94,

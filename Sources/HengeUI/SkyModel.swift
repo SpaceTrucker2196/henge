@@ -172,7 +172,40 @@ public final class SkyModel {
         Sun.horizontal(at: time, site: site)
     }
 
+    /// How far the eye must clear the turf, metres.
+    ///
+    /// Not zero: a camera exactly on the ground plane sees the horizon through
+    /// the grass and clips into the soil banked around the stones.
+    public static let minimumClearance = 0.35
+
+    /// Keep the eye above the ground it is actually over.
+    ///
+    /// The orbit camera could be pitched below the horizon far enough to put
+    /// the eye under Salisbury Plain, at which point you are looking up at the
+    /// underside of the terrain mesh — which is unlit, single-sided and reads
+    /// as the world having been turned off. On a heightfield "below ground" is
+    /// a different number at every point, so this asks the terrain rather than
+    /// clamping against zero.
+    private func liftAboveGround(_ camera: Camera) -> Camera {
+        let ground = groundHeight(east: Double(camera.position.x),
+                                  south: Double(camera.position.z))
+        let floor = Float(ground + SkyModel.minimumClearance)
+        guard camera.position.y < floor else { return camera }
+
+        var lifted = camera
+        // Raise the target with the eye, so the view direction is preserved and
+        // the camera does not swing to look at its own feet as it is clamped.
+        let rise = floor - camera.position.y
+        lifted.position.y = floor
+        lifted.target.y += rise
+        return lifted
+    }
+
     public var camera: Camera {
+        liftAboveGround(rawCamera)
+    }
+
+    private var rawCamera: Camera {
         let axis = Monument.axisAzimuth
         let eye = Station.eyeHeight
 

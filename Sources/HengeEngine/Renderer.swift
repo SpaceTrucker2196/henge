@@ -8,11 +8,20 @@ import HengeGeometry
 /// Everything the renderer needs to know about the moment being drawn.
 public struct SceneState: Sendable {
 
+    /// Whether individual blades are drawn near the viewer.
+    ///
+    /// Off in the rendering tests, which measure ground luminance and would
+    /// otherwise be measuring grass.
+    public var grassBlades: Bool
+
     /// Wind speed at the surface, m/s. Zero stops the grass dead.
     ///
-    /// Default 4.5 — a fresh breeze, and about the annual mean at 10 m on
-    /// Salisbury Plain. Fast enough to see, slow enough not to distract from a
-    /// sunrise.
+    /// Default 1.8 — a light breeze. It began at 4.5, the annual mean at 10 m
+    /// over Salisbury Plain, which is correct for 10 m and wrong for the top of
+    /// the sward: the wind profile falls off sharply through the boundary
+    /// layer, and grass at ankle height feels a fraction of what an anemometer
+    /// on a mast reads. It also simply looked hurried against a monument whose
+    /// whole subject is slowness.
     public var windSpeed: Float
 
     /// The bearing the wind blows *from*, degrees.
@@ -80,7 +89,8 @@ public struct SceneState: Sendable {
                 exposure: Float = 1.6,
                 surfaceTexturing: Bool = true,
                 weathering: Bool = true,
-                windSpeed: Float = 4.5,
+                windSpeed: Float = 1.8,
+                grassBlades: Bool = true,
                 windBearing: Double = 250,
                 windTime: Double = 0) {
         self.sun = sun
@@ -94,6 +104,7 @@ public struct SceneState: Sendable {
         self.surfaceTexturing = surfaceTexturing
         self.weathering = weathering
         self.windSpeed = windSpeed
+        self.grassBlades = grassBlades
         self.windBearing = windBearing
         self.windTime = windTime
     }
@@ -208,6 +219,13 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
     private let commandQueue: MTLCommandQueue
     private let scenePipeline: MTLRenderPipelineState
+    private let grassPipeline: MTLRenderPipelineState
+    /// The one blade every instance shares, and the field of instances.
+    private var grassShapeBuffer: MTLBuffer?
+    private var grassIndexBuffer: MTLBuffer?
+    private var grassInstanceBuffer: MTLBuffer?
+    private var grassIndexCount = 0
+    private var grassBladeCount = 0
     private let shadowPipeline: MTLRenderPipelineState
     private let skyPipeline: MTLRenderPipelineState
     private let sceneDepthState: MTLDepthStencilState
@@ -283,6 +301,25 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                           colour: Self.colourFormat,
                                           depth: Self.depthFormat,
                                           useVertexDescriptor: true)
+        // Blended, because the outermost blades fade into the textured ground
+        // rather than ending the field at a visible circle. Depth writes stay
+        // on: a blade is opaque everywhere except that outer ring, and turning
+        // them off would let near blades draw behind far ones.
+        let grassDescriptor = MTLRenderPipelineDescriptor()
+        grassDescriptor.label = "grass"
+        grassDescriptor.vertexFunction = library.makeFunction(name: "grass_vertex")
+        grassDescriptor.fragmentFunction = library.makeFunction(name: "grass_fragment")
+        grassDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        grassDescriptor.colorAttachments[0].isBlendingEnabled = true
+        grassDescriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+        grassDescriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+        grassDescriptor.depthAttachmentPixelFormat = Self.depthFormat
+        do {
+            self.grassPipeline = try device.makeRenderPipelineState(descriptor: grassDescriptor)
+        } catch {
+            throw RendererError.pipelineCreationFailed("grass: \(error)")
+        }
+
         self.shadowPipeline = try pipeline("shadow", vertex: "shadow_vertex",
                                            fragment: nil, colour: nil,
                                            depth: Self.depthFormat,
@@ -428,8 +465,24 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             // Chalk discs are flat and small; they do not need the tessellation
             // a seven-metre sarsen does.
             let detail = stone.material == .chalk ? 5 : subdivisions
-            let mesh = StoneMeshBuilder.build(stone, subdivisions: detail,
+            var mesh = StoneMeshBuilder.build(stone, subdivisions: detail,
                                               roughness: roughness, rounding: rounding)
+            mesh = Self.seat(mesh, of: stone, on: terrain)
+            // The soil banked against its foot, as its own small mesh so it
+            // can take the ground material rather than the stone's.
+            let skirt = SoilSkirt.build(around: stone, groundHeight: { x, z in
+                Float(terrain?.groundHeight(east: Double(x), south: Double(z)) ?? 0)
+            })
+            if !skirt.indices.isEmpty,
+               let soil = try makeDrawItem(mesh: skirt,
+                                           albedo: SurfaceMaterial.soil,
+                                           label: "\(stone.id) soil",
+                                           castsShadow: false,
+                                           kind: .grass,
+                                           seed: stone.seed) {
+                items.append(soil)
+            }
+
             if let item = try makeDrawItem(mesh: mesh,
                                            albedo: SurfaceMaterial.albedo(for: stone.material),
                                            label: stone.id,
@@ -456,6 +509,44 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
 
         drawItems = items
+        loadGrass()
+    }
+
+    /// Build the blade mesh and scatter the field.
+    ///
+    /// Silent on failure for the same reason the textures are: a machine that
+    /// cannot allocate the instance buffer should still show a correct almanac
+    /// over an untufted plain, not refuse to start.
+    private func loadGrass() {
+        guard state.grassBlades else {
+            grassBladeCount = 0
+            return
+        }
+        let shape = GrassField.bladeMesh()
+        let blades = GrassField.scatter(terrain: terrain)
+        guard !blades.isEmpty,
+              let shapeBuffer = device.makeBuffer(
+                bytes: shape.vertices,
+                length: MemoryLayout<GrassVertex>.stride * shape.vertices.count,
+                options: .storageModeShared),
+              let indexBuffer = device.makeBuffer(
+                bytes: shape.indices,
+                length: MemoryLayout<UInt16>.stride * shape.indices.count,
+                options: .storageModeShared),
+              let instanceBuffer = device.makeBuffer(
+                bytes: blades,
+                length: MemoryLayout<GrassBlade>.stride * blades.count,
+                options: .storageModeShared) else {
+            grassBladeCount = 0
+            return
+        }
+        shapeBuffer.label = "grass blade"
+        instanceBuffer.label = "grass field"
+        grassShapeBuffer = shapeBuffer
+        grassIndexBuffer = indexBuffer
+        grassInstanceBuffer = instanceBuffer
+        grassIndexCount = shape.indices.count
+        grassBladeCount = blades.count
     }
 
     private func makeDrawItem(mesh: Mesh, albedo: SIMD4<Float>, label: String,
@@ -505,6 +596,35 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                 : SurfaceMaterial.stoneReflectance),
                         castsShadow: castsShadow,
                         surfaceKind: kind)
+    }
+
+    /// Put a stone on the ground it is actually standing on.
+    ///
+    /// `MonumentScene` places stones on a flat datum: their `position.y` is a
+    /// height above local ground, because the archaeology records where stones
+    /// are on the plan and how tall they are, not what the contour does under
+    /// each one. The ground mesh, meanwhile, is displaced by the real
+    /// heightfield. On Salisbury Plain that is a metre or so of relief across
+    /// the monument — so the near stones looked fine and the outer ones
+    /// floated, the Heel Stone at 77 m and the Station Stones at 43 m being
+    /// furthest from the datum point.
+    ///
+    /// The fix is to lift each stone by the ground height under its own root,
+    /// then sink it a little. The sink is not a fudge for cracks: megaliths are
+    /// set in sockets, and a stone resting exactly on the surface reads as
+    /// dropped there this morning.
+    static func seat(_ mesh: Mesh, of stone: Stone, on terrain: TerrainModel?) -> Mesh {
+        guard let terrain else { return mesh }
+        let lift = Float(terrain.groundHeight(east: Double(stone.position.x),
+                                              south: Double(stone.position.z)))
+        // Chalk discs are flush features, not standing stones; sinking one
+        // would put it under the turf and out of sight.
+        let sink: Float = stone.material == .chalk ? 0 : 0.12
+        var seated = mesh
+        for i in seated.positions.indices {
+            seated.positions[i].y += lift - sink
+        }
+        return seated
     }
 
     /// Ground mesh, optionally displaced by the terrain.
@@ -711,7 +831,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 let towards = (state.windBearing + 180) * .pi / 180
                 return SIMD4(Float(sin(towards)), state.windSpeed,
                              Float(-cos(towards)), Float(state.windTime))
-            }()
+            }(),
+            grass: SIMD4(GrassField.radius, GrassField.fade, 0, 0)
         )
     }
 
@@ -810,6 +931,27 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                           indexType: .uint32,
                                           indexBuffer: item.indexBuffer,
                                           indexBufferOffset: 0)
+        }
+
+        // Blades last, over the finished ground. They are two-sided — a blade
+        // is thin enough that which face you see is close to arbitrary, and
+        // culling would blank half the field.
+        if grassBladeCount > 0,
+           let shape = grassShapeBuffer,
+           let indices = grassIndexBuffer,
+           let instances = grassInstanceBuffer {
+            encoder.setRenderPipelineState(grassPipeline)
+            encoder.setCullMode(.none)
+            encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 0)
+            encoder.setVertexBuffer(shape, offset: 0, index: 1)
+            encoder.setVertexBuffer(instances, offset: 0, index: 2)
+            encoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 0)
+            encoder.drawIndexedPrimitives(type: .triangle,
+                                          indexCount: grassIndexCount,
+                                          indexType: .uint16,
+                                          indexBuffer: indices,
+                                          indexBufferOffset: 0,
+                                          instanceCount: grassBladeCount)
         }
     }
 

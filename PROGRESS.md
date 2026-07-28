@@ -911,3 +911,106 @@ ends in both kinds of view.
 
 163 tests, both platforms warning-clean.
 
+## 2026-07-28 — Blades, soil, seated stones, and a floor under the camera
+
+### Individual blades
+
+The shading model stays — a hundred metres out a blade is a hundredth of a
+pixel and drawing it is wasted work — but near the viewer it reads as a pattern
+moving over a surface rather than as grass, and this app stands you on the turf
+at eye height. So real geometry within 28 m, the shading model beyond, and a
+fade where they meet.
+
+One tapering strip of four segments, instanced tens of thousands of times; all
+the variety rides on the instance. Placement is jittered grid rather than random
+scatter, because pure random clumps and the gaps read as bald patches. Seeded, so
+the sward is identical every launch.
+
+The motion has two parts and needs both. The **gust** is the same travelling
+field the ground shading uses, so blades and turf agree about where the wind is.
+The **flutter** is each blade's own oscillation at its own phase — without it
+every blade inside a gust bends by the same amount at the same instant, and the
+field becomes a vibrating carpet. Bending is a cantilever, t², and shortens the
+blade's reach as it curls: without that the tips stretch as the wind rises, which
+reads as growing rather than bending.
+
+Blades receive shadows and cast none. Fifty thousand slivers in a shadow map
+would cost more than the rest of the frame and buy a haze of aliasing; what you
+notice is a trilithon's shadow crossing the grass, and that is the receiving
+half.
+
+**The wind is slower.** 4.5 m/s to 1.8. The original figure is the annual mean at
+10 m over Salisbury Plain, which is right for 10 m and wrong for the top of the
+sward — the profile falls off sharply through the boundary layer. It also looked
+hurried against a monument whose whole subject is slowness.
+
+### Soil at the foot of the stones
+
+A megalith does not sit on turf like a chess piece on a board. It stands in a
+socket, and four and a half thousand years of rain, worm cast and trampling have
+banked a low irregular mound against it. Without one the junction is a hard line
+and the stone reads as placed rather than rooted.
+
+Each mound is its own small mesh: a ring from part-way up the stone out to
+nothing, with reach and height varying around the circumference from two noise
+frequencies plus a drift direction, seeded per stone. It hugs the *box* outline
+rather than ringing the stone at constant radius — a circle leaves soil floating
+clear of the long faces and buried at the corners, which is worse than none. And
+it samples the terrain at every point, so on a slope the uphill side is buried
+deeper.
+
+Said plainly in the source: this is not archaeology. It is a shape chosen to look
+like the photographs, and this project cites its archaeology.
+
+### Stones now stand on the ground they are over
+
+The reported floating stone was real. `MonumentScene` places stones on a flat
+datum — the record gives a plan position and a height, not a contour under each
+socket — while the ground mesh is displaced by the heightfield. Across the
+monument that is about a metre of relief, so the near stones looked right and the
+outer ones hung: the Heel Stone at 77 m and the Station Stones at 43 m are
+furthest from the datum point. Each stone is now lifted by the ground under its
+own root and sunk 0.12 m, because a stone resting exactly on the surface reads as
+dropped there this morning.
+
+The test needed to learn that lintels legitimately float — an impost's base is
+3.6 m in the air. A stone is ground-founded when its centre sits about half its
+own height up, which separates the two without a flag the archaeology does not
+carry.
+
+### A floor under the camera
+
+Pitched far enough down, the orbit camera put the eye *below* Salisbury Plain,
+looking at the back of a single-sided unlit terrain mesh — which reads as the
+world having been switched off. On a heightfield "below ground" is a different
+number at every point, so the clamp asks the terrain rather than comparing
+against zero, and raises the target with the eye so the view direction is
+preserved instead of tipping toward its own feet.
+
+### Two shader lessons, both about ordering
+
+MSL has no forward declarations, and this bit twice in one session: `windField`
+called an `fbm` declared below it, and later the grass fragment called
+`preethamSky` and `acesToneMap` from above them. Both times nothing rendered at
+all, which the suite caught instantly — the one failure mode a pixel test cannot
+miss. Also: Metal's vertex buffer arguments stop at 30, so the instance buffer
+moved from 31 to 2. That one is a compile error rather than a silent misbinding,
+which is the good kind of limit.
+
+### The oracles render a plain world
+
+`grassBlades` joins `surfaceTexturing` and `weathering` as something the geometry
+tests switch off. The reasoning is the same and worth restating because it keeps
+recurring: those suites read geometry out of image luminance, and every layer of
+detail added since M1 puts variation into the thing being measured. Blades in
+front of a stone read as holes in it; blades over the ground hide the shadow edge.
+`testTexturingIsOnByDefault` and its siblings guard the shipping path.
+
+The damp-course test was rebuilt for the third time on the same principle. A
+0.55 m damp band on a six-metre upright is 9% of the height, and each new detail
+— turf below, then the soil bank — pushed it out of whatever band was being
+measured. It now uses a two-metre stone seen close, where the damp course is over
+a quarter of the frame and no longer depends on placing a band precisely.
+
+175 tests, both platforms warning-clean.
+

@@ -36,7 +36,11 @@ final class SurfaceResponseTests: XCTestCase {
 
         var state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: sunAltitude),
                                                          azimuth: Angle(degrees: 180)),
-                               camera: camera, turbidity: 2.4, exposure: 1.6)
+                               camera: camera, turbidity: 2.4, exposure: 1.6,
+                               grassBlades: false)
+        // Blades off: this measures how the *ground* answers light and how the
+        // shading model moves it. With blades on, the frame is grass and the
+        // question becomes a different one — which the blade suite asks.
         state.windTime = windTime
         state.windSpeed = windSpeed
 
@@ -153,7 +157,8 @@ final class SurfaceResponseTests: XCTestCase {
             camera.near = 0.3
             let state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: sunAltitude),
                                                              azimuth: Angle(degrees: 180)),
-                                   camera: camera)
+                                   camera: camera,
+                                   grassBlades: false)
             let renderer = try HengeRenderer(device: device, state: state,
                                              shadowResolution: 512)
             try renderer.load(scene: MonumentScene(stones: [stone]))
