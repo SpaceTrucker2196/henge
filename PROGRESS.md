@@ -1235,3 +1235,49 @@ Deep time has no time zones, so before 1900 the local day is the solar one,
 
 186 tests, both platforms warning-clean.
 
+
+## 2026-07-28 — Beams, gold markers, the drawn lines, and stones that differ
+
+Five orders in one sitting, four of them arriving mid-stream from the owner.
+
+**Light shafts.** A fullscreen raymarch after the scene: each view ray walks
+a thin ground haze and asks the existing shadow cascades whether the sun can
+see that piece of air, so the beams through the trilithons are carved by the
+same shadows the calendar is measured against. The decision of how much haze
+an hour deserves lives in `HengeAstro`, where a test can reach it — and its
+set-ramp now ends at 0.2° altitude as a *contract* with the cascade-fit
+threshold, after review proved the pretty −1.5° tail marched beams into
+identity matrices and popped off mid-fade under a bright moon.
+
+**The chrome.** The almanac left its corner and runs the top of the view as
+columns behind glass; moon phases and lunar events ride as glyphs whose
+mapping lives beside the names in `HengeAstro`, pinned by tests, because a
+waxing moon drawn waning would pass every rendering test and still be wrong.
+
+**The diagram.** Two mode switches. The alignment overlay drapes the
+researched lines over the turf unlit — cardinals, axis, Avenue (dimensions
+now in `Monument` with their citation), the Station rectangle, and the live
+sun and moon bearings. The marker mode stands four gold stones in the Aubrey
+holes at the real positions of sun, moon and nodes, projected from the
+ephemeris rather than simulated from Hoyle's shuffle, and a bronze chip says
+"modern hypothesis — Hoyle 1966" on screen for exactly as long as the gold
+does. The research behind it is a six-agent workflow with a citation audit
+(research/lunar-markers.md); one finding of the audit worth repeating: do
+not source Hawkins's mechanics from Wikipedia, which garbles them.
+
+**The stones are individuals.** Every mesh knob now draws per stone from its
+seed — p-norm arris, rounding, amplitude, frequency, crown taper — over a
+domain-warped hybrid multifractal, and all of it vanishes at the oracle's
+zero-zero calibration build, which a test now pins. The second-scale texture
+sample is blended variance-preserving instead of multiplied; the recentring
+constant had to be *measured* (the map's linear mean is a quarter of the
+sRGB figure the calibration grew around — the first cut turned the stones
+to coal, and the exposure-continuity gain is derived, not tuned). Toksvig
+folds mip-lost normal variance into roughness; a narrow photograph-derived
+cavity term feeds micro-shadowing.
+
+The session closed with a fourteen-agent adversarial review of its own diff
+— every finding challenged by an agent told to refute it, eight confirmed,
+eight fixed, the moon marker's one-hole lag among them.
+
+212 tests, both platforms warning-clean.
