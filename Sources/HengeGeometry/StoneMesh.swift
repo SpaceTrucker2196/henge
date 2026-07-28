@@ -56,6 +56,68 @@ public enum StoneMeshBuilder {
         return t * t * (3 - 2 * t)
     }
 
+    /// The shape a particular stone takes: every knob the mesh has, drawn
+    /// once per stone from its seed.
+    ///
+    /// This exists because the stones used to differ only in *shading* —
+    /// per-stone texture offset and rotation — while every mesh shared one
+    /// set of displacement parameters. Eighty of the same rock in eighty
+    /// different coats. The parameters below are what "quarried, then four
+    /// thousand years of weather" varies between one sarsen and the next,
+    /// and their ranges are an artistic reading of generic weathered rock,
+    /// deliberately not a claim about sarsen specifically — the geology
+    /// strand of the research is still unusable (research notes, 2026-07-28).
+    ///
+    /// Everything scales from the caller's `roughness` and `rounding`, and
+    /// vanishes with them: the shadow-agreement oracle builds its stones at
+    /// zero-zero and must get the exact reference box, so individuality is
+    /// part of the weathering, never part of the calibration solid.
+    struct StoneShape {
+        /// Exponent of the p-norm the corners are rounded against: 2 is the
+        /// old inscribed ellipsoid, higher keeps faces flatter and gathers
+        /// the rounding into a tighter arris — which is what a dressed block
+        /// actually has.
+        let arrisExponent: Double
+        /// How far toward that p-norm surface the box is pulled.
+        let rounding: Double
+        /// Displacement, as a fraction of the smallest half-extent.
+        let amplitude: Double
+        /// Base frequency of the displacement field.
+        let frequency: Double
+        /// How much narrower the crown is than the foot, 0 to ~0.1. Scaled
+        /// by the roughness knob so a calibration build tapers not at all.
+        let taper: Double
+
+        static func draw(seed: UInt64, roughness: Double, rounding: Double) -> StoneShape {
+            var rng = SplitMix64(seed: seed)
+            return StoneShape(
+                arrisExponent: 2.0 + rng.unit() * 3.0,
+                rounding: rounding * (0.75 + rng.unit() * 0.75),
+                amplitude: roughness * (0.8 + rng.unit() * 0.45),
+                frequency: 2.4 * (0.85 + rng.unit() * 0.4),
+                taper: rng.unit() * 0.10 * min(roughness / 0.06, 1))
+        }
+    }
+
+    /// Deterministic per-stone stream, so a stone's shape is a pure function
+    /// of its seed. SplitMix64 because it is tiny, well-distributed, and
+    /// self-contained — invariant 5 rules out a library for this.
+    struct SplitMix64 {
+        private var state: UInt64
+        init(seed: UInt64) { state = seed &+ 0x9E3779B97F4A7C15 }
+        mutating func next() -> UInt64 {
+            state = state &+ 0x9E3779B97F4A7C15
+            var z = state
+            z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+            z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+            return z ^ (z >> 31)
+        }
+        /// Uniform in [0, 1).
+        mutating func unit() -> Double {
+            Double(next() >> 11) * (1.0 / 9_007_199_254_740_992.0)
+        }
+    }
+
     /// - Parameters:
     ///   - subdivisions: grid divisions per box face.
     ///   - roughness: radial displacement as a fraction of the smallest
@@ -80,25 +142,33 @@ public enum StoneMeshBuilder {
         let smallestHalf = min(half.x, min(half.y, half.z))
 
         var noise = ValueNoise(seed: stone.seed)
+        let shapeOf = StoneShape.draw(seed: stone.seed,
+                                      roughness: roughness, rounding: rounding)
 
-        /// Shape a point on the box surface: round the corners, then weather it.
+        /// Shape a point on the box surface: round the corners, weather it,
+        /// then taper the crown.
         ///
-        /// Both steps are functions of the point alone, never of the face it
-        /// came from — which is what lets vertices shared between faces be
-        /// welded and still land in the same place.
+        /// All three steps are functions of the point alone, never of the
+        /// face it came from — which is what lets vertices shared between
+        /// faces be welded and still land in the same place.
         func shape(_ boxPoint: SIMD3<Double>) -> SIMD3<Double> {
             let d = simd_normalize(boxPoint)
 
-            // The ellipsoid inscribed in the same box. Scaled per axis: a
-            // sphere of the smallest half-extent looks like the same idea and
-            // shortens the stone along its long axis instead.
-            let ellipsoidScale = sqrt(pow(d.x / half.x, 2)
-                                      + pow(d.y / half.y, 2)
-                                      + pow(d.z / half.z, 2))
-            var point = simd_mix(boxPoint, d / ellipsoidScale, SIMD3(repeating: rounding))
+            // The p-norm surface inscribed in the same box. At p = 2 this is
+            // the old inscribed ellipsoid; this stone's own exponent keeps
+            // the faces flatter and gathers the rounding into an arris of its
+            // own tightness. Scaled per axis, as the ellipsoid was, so a tall
+            // stone is not shortened along its long axis.
+            let p = shapeOf.arrisExponent
+            let pNormScale = pow(pow(abs(d.x / half.x), p)
+                                 + pow(abs(d.y / half.y), p)
+                                 + pow(abs(d.z / half.z), p), 1 / p)
+            var point = simd_mix(boxPoint, d / pNormScale,
+                                 SIMD3(repeating: shapeOf.rounding))
 
-            if roughness > 0 {
-                var amount = noise.fbm(d * 2.4) * roughness * smallestHalf * 2
+            if shapeOf.amplitude > 0 {
+                var amount = noise.rockField(d * shapeOf.frequency)
+                    * shapeOf.amplitude * smallestHalf * 2
                 // Fade out toward the waterline. A shadow is stretched by
                 // 1/tan(altitude), and at the low sun this app exists for that
                 // is a factor of eight or nine — so a three-centimetre bump at
@@ -106,6 +176,17 @@ public enum StoneMeshBuilder {
                 amount *= smoothstep(0.0, 1.6, point.y + centre.y)
                 point += d * amount
             }
+
+            // The crown narrows. Real uprights taper — they were dressed to
+            // — and a fractional squeeze of the top against the foot is the
+            // single cheapest thing that makes two stones of the same nominal
+            // dimensions read as two stones. A pure function of the point's
+            // own height, so welding is untouched; zero at the foot, so the
+            // sockets and the waterline tests are too.
+            let crown = smoothstep(0.15, 1.0, (boxPoint.y + half.y) / (2 * half.y))
+            let squeeze = 1 - shapeOf.taper * crown
+            point.x *= squeeze
+            point.z *= squeeze
             return point + centre
         }
 
@@ -286,6 +367,47 @@ struct ValueNoise {
         for _ in 0..<4 {
             total += sample(p * frequency) * amplitude
             normalisation += amplitude
+            amplitude *= 0.5
+            frequency *= 2.13
+        }
+        return total / normalisation
+    }
+
+    /// The displacement field the stones are carved with: a hybrid
+    /// multifractal with one level of domain warp, in place of plain fBm.
+    ///
+    /// Plain fBm reads as *noise* — every octave everywhere at full strength.
+    /// Weathered rock is not like that: where the surface stands proud it is
+    /// broken and detailed, where it has worn smooth it is smooth at every
+    /// scale at once. Musgrave's hybrid multifractal gets exactly that by
+    /// letting each octave's weight ride on the octaves before it, and a
+    /// single warp of the domain bends the features so they stop looking
+    /// gridded. (Musgrave, Kolb & Mace, "The synthesis and rendering of
+    /// eroded fractal terrains", SIGGRAPH 1989 — applied here at hand scale
+    /// rather than landscape scale.)
+    ///
+    /// Bounded in [-1, 1] by construction — each octave contributes at most
+    /// `amplitude × weight ≤ amplitude` — so the mesh tests can state a hard
+    /// ceiling on how far a vertex may leave the box.
+    mutating func rockField(_ p: SIMD3<Double>) -> Double {
+        // One warp level: three decorrelated samples bend the domain.
+        let warp = SIMD3(sample(p + SIMD3(31.7, 0, 0)),
+                         sample(p + SIMD3(0, 47.3, 0)),
+                         sample(p + SIMD3(0, 0, 12.9)))
+        let q = p + warp * 0.6
+
+        var total = 0.0
+        var amplitude = 1.0
+        var frequency = 1.0
+        var normalisation = 0.0
+        var weight = 1.0
+        for _ in 0..<4 {
+            let signal = sample(q * frequency) * weight
+            total += signal * amplitude
+            normalisation += amplitude
+            // The next octave is strongest where this one stood proud —
+            // clamped to [0, 1] so the sum stays bounded.
+            weight = min(max(0.5 + signal, 0), 1)
             amplitude *= 0.5
             frequency *= 2.13
         }

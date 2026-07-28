@@ -295,6 +295,15 @@ static float fbm(float3 p)
 // keeps the archaeology honest — the texture is standing in for weathering and
 // grain, not claiming to be a photograph of stone 56.
 constant float3 kRockMean  = float3(0.36, 0.33, 0.30);
+// The rock map's *linear-space* mean, measured offline over every texel
+// (scratch script, 2026-07-28: 1024² texels through the sRGB EOTF). This is
+// not kRockMean, and the difference matters: kRockMean is the sRGB-space
+// figure the material calibration grew around, four times brighter than the
+// linear truth. The variance-preserving blend must recentre on the *actual*
+// mean of the samples it is blending, or the recentring subtracts a value
+// four times the signal and drives the stones toward black — which is
+// precisely how the first cut failed.
+constant float3 kRockMeanLinear = float3(0.0831, 0.0781, 0.0652);
 constant float3 kGrassMean = float3(0.24, 0.27, 0.14);
 // The two ends of the ground's colour range. Everything between a bare soil
 // bank and clean turf is a mix of these two, chosen so the banks around the
@@ -361,6 +370,10 @@ struct Surface {
     float3 albedo;
     float3 normal;
     float  roughness;
+    /// Cavity term, 1 on open faces down to ~0.4 in crevices. Feeds the
+    /// ambient occlusion and the micro-shadow aperture; without it fine
+    /// relief reads as a printed pattern rather than a carved surface.
+    float  cavity;
 };
 
 static float3 triplanarWeights(float3 n)
@@ -417,12 +430,11 @@ static Surface sampleStone(float3 worldPosition, float3 n,
     float3 cx = albedoMap.sample(surfaceSampler, uvX).rgb;
     float3 cy = albedoMap.sample(surfaceSampler, uvY).rgb;
     float3 cz = albedoMap.sample(surfaceSampler, uvZ).rgb;
-    float3 colour = cx * w.x + cy * w.y + cz * w.z;
+    float3 nearColour = cx * w.x + cy * w.y + cz * w.z;
 
-    // And a second sample at an incommensurate scale, multiplied in — the same
-    // trick the ground uses. Within a single seven-metre upright the 1.5 m tile
-    // repeats four times over, and no amount of per-stone variation hides a
-    // repeat that happens inside one stone.
+    // A second sample at an incommensurate scale, because within a single
+    // seven-metre upright the 1.5 m tile repeats four times over, and no
+    // per-stone variation hides a repeat that happens inside one stone.
     float2 broad = spinX * (worldPosition.zy * scale * 0.229) + offset;
     float2 broadY = spinY * (worldPosition.xz * scale * 0.229) + offset.yx;
     float2 broadZ = spinZ * (worldPosition.xy * scale * 0.229) + offset;
@@ -430,7 +442,27 @@ static Surface sampleStone(float3 worldPosition, float3 n,
     float3 by = albedoMap.sample(surfaceSampler, broadY).rgb;
     float3 bz = albedoMap.sample(surfaceSampler, broadZ).rgb;
     float3 broadColour = bx * w.x + by * w.y + bz * w.z;
-    colour *= mix(float3(1.0), broadColour / kRockMean, 0.45);
+
+    // Blended variance-preserving, not multiplied. Multiplying two samples
+    // of the same texture is the naive blend Heitz & Neyret diagnose:
+    // E[ab] = E[a]·E[b], so the mid-tones squeeze and colours appear that
+    // are in neither sample — the faint plastic flatness the rock used to
+    // have. A weighted sum recentred on the map's mean and rescaled by
+    // rsqrt(Σw²) restores the source's variance exactly: a blend of
+    // independent samples has variance (Σw²)σ², and dividing by √(Σw²) puts
+    // σ² back.
+    const float wNear = 1.0 / 1.45;
+    const float wBroad = 0.45 / 1.45;
+    float3 colour = (nearColour * wNear + broadColour * wBroad - kRockMeanLinear)
+                  * rsqrt(wNear * wNear + wBroad * wBroad) + kRockMeanLinear;
+    // Exposure continuity, derived rather than tuned: the old multiplicative
+    // blend delivered a mean of E[a]·(0.55 + 0.45·E[b]/kRockMean) — with the
+    // measured means, 0.653 of the source mean — and every material albedo
+    // in the scene was calibrated against that. The recentred sum restores
+    // the source's mean exactly, so it is scaled by the same 0.653 to land
+    // on the calibration the scene already has. Relative contrast (σ/μ) is
+    // untouched, which is the property the whole exercise was for.
+    colour = max(colour * 0.653, float3(0.0));
 
     float rx = roughnessMap.sample(surfaceSampler, uvX).r;
     float ry = roughnessMap.sample(surfaceSampler, uvY).r;
@@ -442,6 +474,10 @@ static Surface sampleStone(float3 worldPosition, float3 n,
     float3 nx = normalMap.sample(surfaceSampler, uvX).xyz * 2.0 - 1.0;
     float3 ny = normalMap.sample(surfaceSampler, uvY).xyz * 2.0 - 1.0;
     float3 nz = normalMap.sample(surfaceSampler, uvZ).xyz * 2.0 - 1.0;
+    // Toksvig's cue, read before the strength scaling touches the vectors:
+    // a mip-filtered normal shortens as the normals it averaged disagree,
+    // so its lost length *is* the variance the mip threw away.
+    float sampledLength = length(nx) * w.x + length(ny) * w.y + length(nz) * w.z;
     float strength = draw.surface.z;
     nx.xy *= strength; ny.xy *= strength; nz.xy *= strength;
     float3 bent = normalize(
@@ -453,8 +489,24 @@ static Surface sampleStone(float3 worldPosition, float3 n,
     Surface out;
     out.albedo = draw.albedo.rgb * (colour / kRockMean);
     out.normal = bent;
-    out.roughness = clamp(draw.albedo.w * (rx * w.x + ry * w.y + rz * w.z) * 2.0,
+    // The base roughness, plus the variance the mip chain lost (Toksvig
+    // 2005): without this the grain fades to an unnaturally clean grey at
+    // fifty metres, and this app looks at its stones from one metre and
+    // from fifty in the same session.
+    float baseRoughness = clamp(draw.albedo.w * (rx * w.x + ry * w.y + rz * w.z) * 2.0,
+                                0.15, 1.0);
+    float lost = clamp(1.0 - sampledLength, 0.0, 1.0);
+    out.roughness = clamp(sqrt(baseRoughness * baseRoughness + lost * 0.6),
                           0.15, 1.0);
+    // Cavity from the photograph itself: on a rock scan, dark is crevice.
+    // The band is deliberately narrow — [0.75, 1] — because texel darkness
+    // is a *cue* for occlusion, not a measurement of it. The first cut ran
+    // the floor at 0.4, which put the micro-shadow aperture at 0.32 and
+    // extinguished direct light across whole lit faces; the term is meant to
+    // bite in crevices at grazing light, not to relight the stone.
+    float relative = dot(colour, float3(0.2126, 0.7152, 0.0722))
+                   / (dot(kRockMeanLinear, float3(0.2126, 0.7152, 0.0722)) * 0.653);
+    out.cavity = 0.75 + 0.25 * clamp(relative, 0.0, 1.0);
     return out;
 }
 
@@ -561,6 +613,9 @@ static Surface sampleGround(float3 worldPosition, float3 n, float turf,
     bent = normalize(bent + slope * relief);
 
     Surface out;
+    // Open downland: the sward's self-shadowing is already painted into the
+    // root-darkening and the mottle, so the cavity term stays out of it.
+    out.cavity = 1.0;
     // The material colour is chosen per fragment rather than per draw, so the
     // soil banks and the turf they sit in are two ends of one range instead of
     // two separately-authored greens that never quite meet.
@@ -657,6 +712,7 @@ static Surface blowGrass(Surface surface, float3 worldPosition,
     float3 downwind = float3(frame.wind.x, 0.0, frame.wind.z);
 
     Surface out;
+    out.cavity = surface.cavity;
     // Paler where laid over — the undersides catching the sky.
     out.albedo = surface.albedo * (1.0 + bend * 0.28);
     // Tilting the normal is what carries most of the effect: it changes n·l,
@@ -763,6 +819,10 @@ static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
     out.albedo = albedo;
     out.normal = normal;
     out.roughness = clamp(roughness, 0.12, 1.0);
+    // The solution hollows deepen the texture's own cavity: a pit is a place
+    // the sky mostly cannot see. Floored well above black — same reasoning
+    // as the narrow band in sampleStone.
+    out.cavity = clamp(surface.cavity * (1.0 - pits * 0.3), 0.65, 1.0);
     return out;
 }
 
@@ -880,6 +940,7 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
         surface.albedo = draw.albedo.rgb;
         surface.normal = geometricNormal;
         surface.roughness = draw.albedo.w;
+        surface.cavity = 1.0;
     }
 
     float3 n = surface.normal;
@@ -921,7 +982,16 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     float sunShadow = frame.shadowSource.x > 0.5 ? 1.0 : shadow;
     float moonShadow = frame.shadowSource.x > 0.5 ? shadow : 1.0;
 
-    float3 direct = (diffuse + specular) * frame.sunRadiance.rgb * ndotl * sunShadow;
+    // Micro-shadowing from the cavity term (the aperture trick from Naughty
+    // Dog's Uncharted 4 shading): a crevice stops seeing the sun well before
+    // the geometric terminator says so, because its own walls stand in the
+    // way. Open surface, aperture 2, no effect; deepest cavity, the direct
+    // light dies as ndotl falls below the cone the crevice can see through.
+    float aperture = 2.0 * surface.cavity * surface.cavity;
+    float microShadow = clamp(aperture - 1.0 + ndotl, 0.0, 1.0);
+
+    float3 direct = (diffuse + specular) * frame.sunRadiance.rgb * ndotl
+                  * sunShadow * microShadow;
 
     // Moonlight. Unshadowed for now — giving the moon its own cascades is M5
     // work — so it is kept dim enough that the missing shadows do not read as
@@ -995,6 +1065,11 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // as cardboard.
     float wrap = clamp((dot(n, l) + 0.35) / 1.35, 0.0, 1.0);
     ambient += albedo * frame.sunRadiance.rgb * wrap * 0.018 * shadow;
+
+    // Cavity occludes the ambient: sky light reaches into a crevice about as
+    // well as the sun does. Kept gentler than the direct-light aperture —
+    // ambient arrives from everywhere, so some of it always gets in.
+    ambient *= mix(0.6, 1.0, surface.cavity);
 
     // Aerial perspective — distance haze keeps the barrows on the horizon from
     // reading as cardboard cut-outs.
