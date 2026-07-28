@@ -8,6 +8,13 @@ import HengeGeometry
 /// Everything the renderer needs to know about the moment being drawn.
 public struct SceneState: Sendable {
 
+    /// Whether the stones carry four thousand years of weather.
+    ///
+    /// Separate from `surfaceTexturing` because it is a separate claim, and
+    /// because the test that measures it needs to render the same stone both
+    /// ways and compare.
+    public var weathering: Bool
+
     /// Whether surfaces carry their photographic detail.
     ///
     /// On everywhere the app runs. Off in the tests that measure *geometry* —
@@ -48,7 +55,8 @@ public struct SceneState: Sendable {
                 camera: Camera = Camera(),
                 turbidity: Float = 2.4,
                 exposure: Float = 1.6,
-                surfaceTexturing: Bool = true) {
+                surfaceTexturing: Bool = true,
+                weathering: Bool = true) {
         self.sun = sun
         self.moon = moon
         self.moonAngularRadius = moonAngularRadius
@@ -58,6 +66,7 @@ public struct SceneState: Sendable {
         self.turbidity = turbidity
         self.exposure = exposure
         self.surfaceTexturing = surfaceTexturing
+        self.weathering = weathering
     }
 
     /// Build the state for a moment in time at a site. This is the only path
@@ -397,7 +406,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                            label: stone.id,
                                            // A disc flush in the turf casting a
                                            // shadow would be a hole, not a stone.
-                                           castsShadow: stone.material != .chalk) {
+                                           castsShadow: stone.material != .chalk,
+                                           seed: stone.seed) {
                 items.append(item)
             }
         }
@@ -421,7 +431,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
     private func makeDrawItem(mesh: Mesh, albedo: SIMD4<Float>, label: String,
                               castsShadow: Bool = true,
-                              kind: SurfaceTextures.Kind = .rock) throws -> DrawItem? {
+                              kind: SurfaceTextures.Kind = .rock,
+                              seed: UInt64 = 0) throws -> DrawItem? {
         guard !mesh.positions.isEmpty, !mesh.indices.isEmpty else { return nil }
 
         var vertices: [MeshVertex] = []
@@ -450,7 +461,16 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                             albedo: albedo,
                             surface: SIMD4(kind == .grass ? 1 : 0,
                                            kind.metresPerTile,
-                                           kind.normalStrength, 1)),
+                                           kind.normalStrength, 1),
+                            // The foot is measured off the mesh rather than
+                            // taken from the stone's nominal position: the
+                            // meshes are already in world space and sit on
+                            // displaced terrain, so a stone on a slope has a
+                            // foot that is not where its centre says it is.
+                            weather: SIMD4(mesh.positions.map(\.y).min() ?? 0,
+                                           kind == .grass ? 0 : 1,
+                                           0.55,
+                                           Float(seed % 997))),
                         castsShadow: castsShadow,
                         surfaceKind: kind)
     }
@@ -523,6 +543,13 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// grid, that is what stops the shadow edges crawling during a time-lapse —
     /// which would be fatal here, because the crawling would look exactly like
     /// the sun moving.
+    /// How far back along the light the shadow camera sits, in cascade radii,
+    /// and how deep its box runs. Shared with the shader through
+    /// `cascadeRadii.w`, because PCSS turns depth differences back into metres
+    /// and would silently mis-scale every penumbra if the two drifted apart.
+    static let shadowPullback: Float = 6
+    static let shadowDepthSpan: Float = 13
+
     static func cascadeMatrix(camera: Camera, aspect: Float,
                               near: Float, far: Float,
                               lightDirection: SIMD3<Float>,
@@ -563,13 +590,26 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         centreLightSpace.y = floor(centreLightSpace.y * texelsPerWorldUnit) / texelsPerWorldUnit
         let snappedCentre = (lightView.inverse * centreLightSpace).xyz
 
-        let eye = snappedCentre + lightDirection * (radius * 2)
+        // Pull the light's eye a long way back along its own direction.
+        //
+        // A cascade box fitted to the view frustum contains only what the
+        // camera can see — but a *caster* need not be visible to throw a shadow
+        // into frame, and at a grazing sun it usually is not. Standing at the
+        // Altar Stone at sunrise, the thing shadowing you is behind you. With
+        // the eye at 2× the radius, a stone thirty metres upwind fell outside
+        // the box, never reached the depth pass, and cast nothing: a
+        // differential test showed a receiving stone darkening by 0.0%.
+        //
+        // Six radii of pullback and thirteen of depth span cover the casters
+        // that matter without the box growing so deep that a 32-bit float
+        // starts to lose the near geometry.
+        let eye = snappedCentre + lightDirection * (radius * Self.shadowPullback)
         let view = MetalMath.lookAt(eye: eye, target: snappedCentre,
                                     up: abs(lightDirection.y) > 0.99
                                         ? SIMD3<Float>(0, 0, 1) : SIMD3<Float>(0, 1, 0))
         let projection = MetalMath.orthographic(left: -radius, right: radius,
                                                 bottom: -radius, top: radius,
-                                                near: 0.1, far: radius * 4.5)
+                                                near: 0.1, far: radius * Self.shadowDepthSpan)
         return (projection * view, radius)
     }
 
@@ -581,11 +621,24 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         let splits = SIMD4<Float>(24, 90, 320, 0)
         var matrices = (matrix_identity_float4x4, matrix_identity_float4x4, matrix_identity_float4x4)
-        var radii = SIMD4<Float>(splits.x, splits.y, splits.z, 0)
+        var radii = SIMD4<Float>(splits.x, splits.y, splits.z, Self.shadowDepthSpan)
 
-        // Only fit cascades when the sun is actually up; below the horizon the
-        // light direction degenerates and the fit produces garbage.
-        if sunDirection.y > 0.01 {
+        // Fit cascades whenever the sun is above the horizon at all.
+        //
+        // This threshold used to be 0.01, which is an altitude of 0.573° — so
+        // the monument cast no shadow whatever between the sun's appearing and
+        // its clearing half a degree of sky. That is the definition-of-done
+        // moment and its mirror at midwinter sunset: the two instants the whole
+        // app is built around, and the two it drew flat. The comment said the
+        // fit "produces garbage" below the horizon, which is true, but 0.573°
+        // is not below the horizon.
+        //
+        // The epsilon that remains is a thousandth of that — 0.011° — and
+        // exists only so the orthographic box cannot collapse to zero depth
+        // exactly at grazing incidence. `state.sun` is already refracted, so
+        // this is measured against the *apparent* horizon, which is the one you
+        // see the sun rise over.
+        if sunDirection.y > 0.0002 {
             let m0 = Self.cascadeMatrix(camera: state.camera, aspect: aspect,
                                         near: state.camera.near, far: splits.x,
                                         lightDirection: sunDirection,
@@ -599,7 +652,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                         lightDirection: sunDirection,
                                         resolution: shadowResolution)
             matrices = (m0.matrix, m1.matrix, m2.matrix)
-            radii = SIMD4(m0.radius, m1.radius, m2.radius, 0)
+            radii = SIMD4(m0.radius, m1.radius, m2.radius, Self.shadowDepthSpan)
         }
 
         let radiance = state.sunRadiance
@@ -705,6 +758,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 // as zero and multiplies the whole surface to black.
                 draw.surface.w = 0
             }
+            if !state.weathering { draw.weather.y = 0 }
             encoder.setVertexBuffer(item.vertexBuffer, offset: 0, index: 30)
             encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 0)
             encoder.setVertexBytes(&draw, length: MemoryLayout<DrawUniforms>.stride, index: 1)

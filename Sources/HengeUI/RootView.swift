@@ -40,18 +40,20 @@ public struct RootView: View {
         ZStack(alignment: .bottom) {
             scene
 
-            VStack(spacing: 10) {
-                if showingAlmanac { events }
-                timeBar
-                stations
+            HengeGlass(spacing: 14) {
+                VStack(spacing: 10) {
+                    if showingAlmanac { events }
+                    timeBar
+                    stations
+                }
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 10)
         }
         .overlay(alignment: .topLeading) {
-            if showingAlmanac { almanac.padding(16) }
+            if showingAlmanac { HengeGlass { almanac }.padding(16) }
         }
-        .overlay(alignment: .topTrailing) { almanacToggle.padding(16) }
+        .overlay(alignment: .topTrailing) { HengeGlass { almanacToggle }.padding(16) }
         .foregroundStyle(Henge.stone)
         .tint(Henge.bronze)
         .task { await runClock() }
@@ -59,6 +61,9 @@ public struct RootView: View {
             // The coming station first, then the monument itself — so the panel
             // opens on whatever the user was just looking at.
             LoreView(notes: [model.stationNote] + Lore.monument)
+                // The sheet is glass too, so the monument stays faintly
+                // present behind the reading rather than being boxed out.
+                .presentationBackground(.ultraThinMaterial)
         }
     }
 
@@ -68,6 +73,12 @@ public struct RootView: View {
         HengeSceneView(model: model)
             .ignoresSafeArea()
             .contentShape(Rectangle())
+            // Composed with `simultaneously` rather than stacked as a
+            // `.gesture` plus a `.simultaneousGesture`. Stacked, the drag —
+            // which has `minimumDistance: 0` and so claims the very first touch
+            // — would start tracking a pinch's first finger and swing the view
+            // while the other finger was still arriving. Composed, SwiftUI
+            // resolves them as one recognition and the pinch reads cleanly.
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
@@ -76,14 +87,16 @@ public struct RootView: View {
                         lastDrag = value.translation
                     }
                     .onEnded { _ in lastDrag = .zero }
-            )
-            .simultaneousGesture(
-                MagnifyGesture()
-                    .onChanged { value in
-                        model.zoom(by: Double(value.magnification / lastZoom))
-                        lastZoom = value.magnification
-                    }
-                    .onEnded { _ in lastZoom = 1 }
+                    .simultaneously(with:
+                        MagnifyGesture(minimumScaleDelta: 0)
+                            .onChanged { value in
+                                let magnification = Double(value.magnification)
+                                guard magnification > 0, lastZoom > 0 else { return }
+                                model.zoom(by: magnification / Double(lastZoom))
+                                lastZoom = value.magnification
+                            }
+                            .onEnded { _ in lastZoom = 1 }
+                    )
             )
             // Recentre lost its button along with the slider panel, so it
             // becomes what it should always have been: the gesture you already
@@ -94,9 +107,14 @@ public struct RootView: View {
                 }
             }
             .accessibilityLabel("The monument")
-            .accessibilityHint("Drag to look around, pinch to zoom, "
+            .accessibilityHint("Drag to look around, pinch or scroll to zoom, "
                                + "double tap to recentre")
             .accessibilityAction(named: "Recentre") { model.recentre() }
+            // VoiceOver cannot pinch. Zoom has to be reachable as an action or
+            // it does not exist for anyone using it — invariant 7.
+            .accessibilityAction(named: "Zoom in") { model.zoom(by: 1.25) }
+            .accessibilityAction(named: "Zoom out") { model.zoom(by: 0.8) }
+            .modifier(ScrollZoom { model.zoom(by: $0) })
     }
 
     // ── where you stand ─────────────────────────────────────────────────────

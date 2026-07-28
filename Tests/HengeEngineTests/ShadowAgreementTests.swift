@@ -276,9 +276,9 @@ final class RendererSetupTests: XCTestCase {
         // than a magic number. Adding a field on one side only would have
         // silently reinterpreted every uniform after it.
         XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 8 * 16)
-        // 2 matrices + albedo + `surface` (the texture descriptor: which map
-        // set, tile size in metres, normal strength).
-        XCTAssertEqual(MemoryLayout<DrawUniforms>.size, 2 * 64 + 2 * 16)
+        // 2 matrices + albedo + `surface` (which map set, tile size, normal
+        // strength) + `weather` (the stone's foot, lichen, damp, seed).
+        XCTAssertEqual(MemoryLayout<DrawUniforms>.size, 2 * 64 + 3 * 16)
         XCTAssertEqual(MemoryLayout<MeshVertex>.stride, 32)
     }
 

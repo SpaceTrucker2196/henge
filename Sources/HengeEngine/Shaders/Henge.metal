@@ -24,7 +24,8 @@ struct FrameUniforms {
     float4   skyParameters;  // x turbidity, y exposure, z time, w shadow texel
     float4   moonDirection;  // toward the moon, w = angular radius
     float4   moonLight;      // rgb radiance, w = illuminated fraction
-    float4   cascadeRadii;   // half-extent in metres of each cascade's ortho box
+    float4   cascadeRadii;   // xyz: half-extent in metres of each cascade's ortho
+                             // box. w: how many radii deep that box runs
 };
 
 struct DrawUniforms {
@@ -33,6 +34,8 @@ struct DrawUniforms {
     float4   albedo;         // rgb albedo, w = roughness
     float4   surface;        // x: 0 stone / 1 ground, y: metres per texture tile,
                              // z: normal strength, w: 1 textured / 0 flat
+    float4   weather;        // x: world Y of the stone's foot, y: lichen amount,
+                             // z: damp rise in metres, w: per-stone seed
 };
 
 struct Vertex {
@@ -165,9 +168,10 @@ static float sampleShadow(depth2d_array<float> shadowMap,
 
     float texel = frame.skyParameters.w;
     float radius = frame.cascadeRadii[cascade];      // metres, half the ortho box
-    // The ortho box spans 2r across and 4.5r deep — see `cascadeMatrix`. So one
-    // unit of depth is 4.5r metres, and one unit of UV is 2r metres.
-    float metresPerDepth = radius * 4.5;
+    // The ortho box spans 2r across, and cascadeRadii.w deep — passed rather
+    // than hardcoded, so the depth span cannot drift out of step with
+    // `cascadeMatrix` and quietly mis-scale every penumbra.
+    float metresPerDepth = radius * frame.cascadeRadii.w;
     float metresPerUV    = radius * 2.0;
 
     // ── 1. blocker search ───────────────────────────────────────────────────
@@ -328,6 +332,126 @@ static Surface sampleGround(float3 worldPosition, float3 n,
     return out;
 }
 
+// ── weathering ──────────────────────────────────────────────────────────────
+//
+// A rock photograph gives grain. It does not give four thousand years standing
+// in Wiltshire rain, and that is what actually distinguishes these stones: they
+// are not uniformly stone-coloured, they are *mapped* by where water runs and
+// where it lingers.
+//
+// Four effects, each keyed to something physical rather than to taste:
+//
+//   **A damp foot.** Groundwater wicks up the first half-metre or so. Wet rock
+//   is darker and glossier than dry — same rock, lower albedo, lower roughness.
+//
+//   **Lichen where water lingers.** Crustose lichens take upward-facing ledges
+//   and the sheltered side. In Britain that is the north and east faces, which
+//   dry slowest; the sun-baked south-west stays comparatively bare. Yellow-green
+//   because *Xanthoria* and *Rhizocarpon* are what is actually on them, and
+//   matte because lichen is.
+//
+//   **Rain streaking.** Water running down a vertical face washes it cleaner in
+//   channels, leaving pale vertical bands. Stretched hard along Y — that
+//   anisotropy is the whole reason a streak reads as a streak and not as a
+//   stain.
+//
+//   **Wind scour on the tops.** Exposed upper surfaces are lighter and rougher,
+//   the lichen scrubbed off them.
+//
+// All procedural: value noise, no textures, nothing to license. Seeded per
+// stone from `Stone.seed`, so no two weather alike and the pattern is stable
+// across frames — a weathering that shimmered as the camera moved would be
+// worse than none.
+static float hash13(float3 p)
+{
+    p = fract(p * 0.1031);
+    p += dot(p, p.yzx + 33.33);
+    return fract((p.x + p.y) * p.z);
+}
+
+static float valueNoise(float3 p)
+{
+    float3 i = floor(p);
+    float3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);          // smoothstep, so the derivative is continuous
+
+    float n000 = hash13(i + float3(0, 0, 0)), n100 = hash13(i + float3(1, 0, 0));
+    float n010 = hash13(i + float3(0, 1, 0)), n110 = hash13(i + float3(1, 1, 0));
+    float n001 = hash13(i + float3(0, 0, 1)), n101 = hash13(i + float3(1, 0, 1));
+    float n011 = hash13(i + float3(0, 1, 1)), n111 = hash13(i + float3(1, 1, 1));
+
+    float nx00 = mix(n000, n100, f.x), nx10 = mix(n010, n110, f.x);
+    float nx01 = mix(n001, n101, f.x), nx11 = mix(n011, n111, f.x);
+    return mix(mix(nx00, nx10, f.y), mix(nx01, nx11, f.y), f.z);
+}
+
+static float fbm(float3 p)
+{
+    float sum = 0.0, amplitude = 0.5;
+    for (int i = 0; i < 4; ++i) {
+        sum += amplitude * valueNoise(p);
+        p *= 2.03;                         // not exactly 2, to avoid the octaves
+        amplitude *= 0.5;                  // lining their features up
+    }
+    return sum;
+}
+
+static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
+                            constant DrawUniforms &draw)
+{
+    float lichenAmount = draw.weather.y;
+    if (lichenAmount <= 0.0) { return surface; }
+
+    float height = max(worldPosition.y - draw.weather.x, 0.0);
+    float3 p = worldPosition + draw.weather.w;
+
+    // Damp foot. Softened by noise so the line is not a bathtub ring.
+    float damp = 1.0 - smoothstep(0.0, max(draw.weather.z, 0.05), height);
+    damp *= 0.55 + 0.45 * fbm(p * 0.8);
+
+    // Shelter: upward-facing, and the north-east half. World +Z is south, so
+    // north is -Z and east is +X — the sheltered quarter faces -Z and +X.
+    float up = clamp(n.y, 0.0, 1.0);
+    float sheltered = clamp(-n.z * 0.5 + n.x * 0.25 + 0.5, 0.0, 1.0);
+    float patch = smoothstep(0.40, 0.72, fbm(p * 1.7));
+    float lichen = lichenAmount * clamp(up * 0.9 + sheltered * 0.7, 0.0, 1.0) * patch;
+
+    // Rain wash: vertical channels, so the noise is stretched hard along Y.
+    float vertical = 1.0 - up;
+    float streak = fbm(float3(p.x * 7.0, p.y * 0.30, p.z * 7.0));
+    float wash = vertical * smoothstep(0.52, 0.88, streak) * (1.0 - damp);
+
+    // Wind scour: the exposed top, above the damp and away from the shelter.
+    float scour = clamp(up - 0.55, 0.0, 1.0) * 2.2 * smoothstep(0.3, 1.2, height);
+
+    const float3 dampTint   = float3(0.52, 0.53, 0.50);
+    const float3 lichenTint = float3(0.74, 0.79, 0.48);
+    const float3 washTint   = float3(0.88, 0.87, 0.83);
+
+    float3 albedo = surface.albedo;
+    albedo *= mix(1.0, dampTint, damp * 0.80);
+    albedo = mix(albedo, albedo * lichenTint * 1.45, clamp(lichen, 0.0, 1.0));
+    albedo *= mix(1.0, washTint, wash * 0.40);
+    albedo *= 1.0 + scour * 0.14;
+
+    float roughness = surface.roughness;
+    roughness = mix(roughness, 0.96, clamp(lichen, 0.0, 1.0) * 0.85);  // lichen is matte
+    roughness = mix(roughness, roughness * 0.70, damp * 0.60);         // wet is glossier
+    roughness = mix(roughness, min(roughness * 1.2, 1.0), scour * 0.5);
+
+    // Lichen sits proud of the rock. A small crust in the surface normal is
+    // what stops it reading as a decal printed on the stone.
+    float3 crust = float3(fbm(p * 9.0) - 0.5, fbm(p * 9.0 + 17.0) - 0.5,
+                          fbm(p * 9.0 + 43.0) - 0.5);
+    float3 normal = normalize(surface.normal + crust * lichen * 0.35);
+
+    Surface out;
+    out.albedo = albedo;
+    out.normal = normal;
+    out.roughness = clamp(roughness, 0.12, 1.0);
+    return out;
+}
+
 // ── the sky ─────────────────────────────────────────────────────────────────
 
 // Preetham et al., "A Practical Analytic Model for Daylight" (1999).
@@ -422,11 +546,14 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // reported a lit/shade contrast of 0.003 and no shadow edge anywhere.
     Surface surface;
     if (draw.surface.w > 0.5) {
-        surface = draw.surface.x > 0.5
-            ? sampleGround(in.worldPosition, geometricNormal, draw,
-                           albedoMap, normalMap, roughnessMap, surfaceSampler)
-            : sampleStone(in.worldPosition, geometricNormal, draw,
-                          albedoMap, normalMap, roughnessMap, surfaceSampler);
+        if (draw.surface.x > 0.5) {
+            surface = sampleGround(in.worldPosition, geometricNormal, draw,
+                                   albedoMap, normalMap, roughnessMap, surfaceSampler);
+        } else {
+            surface = sampleStone(in.worldPosition, geometricNormal, draw,
+                                  albedoMap, normalMap, roughnessMap, surfaceSampler);
+            surface = weatherStone(surface, in.worldPosition, geometricNormal, draw);
+        }
     } else {
         surface.albedo = draw.albedo.rgb;
         surface.normal = geometricNormal;

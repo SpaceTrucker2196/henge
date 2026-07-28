@@ -52,7 +52,7 @@ public struct FrameUniforms {
                 skyParameters: SIMD4<Float> = SIMD4(2.2, 1, 0, 1.0 / 2048.0),
                 moonDirection: SIMD4<Float> = SIMD4(0, -1, 0, 0.0045),
                 moonLight: SIMD4<Float> = .zero,
-                cascadeRadii: SIMD4<Float> = SIMD4(24, 90, 320, 0)) {
+                cascadeRadii: SIMD4<Float> = SIMD4(24, 90, 320, 13)) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -79,15 +79,21 @@ public struct DrawUniforms {
     /// y: metres covered by one tile of the texture.
     /// z: normal-map strength. w: 1 when textured, 0 for flat shading.
     public var surface: SIMD4<Float>
+    /// x: world Y of the stone's foot, so the shader knows how high up a
+    /// fragment sits. y: how much lichen, 0 for none. z: how far damp wicks up,
+    /// in metres. w: per-stone seed, so no two weather alike.
+    public var weather: SIMD4<Float>
 
     public init(model: float4x4 = matrix_identity_float4x4,
                 normalMatrix: float4x4 = matrix_identity_float4x4,
                 albedo: SIMD4<Float> = SIMD4(0.55, 0.53, 0.48, 0.85),
-                surface: SIMD4<Float> = SIMD4(0, 1.4, 1.0, 1)) {
+                surface: SIMD4<Float> = SIMD4(0, 1.4, 1.0, 1),
+                weather: SIMD4<Float> = SIMD4(0, 0, 0.55, 0)) {
         self.model = model
         self.normalMatrix = normalMatrix
         self.albedo = albedo
         self.surface = surface
+        self.weather = weather
     }
 }
 

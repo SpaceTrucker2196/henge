@@ -25,9 +25,11 @@ public struct LoreView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                ForEach(notes) { note in
-                    panel(note)
+            HengeGlass(spacing: 18) {
+                VStack(alignment: .leading, spacing: 18) {
+                    ForEach(notes) { note in
+                        panel(note)
+                    }
                 }
             }
             .padding(20)

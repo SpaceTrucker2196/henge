@@ -81,3 +81,34 @@ public extension View {
         }
     }
 }
+
+/// Wraps a cluster of glass elements so they behave as one material.
+///
+/// Liquid Glass is not a per-view backdrop blur — nearby glass elements are
+/// meant to merge, refract together and share a single lensing pass. Without a
+/// container each panel is its own island, which reads as several stacked
+/// plates of frosted plastic rather than one piece of glass, and costs more to
+/// draw besides. Everything else about the panels was already right; this is
+/// what makes them look like the material they are asking for.
+///
+/// Below the OS versions that have it, this is a plain passthrough and the
+/// `.ultraThinMaterial` fallback in `hengePanel` does the work.
+public struct HengeGlass<Content: View>: View {
+
+    private let spacing: CGFloat
+    private let content: Content
+
+    public init(spacing: CGFloat = 12, @ViewBuilder content: () -> Content) {
+        self.spacing = spacing
+        self.content = content()
+    }
+
+    public var body: some View {
+        if #available(iOS 26.0, macOS 26.0, *) {
+            GlassEffectContainer(spacing: spacing) { content }
+        } else {
+            content
+        }
+    }
+}
+

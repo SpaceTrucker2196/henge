@@ -107,4 +107,88 @@ final class SurfaceTextureTests: XCTestCase {
         XCTAssertGreaterThan(distinct.count, 40,
                              "too few distinct values — is anything textured?")
     }
+
+    /// Weathering darkens the foot of a stone, and only the foot.
+    ///
+    /// Groundwater wicks up the first half-metre and wet rock is darker than
+    /// dry. Measured as a per-row ratio between the same stone rendered with
+    /// weathering on and off, which is what makes it robust: an absolute
+    /// reading at the base is dominated by self-shadowing and ambient
+    /// occlusion, and hand-placing a measurement band got a diluted 0.8%
+    /// because the band straddled the stone's foot and the turf below it.
+    ///
+    /// Asserting the *shape* rather than a single number also catches the
+    /// failure that matters — weathering that darkens the whole stone is a
+    /// tint, not a damp course.
+    func testTheDampCourseDarkensTheFootAndNothingElse() throws {
+        let device = try makeDevice()
+        let size = 256
+
+        func rowLuminances(weathered: Bool) throws -> [Double] {
+            let stone = Stone(id: "probe", position: SIMD3(0, 0, 0),
+                              height: 6.0, width: 2.6, thickness: 1.2, material: .sarsen)
+            var camera = Camera(position: SIMD3(0, 3, 16), target: SIMD3(0, 3, 0))
+            camera.near = 0.3
+            let state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: 45),
+                                                             azimuth: Angle(degrees: 180)),
+                                   camera: camera, weathering: weathered)
+            let renderer = try HengeRenderer(device: device, state: state,
+                                             shadowResolution: 1024)
+            try renderer.load(scene: MonumentScene(stones: [stone]))
+
+            let texture = try renderer.renderOffscreen(width: size, height: size)
+            var pixels = [UInt8](repeating: 0, count: size * size * 4)
+            pixels.withUnsafeMutableBytes { raw in
+                texture.getBytes(raw.baseAddress!, bytesPerRow: size * 4,
+                                 from: MTLRegionMake2D(0, 0, size, size), mipmapLevel: 0)
+            }
+
+            return (0..<size).map { y in
+                var total = 0.0
+                // Only the middle columns, which are the stone's face.
+                for x in (size * 5 / 12)..<(size * 7 / 12) {
+                    let offset = (y * size + x) * 4
+                    let b = Double(pixels[offset])
+                    let g = Double(pixels[offset + 1])
+                    let r = Double(pixels[offset + 2])
+                    total += 0.2126 * r + 0.7152 * g + 0.0722 * b
+                }
+                return total / Double(size / 6)
+            }
+        }
+
+        let dry = try rowLuminances(weathered: false)
+        let wet = try rowLuminances(weathered: true)
+        let ratios = zip(wet, dry).map { $1 > 4 ? $0 / $1 : 1.0 }
+
+        // Image rows run downward: the stone's top half is the upper rows.
+        let upper = Array(ratios[(size * 30 / 100)..<(size * 50 / 100)])
+        let lower = Array(ratios[(size * 58 / 100)..<(size * 68 / 100)])
+
+        let darkest = lower.min() ?? 1
+        XCTAssertLessThan(darkest, 0.94,
+                          "the base darkened by only \((1 - darkest) * 100)% — "
+                          + "the damp course is not doing anything")
+
+        let upperMean = upper.reduce(0, +) / Double(upper.count)
+        XCTAssertGreaterThan(upperMean, 0.93,
+                             "weathering dimmed the whole stone by \((1 - upperMean) * 100)% — "
+                             + "that is a tint, not a damp course")
+    }
+
+    /// Weathering is on in the shipping path, for the same reason texturing is.
+    func testWeatheringIsOnByDefault() {
+        let state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: 30),
+                                                         azimuth: Angle(degrees: 120)))
+        XCTAssertTrue(state.weathering)
+    }
+
+    /// Two stones must not weather alike. The pattern is seeded per stone, and
+    /// a shared seed would put the same lichen patch on all eighty of them.
+    func testWeatheringIsSeededPerStone() {
+        let scene = MonumentScene.complete(state: .asItWas)
+        let seeds = Set(scene.stones.map(\.seed))
+        XCTAssertGreaterThan(seeds.count, scene.stones.count / 2,
+                             "stones share seeds; they would weather identically")
+    }
 }

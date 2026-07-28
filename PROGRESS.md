@@ -751,3 +751,86 @@ untextured with every test still green.
 
 144 tests, both platforms warning-clean, and the macOS app launches and stays up.
 
+## 2026-07-28 — Zoom, glass, weathering, and the shadow that was never there
+
+### The one that matters: no shadows at sunrise
+
+`buildFrameUniforms` gated the cascade fit on `sunDirection.y > 0.01`. That is an
+altitude of **0.573°**, so the monument cast no shadow at all between the sun
+appearing and its clearing half a degree of sky. The definition-of-done moment
+and its midwinter mirror — the two instants the entire app is built around — drew
+flat. The comment said the fit "produces garbage" below the horizon, which is
+true, and 0.573° is not below the horizon.
+
+A second fault sat behind it, and it was the larger one. Cascade boxes are fitted
+to the *view* frustum, and a caster need not be visible to throw a shadow into
+frame — at a grazing sun it usually is not. Standing at the Altar Stone at
+sunrise, the thing shadowing you is behind you. With the light's eye at twice the
+cascade radius, a stone thirty metres upwind fell outside the box, never reached
+the depth pass and cast nothing. Pullback is now six radii over a thirteen-radius
+box, and that span is passed to the shader in `cascadeRadii.w` rather than
+hardcoded twice, because PCSS converts depth differences back into metres and
+would otherwise mis-scale every penumbra the moment the two drifted.
+
+**The first test I wrote for this did not catch it, and that is the interesting
+part.** It measured shadow on the *ground*, and at 0.3° altitude the ground is
+lit at 89.7° incidence: it receives almost nothing, so removing the sun from it
+removes almost nothing. Readings were identical to three significant figures with
+the bug present and absent. At sunrise the shadow lives on the **vertical
+faces**, lit nearly head-on — which is also where you see it at the monument, the
+Heel Stone's shadow thrown across the uprights.
+
+Rewritten as a differential: render a receiving stone alone, render it again with
+a caster upwind, require the second to be darker. Verified the only way that
+counts — restored the old gate and watched five assertions fail, then restored
+the fix and watched them pass. The threshold is 5% against an observed 8.7%,
+which is modest on purpose: at sunrise the direct sun is heavily attenuated by
+airmass and much of the light on that face comes from the sky. What the assertion
+separates is a shadow from *no shadow at all*, and no shadow at all is 0.0%.
+
+Two other measurements moved rather than their tolerances, both correct physics:
+a 7 m stone at 20° throws its shadow 19 m and cannot reach a receiver at 30 m,
+and at 10° it clears the receiver's foot but not its middle.
+
+### Weathering
+
+Four procedural effects over the photographic rock, each keyed to something
+physical: a damp foot where groundwater wicks up (wet rock is darker *and*
+glossier — lower albedo, lower roughness); lichen on upward ledges and the
+sheltered north-east faces, which dry slowest, in the yellow-green of *Xanthoria*
+and *Rhizocarpon* and matte because lichen is; rain streaking on vertical faces,
+noise stretched hard along Y because that anisotropy is what makes a streak read
+as a streak rather than a stain; and wind scour lightening the exposed tops.
+Value noise, four octaves, seeded per stone from `Stone.seed` — nothing vendored,
+and no two stones weather alike.
+
+The test asserts the *shape* rather than a number: the base darkens and the upper
+half does not. Weathering that dims the whole stone is a tint, not a damp course,
+and a single-band measurement could not tell them apart — the first attempt read
+a diluted 0.8% because the band straddled the stone's foot and the turf below it.
+
+### Zoom and glass
+
+Zoom worked on iPad and effectively did not on the Mac, where the gesture people
+reach for is a two-finger scroll and SwiftUI has no gesture for it. The scene is
+an `MTKView` behind an `NSViewRepresentable` and scroll events route by
+hit-testing, so a transparent catcher would have had to be hit-testable — and
+would then have swallowed the clicks the drag gesture needs. A local event
+monitor sees the events without taking part in hit-testing at all. Trackpad and
+wheel get separate divisors, because scaling both the same way makes the wheel
+useless or the trackpad frantic, and the response is exponential because zoom is
+multiplicative. Drag and magnify are now composed with `simultaneously` rather
+than stacked, so a `minimumDistance: 0` drag cannot claim a pinch's first finger
+and swing the view while the second is still arriving. VoiceOver gets explicit
+zoom actions — it cannot pinch, and invariant 7 means a gesture-only control does
+not exist for anyone using it.
+
+The panels were already glass; what they lacked was a `GlassEffectContainer`.
+Liquid Glass is not a per-view backdrop blur — nearby elements merge, refract
+together and share one lensing pass. Without a container each panel is its own
+island, which reads as several stacked plates of frosted plastic rather than one
+piece of glass. The lore sheet takes a glass presentation background too, so the
+monument stays faintly present behind the reading.
+
+151 tests, both platforms warning-clean.
+
