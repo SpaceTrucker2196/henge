@@ -8,6 +8,23 @@ import HengeGeometry
 /// Everything the renderer needs to know about the moment being drawn.
 public struct SceneState: Sendable {
 
+    /// Whether surfaces carry their photographic detail.
+    ///
+    /// On everywhere the app runs. Off in the tests that measure *geometry* —
+    /// where a shadow's edge falls, how wide its penumbra is — and the reason
+    /// is worth stating, because switching it off in a test is exactly the kind
+    /// of move that hides a bug.
+    ///
+    /// Those tests read the shadow edge out of image luminance. Textured turf
+    /// varies in luminance by more than the shadow does: the measured lit/shade
+    /// contrast fell from comfortably past the guard threshold to 0.03–0.045,
+    /// with grain of comparable amplitude sitting on top of it. The edge is
+    /// still exactly where it was — but the instrument can no longer see it,
+    /// and loosening the guard would have meant measuring noise and calling it
+    /// agreement. So the geometry oracle renders untextured, and a separate
+    /// test asserts the shipping path has texturing on.
+    public var surfaceTexturing: Bool
+
     /// Where the sun is, from `HengeAstro`. Never set by hand — invariant 1.
     public var moon: HorizontalCoordinate
     /// Apparent angular radius of the moon, radians.
@@ -30,7 +47,8 @@ public struct SceneState: Sendable {
                 sunAngularRadius: Double = 0.00465,
                 camera: Camera = Camera(),
                 turbidity: Float = 2.4,
-                exposure: Float = 1.6) {
+                exposure: Float = 1.6,
+                surfaceTexturing: Bool = true) {
         self.sun = sun
         self.moon = moon
         self.moonAngularRadius = moonAngularRadius
@@ -39,6 +57,7 @@ public struct SceneState: Sendable {
         self.camera = camera
         self.turbidity = turbidity
         self.exposure = exposure
+        self.surfaceTexturing = surfaceTexturing
     }
 
     /// Build the state for a moment in time at a site. This is the only path
@@ -103,6 +122,15 @@ struct DrawItem {
     var indexCount: Int
     var uniforms: DrawUniforms
     var castsShadow: Bool
+    var surfaceKind: SurfaceTextures.Kind = .rock
+}
+
+extension Array {
+    /// Bounds-checked lookup, for the texture slots — an absent material set
+    /// must read as "draw it flat", not as a crash.
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
+    }
 }
 
 public enum RendererError: Error, CustomStringConvertible {
@@ -148,6 +176,14 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     private let shadowDepthState: MTLDepthStencilState
     private let skyDepthState: MTLDepthStencilState
     private let shadowSampler: MTLSamplerState
+    /// Repeat-addressed, mipmapped, anisotropic — the opposite of the shadow
+    /// sampler in every respect, and for good reason: this one is filtering
+    /// colour, where averaging is the whole point.
+    private let surfaceSampler: MTLSamplerState
+    /// Rock and grass maps. Optional throughout: a missing texture must degrade
+    /// to the flat-shaded look the renderer had before, not take the app down.
+    /// The almanac is still correct without a photograph of a rock.
+    private var surfaces: [SurfaceTextures] = []
     private let shadowMap: MTLTexture
     private let shadowResolution: Int
 
@@ -265,6 +301,24 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
         self.shadowSampler = sampler
 
+        let surfaceDescriptor = MTLSamplerDescriptor()
+        surfaceDescriptor.minFilter = .linear
+        surfaceDescriptor.magFilter = .linear
+        surfaceDescriptor.mipFilter = .linear
+        surfaceDescriptor.sAddressMode = .repeat
+        surfaceDescriptor.tAddressMode = .repeat
+        // Grazing views along the ground plane are the common case here — the
+        // whole app is about standing at eye height and looking at a horizon —
+        // and that is precisely where isotropic filtering turns turf to mush.
+        surfaceDescriptor.maxAnisotropy = 8
+        guard let colourSampler = device.makeSamplerState(descriptor: surfaceDescriptor) else {
+            throw RendererError.resourceCreationFailed("surface sampler")
+        }
+        self.surfaceSampler = colourSampler
+        self.surfaces = SurfaceTextures.Kind.allCases.compactMap {
+            SurfaceTextures.load($0, device: device)
+        }
+
         let shadowDescriptor = MTLTextureDescriptor()
         shadowDescriptor.textureType = .type2DArray
         shadowDescriptor.pixelFormat = Self.depthFormat
@@ -357,7 +411,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         // the turf underfoot.
         let ground = Self.groundMesh(terrain: terrain, divisions: 220)
         if let item = try makeDrawItem(mesh: ground, albedo: SurfaceMaterial.turf,
-                                       label: "ground", castsShadow: false) {
+                                       label: "ground", castsShadow: false,
+                                       kind: .grass) {
             items.append(item)
         }
 
@@ -365,7 +420,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     }
 
     private func makeDrawItem(mesh: Mesh, albedo: SIMD4<Float>, label: String,
-                              castsShadow: Bool = true) throws -> DrawItem? {
+                              castsShadow: Bool = true,
+                              kind: SurfaceTextures.Kind = .rock) throws -> DrawItem? {
         guard !mesh.positions.isEmpty, !mesh.indices.isEmpty else { return nil }
 
         var vertices: [MeshVertex] = []
@@ -390,8 +446,13 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         // Meshes are already in world space, so the model matrix is identity.
         return DrawItem(vertexBuffer: vertexBuffer, indexBuffer: indexBuffer,
                         indexCount: mesh.indices.count,
-                        uniforms: DrawUniforms(albedo: albedo),
-                        castsShadow: castsShadow)
+                        uniforms: DrawUniforms(
+                            albedo: albedo,
+                            surface: SIMD4(kind == .grass ? 1 : 0,
+                                           kind.metresPerTile,
+                                           kind.normalStrength, 1)),
+                        castsShadow: castsShadow,
+                        surfaceKind: kind)
     }
 
     /// Ground mesh, optionally displaced by the terrain.
@@ -623,9 +684,27 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         encoder.setCullMode(.back)
         encoder.setFragmentTexture(shadowMap, index: 0)
         encoder.setFragmentSamplerState(shadowSampler, index: 0)
+        encoder.setFragmentSamplerState(surfaceSampler, index: 1)
 
         for item in drawItems {
             var draw = item.uniforms
+
+            // Bind whichever material set this item wants. When the textures
+            // failed to load the slots stay empty and the shader's samples come
+            // back as zero — which would render the world black, so the flag
+            // that selects textured shading is cleared instead and the item
+            // falls back to flat albedo. A missing photograph must not be able
+            // to take the almanac down with it.
+            if state.surfaceTexturing, let set = surfaces[safe: item.surfaceKind.rawValue] {
+                encoder.setFragmentTexture(set.albedo, index: 1)
+                encoder.setFragmentTexture(set.normal, index: 2)
+                encoder.setFragmentTexture(set.roughness, index: 3)
+            } else {
+                // Tell the *shader* to take the flat branch. Merely leaving the
+                // texture slots empty is not enough — an unbound sample reads
+                // as zero and multiplies the whole surface to black.
+                draw.surface.w = 0
+            }
             encoder.setVertexBuffer(item.vertexBuffer, offset: 0, index: 30)
             encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 0)
             encoder.setVertexBytes(&draw, length: MemoryLayout<DrawUniforms>.stride, index: 1)

@@ -60,7 +60,8 @@ final class PenumbraTests: XCTestCase {
         let sun = HorizontalCoordinate(altitude: Angle(degrees: sunAltitude),
                                        azimuth: Angle(degrees: 90))
         let state = SceneState(sun: sun, sunAngularRadius: sunAngularRadius,
-                               camera: camera, turbidity: 2.2, exposure: 1.0)
+                               camera: camera, turbidity: 2.2, exposure: 1.0,
+                               surfaceTexturing: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 2048)
         try renderer.load(scene: scene, subdivisions: 8, roughness: 0, rounding: 0)
 

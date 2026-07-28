@@ -38,13 +38,13 @@ public struct LoreView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(note.title)
-                    .font(.headline)
+                    .font(Henge.title(.headline))
                 Spacer(minLength: 8)
                 badge(note.tier)
             }
 
             Text(note.body)
-                .font(.callout)
+                .font(Henge.body(.callout))
                 .fixedSize(horizontal: false, vertical: true)
 
             // Sources are one tap away rather than always open: they must be
@@ -62,7 +62,7 @@ public struct LoreView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(Array(note.citations.enumerated()), id: \.offset) { _, citation in
                         Text(citation.text)
-                            .font(.caption)
+                            .font(Henge.body(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -70,19 +70,19 @@ public struct LoreView: View {
                 .padding(.top, 4)
             } label: {
                 Text(note.citations.count == 1 ? "1 source" : "\(note.citations.count) sources")
-                    .font(.caption)
+                    .font(Henge.body(.caption))
             }
             .accessibilityHint("Show the sources for this note")
         }
         .padding(16)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .hengePanel(cornerRadius: 14)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(note.title). \(note.tier.rawValue).")
     }
 
     private func badge(_ tier: LoreTier) -> some View {
         Text(tier.rawValue)
-            .font(.caption2.weight(.semibold))
+            .font(.system(.caption2, design: .serif).weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(colour(tier).opacity(0.22), in: Capsule())
@@ -90,11 +90,14 @@ public struct LoreView: View {
             .accessibilityLabel("Tier: \(tier.rawValue)")
     }
 
+    /// Tier colours drawn from the palette rather than from the system's
+    /// traffic-light set. Orange-and-green reads as "warning" and "safe", which
+    /// is the wrong idea entirely — a modern-tradition note is not a caution.
     private func colour(_ tier: LoreTier) -> Color {
         switch tier {
-        case .established: .green
-        case .debated: .orange
-        case .modernTradition: .purple
+        case .established: Henge.mistletoe
+        case .debated: Henge.bronze
+        case .modernTradition: Color(red: 0.60, green: 0.58, blue: 0.70)
         }
     }
 }

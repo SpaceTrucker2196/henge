@@ -31,6 +31,8 @@ struct DrawUniforms {
     float4x4 model;
     float4x4 normalMatrix;
     float4   albedo;         // rgb albedo, w = roughness
+    float4   surface;        // x: 0 stone / 1 ground, y: metres per texture tile,
+                             // z: normal strength, w: 1 textured / 0 flat
 };
 
 struct Vertex {
@@ -215,6 +217,117 @@ static float sampleShadow(depth2d_array<float> shadowMap,
     return sum / 16.0;
 }
 
+// ── surface texture ─────────────────────────────────────────────────────────
+//
+// The stones carry no UVs, deliberately: `StoneMesh` welds a box grid and any
+// unwrap of that shape seams somewhere visible. So the rock is mapped
+// triplanar — sampled three times along the world axes and blended by the
+// surface normal — which needs no UVs at all and cannot seam, at the cost of
+// three fetches where one would do. On a scene of eighty stones that is a
+// trade worth making.
+//
+// The ground has an obvious parameterisation (world X and Z) and takes a
+// single tiled fetch.
+//
+// **The photograph supplies detail, not colour.** Each texture is divided by
+// its own mean and multiplied by the material's albedo, so `SurfaceMaterial`
+// stays in charge of what colour a stone is. That matters here more than it
+// would elsewhere: sarsen and bluestone are different rocks and the app says
+// so, and a single photographic albedo would flatten them into one. It also
+// keeps the archaeology honest — the texture is standing in for weathering and
+// grain, not claiming to be a photograph of stone 56.
+constant float3 kRockMean  = float3(0.36, 0.33, 0.30);
+constant float3 kGrassMean = float3(0.24, 0.27, 0.14);
+
+struct Surface {
+    float3 albedo;
+    float3 normal;
+    float  roughness;
+};
+
+static float3 triplanarWeights(float3 n)
+{
+    // Raised to a power so the blend band stays narrow — a wide blend reads as
+    // a smear along the diagonals of every stone.
+    float3 w = pow(abs(n), float3(6.0));
+    return w / max(w.x + w.y + w.z, 1e-4);
+}
+
+static Surface sampleStone(float3 worldPosition, float3 n,
+                           constant DrawUniforms &draw,
+                           texture2d<float> albedoMap,
+                           texture2d<float> normalMap,
+                           texture2d<float> roughnessMap,
+                           sampler surfaceSampler)
+{
+    float scale = 1.0 / max(draw.surface.y, 0.01);
+    float3 w = triplanarWeights(n);
+
+    float2 uvX = worldPosition.zy * scale;
+    float2 uvY = worldPosition.xz * scale;
+    float2 uvZ = worldPosition.xy * scale;
+
+    float3 cx = albedoMap.sample(surfaceSampler, uvX).rgb;
+    float3 cy = albedoMap.sample(surfaceSampler, uvY).rgb;
+    float3 cz = albedoMap.sample(surfaceSampler, uvZ).rgb;
+    float3 colour = cx * w.x + cy * w.y + cz * w.z;
+
+    float rx = roughnessMap.sample(surfaceSampler, uvX).r;
+    float ry = roughnessMap.sample(surfaceSampler, uvY).r;
+    float rz = roughnessMap.sample(surfaceSampler, uvZ).r;
+
+    // Whiteout blend: perturb each planar normal in its own frame, then sum.
+    // Doing it this way means no tangent basis has to be carried through the
+    // vertex format, which would otherwise have to grow for one effect.
+    float3 nx = normalMap.sample(surfaceSampler, uvX).xyz * 2.0 - 1.0;
+    float3 ny = normalMap.sample(surfaceSampler, uvY).xyz * 2.0 - 1.0;
+    float3 nz = normalMap.sample(surfaceSampler, uvZ).xyz * 2.0 - 1.0;
+    float strength = draw.surface.z;
+    nx.xy *= strength; ny.xy *= strength; nz.xy *= strength;
+    float3 bent = normalize(
+          float3(0.0, nx.y, nx.x) * w.x
+        + float3(ny.x, 0.0, ny.y) * w.y
+        + float3(nz.x, nz.y, 0.0) * w.z
+        + n);
+
+    Surface out;
+    out.albedo = draw.albedo.rgb * (colour / kRockMean);
+    out.normal = bent;
+    out.roughness = clamp(draw.albedo.w * (rx * w.x + ry * w.y + rz * w.z) * 2.0,
+                          0.15, 1.0);
+    return out;
+}
+
+static Surface sampleGround(float3 worldPosition, float3 n,
+                            constant DrawUniforms &draw,
+                            texture2d<float> albedoMap,
+                            texture2d<float> normalMap,
+                            texture2d<float> roughnessMap,
+                            sampler surfaceSampler)
+{
+    float scale = 1.0 / max(draw.surface.y, 0.01);
+    float2 uv = worldPosition.xz * scale;
+
+    // A second sample an irrational factor apart, multiplied in. One tile of
+    // grass repeating across fifteen kilometres of Salisbury Plain is the most
+    // obvious tell in any outdoor scene; two incommensurate frequencies push
+    // the visible repeat out past the horizon for the cost of one extra fetch.
+    float3 near = albedoMap.sample(surfaceSampler, uv).rgb;
+    float3 far  = albedoMap.sample(surfaceSampler, uv * 0.137).rgb;
+    float3 colour = near * mix(1.0, far / kGrassMean, 0.55);
+
+    float3 t = normalMap.sample(surfaceSampler, uv).xyz * 2.0 - 1.0;
+    float strength = draw.surface.z;
+    float3 bent = normalize(n + float3(t.x, 0.0, t.y) * strength);
+
+    Surface out;
+    out.albedo = draw.albedo.rgb * (colour / kGrassMean);
+    out.normal = bent;
+    out.roughness = clamp(draw.albedo.w
+                          * roughnessMap.sample(surfaceSampler, uv).r * 2.0, 0.2, 1.0);
+    return out;
+}
+
 // ── the sky ─────────────────────────────────────────────────────────────────
 
 // Preetham et al., "A Practical Analytic Model for Daylight" (1999).
@@ -294,19 +407,49 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
                                constant FrameUniforms &frame [[buffer(0)]],
                                constant DrawUniforms &draw [[buffer(1)]],
                                depth2d_array<float> shadowMap [[texture(0)]],
-                               sampler shadowSampler [[sampler(0)]])
+                               texture2d<float> albedoMap [[texture(1)]],
+                               texture2d<float> normalMap [[texture(2)]],
+                               texture2d<float> roughnessMap [[texture(3)]],
+                               sampler shadowSampler [[sampler(0)]],
+                               sampler surfaceSampler [[sampler(1)]])
 {
-    float3 n = normalize(in.worldNormal);
+    float3 geometricNormal = normalize(in.worldNormal);
+
+    // The untextured branch has to be a branch, not merely an unbound texture.
+    // Sampling a texture that was never bound returns zero, and since the
+    // albedo is the material colour *times* the sampled detail, that renders
+    // the entire world black — which is how this was found: the geometry tests
+    // reported a lit/shade contrast of 0.003 and no shadow edge anywhere.
+    Surface surface;
+    if (draw.surface.w > 0.5) {
+        surface = draw.surface.x > 0.5
+            ? sampleGround(in.worldPosition, geometricNormal, draw,
+                           albedoMap, normalMap, roughnessMap, surfaceSampler)
+            : sampleStone(in.worldPosition, geometricNormal, draw,
+                          albedoMap, normalMap, roughnessMap, surfaceSampler);
+    } else {
+        surface.albedo = draw.albedo.rgb;
+        surface.normal = geometricNormal;
+        surface.roughness = draw.albedo.w;
+    }
+
+    float3 n = surface.normal;
     float3 v = normalize(frame.cameraPosition.xyz - in.worldPosition);
     float3 l = normalize(frame.sunDirection.xyz);
     float3 h = normalize(v + l);
 
     float ndotl = max(dot(n, l), 0.0);
-    float3 albedo = draw.albedo.rgb;
-    float roughness = clamp(draw.albedo.w, 0.05, 1.0);
+    float3 albedo = surface.albedo;
+    float roughness = clamp(surface.roughness, 0.05, 1.0);
 
-    float shadow = ndotl > 0.0
-        ? sampleShadow(shadowMap, shadowSampler, in.worldPosition, frame, in.viewDepth, ndotl)
+    // Bias against the *geometric* normal, not the bumped one. Normal mapping
+    // swings n by tens of degrees on a rough rock face, and feeding that into
+    // the slope-scaled bias would make the bias flicker from texel to texel —
+    // acne on some pixels, peter-panning on their neighbours.
+    float geometricNdotl = max(dot(geometricNormal, l), 0.0);
+    float shadow = geometricNdotl > 0.0
+        ? sampleShadow(shadowMap, shadowSampler, in.worldPosition, frame,
+                       in.viewDepth, geometricNdotl)
         : 1.0;
 
     float3 f0 = float3(0.04);

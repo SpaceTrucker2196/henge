@@ -667,3 +667,87 @@ licensed texture or should be dropped the way constellation figures were.
 Nothing in this repository has been pushed. Eighteen commits sit local past
 `v0.0.1`, awaiting the owner's word.
 
+## 2026-07-28 — The chrome, and real surfaces
+
+### The navigation overlay is gone
+
+It was a slab of controls with sliders for bearing, height and range, floating
+over the monument — in front of the thing it existed to help you look at, taking
+the bottom third of the sky at exactly the hour the sky is worth watching. And
+the sliders duplicated gestures that already worked: drag turns the view, pinch
+pulls it in. A control that does what your thumb already does is furniture.
+
+**Where you stand is now a tab bar**, which is what it always was — a choice
+between four named places, not a continuum. Fine adjustment stays on the
+gestures, and Recentre became a double tap, which is what people try anyway.
+The rate slider became four labelled steps (real time, a minute a second, an
+hour, a day); the log slider spent most of its travel in speeds where nothing
+was legible.
+
+Panels are glass — Liquid Glass where the OS has it, `.ultraThinMaterial`
+elsewhere, and the fallback is not a consolation prize because the property that
+matters is that the panel takes its colour from the sky behind it rather than
+asserting one of its own.
+
+`Theme.swift` is "Mistletoe & Oak", such as it is. The druidic register is
+`Font.Design.serif` — New York, a modern face with old bones — because **a
+typeface is data with a licence** and invariant 5 applies to it as much as to a
+star catalogue. Numbers stay monospaced: an almanac that reflows its digits as
+time runs is unreadable. Palette is desaturated stone, oak and bronze; nothing
+with a strong colour of its own may sit over a physically-modelled sunrise and
+lie about the light. The lore tier badges moved off the system traffic-light
+colours for the same reason orange-and-green was wrong there — a modern-tradition
+note is not a caution.
+
+### Real surfaces
+
+CC0 material sets from ambientCG (`Rock030`, `Grass004`) — colour, normal and
+roughness — triplanar on the stones, tiled on the ground. Triplanar because
+`StoneMesh` deliberately carries no UVs: any unwrap of a welded box grid seams
+somewhere visible. Three fetches instead of one, and no seam. The ground gets a
+second sample at an incommensurate frequency multiplied in, because one grass
+tile repeating across fifteen kilometres is the most obvious tell in any outdoor
+scene.
+
+**The photographs supply detail, not colour.** Each map is divided by its own
+mean and multiplied by the material albedo, so `SurfaceMaterial` still decides
+what colour a stone is — sarsen and bluestone are different rocks and the app
+says so. A single photographic albedo would flatten them into one.
+
+The request was for granite. Recorded in SECURITY.md, and worth repeating: the
+monument has none. The uprights are sarsen, a silcrete, and the smaller stones
+are Preseli dolerite and rhyolite. Granite is speckled feldspar and mica and
+would read as the wrong stone to anyone who has stood there, so a weathered grey
+rock was used instead.
+
+### Two bugs, and one of them mattered
+
+**Unbound textures are not "no texture", they are black.** Adding a
+`surfaceTexturing` flag, I stopped *binding* the maps but the shader kept
+sampling them — and a sample from an unbound slot returns zero, which multiplied
+the entire world to nothing. The geometry tests reported a lit/shade contrast of
+0.003 and no shadow edge anywhere. The flag has to reach the shader as a branch.
+
+**The shadow bias must use the geometric normal.** Normal mapping swings the
+shading normal by tens of degrees across a rough rock face, and the slope-scaled
+depth bias is computed from n·l. Feeding it the bumped normal would make the bias
+flicker texel to texel — acne on some pixels, peter-panning on their neighbours.
+Caught by reasoning rather than by test, and the comment says why so it survives.
+
+### And an honest note about the oracle
+
+The geometry tests — shadow agreement, penumbra width, opacity — now render
+**untextured**, and that deserves scrutiny rather than a footnote, because
+switching a feature off inside a test is exactly how a bug hides.
+
+Those tests read the shadow edge out of image luminance. Textured turf varies in
+luminance by more than the shadow does: measured lit/shade contrast fell from
+comfortably past the guard threshold to 0.03–0.045, with grain of comparable
+amplitude on top. The edge did not move — the instrument stopped being able to
+see it. Loosening the guard would have meant measuring noise and calling it
+agreement. So the geometry oracle renders flat, and `testTexturingIsOnByDefault`
+asserts the shipping path does not, because without it the whole app could ship
+untextured with every test still green.
+
+144 tests, both platforms warning-clean, and the macOS app launches and stays up.
+

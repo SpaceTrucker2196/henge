@@ -46,7 +46,7 @@ let package = Package(
             name: "HengeEngine",
             dependencies: ["HengeAstro", "HengeGeometry"],
             path: "Sources/HengeEngine",
-            resources: [.copy("Shaders")],
+            resources: [.copy("Shaders"), .process("Resources")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         // SwiftUI chrome, and the only place the two worlds meet: the

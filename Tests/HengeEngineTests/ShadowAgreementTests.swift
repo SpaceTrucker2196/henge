@@ -65,7 +65,8 @@ final class ShadowAgreementTests: XCTestCase {
         camera.far = 600
 
         let state = SceneState(sun: sun, sunAngularRadius: 0.00465,
-                               camera: camera, turbidity: 2.2, exposure: 1.0)
+                               camera: camera, turbidity: 2.2, exposure: 1.0,
+                               surfaceTexturing: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 2048)
         try renderer.load(scene: scene, subdivisions: 8, roughness: 0, rounding: 0)
         return renderer
@@ -275,7 +276,9 @@ final class RendererSetupTests: XCTestCase {
         // than a magic number. Adding a field on one side only would have
         // silently reinterpreted every uniform after it.
         XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 8 * 16)
-        XCTAssertEqual(MemoryLayout<DrawUniforms>.size, 2 * 64 + 16)
+        // 2 matrices + albedo + `surface` (the texture descriptor: which map
+        // set, tile size in metres, normal strength).
+        XCTAssertEqual(MemoryLayout<DrawUniforms>.size, 2 * 64 + 2 * 16)
         XCTAssertEqual(MemoryLayout<MeshVertex>.stride, 32)
     }
 
@@ -370,7 +373,11 @@ final class OpacityTests: XCTestCase {
         let camera = Camera.orbiting(distance: 26, azimuthDegrees: Float(bearing),
                                      elevationDegrees: 9,
                                      target: SIMD3<Float>(0, 3.4, 0))
-        let state = SceneState(sun: sun, camera: camera, turbidity: 2.2, exposure: 1.5)
+        // Untextured: this suite asks whether the surface has holes in it, and
+        // photographic grain would put variation into exactly the pixel
+        // comparison that answers it.
+        let state = SceneState(sun: sun, camera: camera, turbidity: 2.2, exposure: 1.5,
+                               surfaceTexturing: false)
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 1024)
         try renderer.load(scene: MonumentScene(state: .asItWas, stones: stones),
                           subdivisions: 12)

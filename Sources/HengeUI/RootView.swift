@@ -2,11 +2,21 @@ import SwiftUI
 import HengeAstro
 import HengeGeometry
 
-/// M1's screen: the light on the stones, and the numbers that prove it.
+/// The screen: the light on the stones, and the numbers that prove it.
 ///
-/// The Wheel of the Year replaces these controls at M4. What matters now is
-/// that every value shown is read from the same `SkyModel` the renderer draws
-/// from, so there is no way for the picture and the almanac to disagree.
+/// The chrome went through one reorganisation worth recording. It used to be a
+/// single floating slab of controls with sliders for bearing, height and range
+/// — a navigation overlay sitting on top of the monument, in front of the thing
+/// it was meant to help you look at. Two problems with that. It occupied the
+/// bottom third of the sky at exactly the hour the sky is worth watching, and
+/// the sliders duplicated gestures that already existed: drag turns the view,
+/// pinch pulls it in. A control that does what your thumb already does is not
+/// a control, it is furniture.
+///
+/// So: **where you stand is a tab bar**, because it is a choice between four
+/// places rather than a continuum, and the fine adjustment stays on the
+/// gestures. Everything else is glass, which means the panels take their colour
+/// from the sunrise behind them instead of asserting one of their own.
 public struct RootView: View {
 
     @State private var model = SkyModel()
@@ -16,6 +26,7 @@ public struct RootView: View {
     @State private var lastDrag: CGSize = .zero
     @State private var lastZoom: CGFloat = 1
     @State private var showingLore = false
+    @State private var showingAlmanac = true
     /// MISSION.md invariant 7. Time-lapse is the app's one continuous motion,
     /// and at 100,000× the whole sky wheels — which is exactly the kind of
     /// thing this setting exists to stop. Honoured by capping the rate rather
@@ -27,35 +38,22 @@ public struct RootView: View {
 
     public var body: some View {
         ZStack(alignment: .bottom) {
-            HengeSceneView(model: model)
-                .ignoresSafeArea()
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            model.drag(by: SIMD2(Double(value.translation.width - lastDrag.width),
-                                                 Double(value.translation.height - lastDrag.height)))
-                            lastDrag = value.translation
-                        }
-                        .onEnded { _ in lastDrag = .zero }
-                )
-                .simultaneousGesture(
-                    MagnifyGesture()
-                        .onChanged { value in
-                            model.zoom(by: Double(value.magnification / lastZoom))
-                            lastZoom = value.magnification
-                        }
-                        .onEnded { _ in lastZoom = 1 }
-                )
-                .accessibilityLabel("The monument")
-                .accessibilityHint("Drag to look around, pinch to zoom")
+            scene
 
-            controls
-                .padding(18)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .padding(16)
+            VStack(spacing: 10) {
+                if showingAlmanac { events }
+                timeBar
+                stations
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 10)
         }
-        .overlay(alignment: .topLeading) { readout.padding(20) }
+        .overlay(alignment: .topLeading) {
+            if showingAlmanac { almanac.padding(16) }
+        }
+        .overlay(alignment: .topTrailing) { almanacToggle.padding(16) }
+        .foregroundStyle(Henge.stone)
+        .tint(Henge.bronze)
         .task { await runClock() }
         .sheet(isPresented: $showingLore) {
             // The coming station first, then the monument itself — so the panel
@@ -64,23 +62,246 @@ public struct RootView: View {
         }
     }
 
-    // ── the almanac readout ─────────────────────────────────────────────────
+    // ── the monument ────────────────────────────────────────────────────────
 
-    private var readout: some View {
+    private var scene: some View {
+        HengeSceneView(model: model)
+            .ignoresSafeArea()
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        model.drag(by: SIMD2(Double(value.translation.width - lastDrag.width),
+                                             Double(value.translation.height - lastDrag.height)))
+                        lastDrag = value.translation
+                    }
+                    .onEnded { _ in lastDrag = .zero }
+            )
+            .simultaneousGesture(
+                MagnifyGesture()
+                    .onChanged { value in
+                        model.zoom(by: Double(value.magnification / lastZoom))
+                        lastZoom = value.magnification
+                    }
+                    .onEnded { _ in lastZoom = 1 }
+            )
+            // Recentre lost its button along with the slider panel, so it
+            // becomes what it should always have been: the gesture you already
+            // try when a view has drifted.
+            .onTapGesture(count: 2) {
+                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.3)) {
+                    model.recentre()
+                }
+            }
+            .accessibilityLabel("The monument")
+            .accessibilityHint("Drag to look around, pinch to zoom, "
+                               + "double tap to recentre")
+            .accessibilityAction(named: "Recentre") { model.recentre() }
+    }
+
+    // ── where you stand ─────────────────────────────────────────────────────
+
+    /// The four places, as a tab bar.
+    ///
+    /// These are *stations*, not camera presets — three of them put you on the
+    /// ground at eye height in a spot that means something, and the fourth
+    /// lifts you off it. Naming them after the stones rather than after camera
+    /// positions is the whole point: you are choosing where to stand.
+    private var stations: some View {
+        HStack(spacing: 6) {
+            ForEach(SkyModel.Station.allCases) { station in
+                Button {
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.25)) {
+                        model.station = station
+                    }
+                } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: symbol(for: station))
+                            .font(.system(size: 17))
+                        Text(station.rawValue)
+                            .font(Henge.body(.caption2))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .foregroundStyle(model.station == station ? Henge.bronze : Henge.stone)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(station.rawValue)
+                .accessibilityAddTraits(model.station == station ? [.isSelected] : [])
+            }
+        }
+        .padding(.horizontal, 6)
+        .hengePanel(cornerRadius: 22)
+    }
+
+    private func symbol(for station: SkyModel.Station) -> String {
+        switch station {
+        case .aerial: "eye"
+        case .altarStone: "figure.stand"
+        case .heelStone: "triangle"
+        case .avenue: "arrow.up.forward"
+        }
+    }
+
+    // ── time ────────────────────────────────────────────────────────────────
+
+    /// The rates worth having, as steps rather than a slider.
+    ///
+    /// A logarithmic slider spent most of its travel in speeds where nothing is
+    /// legible. These are the four that mean something: real time, a minute a
+    /// second (a day in twenty-four), an hour a second (a year in a day), and a
+    /// day a second (the wheel turning).
+    private static let rates: [(label: String, value: Double)] = [
+        ("1×", 1), ("min", 60), ("hour", 3600), ("day", 86_400)
+    ]
+
+    private var timeBar: some View {
+        HStack(spacing: 8) {
+            Button {
+                model.isPlaying.toggle()
+            } label: {
+                Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
+                    .frame(width: 34, height: 30)
+            }
+            .buttonStyle(.plain)
+            .hengeControl()
+            .accessibilityLabel(model.isPlaying ? "Pause time" : "Run time forward")
+
+            ForEach(Self.rates, id: \.label) { rate in
+                let allowed = !reduceMotion || rate.value <= 100
+                Button(rate.label) { model.rate = rate.value }
+                    .font(Henge.figure(.caption2))
+                    .padding(.horizontal, 9).padding(.vertical, 7)
+                    .hengeControl(isSelected: abs(model.rate - rate.value) < 0.5)
+                    .buttonStyle(.plain)
+                    .disabled(!allowed)
+                    .opacity(allowed ? 1 : 0.35)
+                    .accessibilityLabel("\(rate.label) per second")
+                    .accessibilityHint(allowed ? "" : "Unavailable while Reduce Motion is on")
+            }
+
+            Spacer(minLength: 0)
+
+            Button { model.jump(toDaysFromNow: -1) } label: {
+                Image(systemName: "chevron.left").frame(width: 28, height: 30)
+            }
+            .buttonStyle(.plain).hengeControl()
+            .accessibilityLabel("Back one day")
+
+            Button("Now") { model.time = JulianDay(Date()) }
+                .font(Henge.body(.caption))
+                .padding(.horizontal, 10).padding(.vertical, 7)
+                .hengeControl()
+                .buttonStyle(.plain)
+
+            Button { model.jump(toDaysFromNow: 1) } label: {
+                Image(systemName: "chevron.right").frame(width: 28, height: 30)
+            }
+            .buttonStyle(.plain).hengeControl()
+            .accessibilityLabel("Forward one day")
+
+            Button { showingLore = true } label: {
+                Image(systemName: "book.closed").frame(width: 34, height: 30)
+            }
+            .buttonStyle(.plain).hengeControl()
+            .accessibilityLabel("Lore")
+            .accessibilityHint("What is known, what is argued, and what is modern "
+                               + "tradition — each with its sources")
+        }
+        .padding(8)
+        .hengePanel()
+    }
+
+    // ── what is coming ──────────────────────────────────────────────────────
+
+    /// The wheel of the year and the events on it, in one scrolling band.
+    ///
+    /// Scrolls rather than truncates: an eclipse season puts three events in a
+    /// fortnight and a quiet stretch puts four in as many months, and flattening
+    /// that to a fixed count would hide exactly the clustering that makes the
+    /// sky legible.
+    private var events: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(WheelStation.allCases) { station in
+                        Button(station.name) { model.jumpToSunrise(of: station) }
+                            .font(Henge.body(.caption2))
+                            .padding(.horizontal, 9).padding(.vertical, 6)
+                            .hengeControl()
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Jump to \(station.name) sunrise")
+                            .accessibilityHint(Lore.note(for: station).tier.rawValue)
+                    }
+                }
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(model.upcoming.prefix(20)) { event in
+                        ribbonButton(for: event)
+                    }
+                }
+            }
+        }
+        .padding(10)
+        .hengePanel()
+    }
+
+    private func ribbonButton(for event: AstronomicalEvent) -> some View {
+        let days = Int((event.instant.value - model.time.value).rounded())
+        return Button {
+            model.time = event.instant
+        } label: {
+            VStack(spacing: 1) {
+                Text(event.kind.name).font(Henge.body(.caption2))
+                Text("\(days) d").font(Henge.figure(.caption2)).opacity(0.7)
+            }
+            .padding(.horizontal, 9).padding(.vertical, 5)
+            .foregroundStyle(isEclipse(event) ? Henge.bronze : Henge.stone)
+        }
+        .buttonStyle(.plain)
+        .hengeControl()
+        .accessibilityLabel("\(event.kind.name), in \(days) days")
+    }
+
+    private func isEclipse(_ event: AstronomicalEvent) -> Bool {
+        if case .eclipsePossible = event.kind { return true }
+        return false
+    }
+
+    // ── the almanac ─────────────────────────────────────────────────────────
+
+    private var almanacToggle: some View {
+        Button {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+                showingAlmanac.toggle()
+            }
+        } label: {
+            Image(systemName: showingAlmanac ? "text.justify" : "text.alignleft")
+                .frame(width: 36, height: 32)
+        }
+        .buttonStyle(.plain)
+        .hengeControl()
+        .foregroundStyle(Henge.stone)
+        .accessibilityLabel(showingAlmanac ? "Hide the almanac" : "Show the almanac")
+    }
+
+    private var almanac: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(model.formattedDate)
-                .font(.title3.weight(.semibold))
+                .font(Henge.title(.title3))
             // Local time first: it is the time at the monument, which is what
             // anyone standing there wants. UT stays visible underneath because
             // it is what the ephemeris is actually computed in.
             Text(model.formattedLocalTime ?? model.formattedSolarTime)
-                .font(.system(.callout, design: .monospaced))
+                .font(Henge.figure(.callout))
             Text(model.formattedLocalTime == nil
                  ? "local apparent solar time" : model.formattedTime)
-                .font(.system(.caption2, design: .monospaced))
-                .foregroundStyle(.secondary)
+                .font(Henge.figure(.caption2))
+                .opacity(0.65)
 
-            Divider().frame(width: 190).padding(.vertical, 6)
+            rule
 
             row("Sundial", model.formattedSolarTime)
             row("Sun over", model.viewpoint == .here
@@ -90,52 +311,78 @@ public struct RootView: View {
             if let sunrise = model.sunriseAzimuth {
                 row("Sunrise bearing", String(format: "%.2f°", sunrise.degrees))
             }
-            Divider().frame(width: 190).padding(.vertical, 6)
+
+            rule
 
             row("Moon", model.moonPhase.name)
-            row("Lit", String(format: "%.0f%%",
-                              model.moonPhase.illuminatedFraction * 100))
+            row("Lit", String(format: "%.0f%%", model.moonPhase.illuminatedFraction * 100))
             row("Moon altitude", String(format: "%.2f°", model.moon.altitude.degrees))
             row("Lunar swing", model.standstill)
             row("Pole star", model.poleStar)
-
-            Divider().frame(width: 190).padding(.vertical, 6)
-
-            row("Next", model.formattedNextStation)
-            // The Aubrey counter, in the ring's own units. "Holes to a node" is
-            // the only thing it can honestly say, so it is the only thing shown.
             row("Aubrey", String(format: "%.1f holes to node", model.aubrey.sunToNode))
             if model.isAubreyEclipseSeason {
                 row("", "eclipse season — hypothesis")
             }
 
-            Divider().frame(width: 190).padding(.vertical, 6)
+            rule
 
             // Live alignment: how far off the line the sun is right now, not
             // whether today happens to be the right date.
             ForEach(model.alignments, id: \.alignment) { entry in
-                row(entry.alignment.name + (entry.isOn ? " ●" : ""),
-                    String(format: "%.2f° off", entry.deviation.degrees))
+                HStack(spacing: 10) {
+                    Text(entry.alignment.name)
+                        .font(Henge.body(.caption))
+                        .opacity(0.75)
+                    Spacer(minLength: 12)
+                    Text(String(format: "%.2f°", entry.deviation.degrees))
+                        .font(Henge.figure(.caption))
+                        .foregroundStyle(entry.isOn ? Henge.mistletoe : Henge.stone)
+                }
+                .frame(maxWidth: 260, alignment: .leading)
             }
 
-            if let deviation = model.axisDeviation {
-                row("Off the axis", String(format: "%.2f°", deviation.degrees))
+            // The two viewpoint choices and the two states of the monument,
+            // demoted to the bottom of the almanac: they are read far less
+            // often than they were reached for when they sat in the main bar.
+            HStack(spacing: 6) {
+                ForEach(SkyModel.Viewpoint.allCases) { viewpoint in
+                    Button(viewpoint.rawValue) { model.viewpoint = viewpoint }
+                        .font(Henge.body(.caption2))
+                        .padding(.horizontal, 8).padding(.vertical, 5)
+                        .hengeControl(isSelected: model.viewpoint == viewpoint)
+                        .buttonStyle(.plain)
+                }
+                Button(model.monumentState == .asItStands ? "Ruin" : "Whole") {
+                    model.monumentState = model.monumentState == .asItStands
+                        ? .asItWas : .asItStands
+                }
+                .font(Henge.body(.caption2))
+                .padding(.horizontal, 8).padding(.vertical, 5)
+                .hengeControl()
+                .buttonStyle(.plain)
+                .accessibilityHint("Switch between the completed monument and the ruin")
             }
+            .padding(.top, 8)
         }
         .padding(14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Almanac for \(model.formattedDate) at \(model.formattedTime)")
+        .hengePanel()
+    }
+
+    private var rule: some View {
+        Rectangle()
+            .fill(Henge.stone.opacity(0.22))
+            .frame(width: 180, height: 1)
+            .padding(.vertical, 5)
     }
 
     private func row(_ label: String, _ value: String) -> some View {
         HStack(spacing: 10) {
             Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Henge.body(.caption))
+                .opacity(0.7)
             Spacer(minLength: 12)
             Text(value)
-                .font(.system(.caption, design: .monospaced))
+                .font(Henge.figure(.caption))
                 .monospacedDigit()
         }
         // No fixed width: at the larger Dynamic Type sizes a 210-point row
@@ -144,191 +391,7 @@ public struct RootView: View {
         .frame(maxWidth: 260, alignment: .leading)
     }
 
-    // ── time and camera ─────────────────────────────────────────────────────
-
-    private var controls: some View {
-        VStack(spacing: 14) {
-            Picker("Sun", selection: $model.viewpoint) {
-                ForEach(SkyModel.Viewpoint.allCases) { viewpoint in
-                    Text(viewpoint.rawValue).tag(viewpoint)
-                }
-            }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Whose sun to show")
-            .accessibilityHint("Here uses this device's time zone, so solar noon "
-                               + "falls when the sun is overhead where you are")
-
-            Picker("Station", selection: $model.station) {
-                ForEach(SkyModel.Station.allCases) { station in
-                    Text(station.rawValue).tag(station)
-                }
-            }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Where you are standing")
-
-            Toggle("As it stands", isOn: Binding(
-                get: { model.monumentState == .asItStands },
-                set: { model.monumentState = $0 ? .asItStands : .asItWas }
-            ))
-            .toggleStyle(.button)
-            .accessibilityHint("Switch between the completed monument and the ruin")
-
-            wheel
-            ribbon
-
-            HStack(spacing: 14) {
-                Button {
-                    model.isPlaying.toggle()
-                } label: {
-                    Label(model.isPlaying ? "Pause" : "Play",
-                          systemImage: model.isPlaying ? "pause.fill" : "play.fill")
-                }
-                .accessibilityLabel(model.isPlaying ? "Pause time" : "Run time forward")
-
-                Button("Now") { model.time = JulianDay(Date()) }
-                Button("Lore") { showingLore = true }
-                    .accessibilityHint("What is known, what is argued, and what is "
-                                       + "modern tradition — each with its sources")
-                Button("Recentre") { model.recentre() }
-
-                Button("−1 day") { model.jump(toDaysFromNow: -1) }
-                Button("+1 day") { model.jump(toDaysFromNow: 1) }
-            }
-            .buttonStyle(.bordered)
-
-            labelled("Rate", String(format: "%.0f×", model.rate)) {
-                // Logarithmic: the interesting rates span five orders of
-                // magnitude, and a linear slider would spend all its travel
-                // in the fast end where nothing is legible.
-                Slider(value: Binding(
-                    get: { log10(max(model.rate, 1)) },
-                    set: { model.rate = pow(10, $0) }
-                ), in: 0...(reduceMotion ? 2 : 5))
-                .accessibilityHint(reduceMotion
-                    ? "Limited to 100× because Reduce Motion is on"
-                    : "How fast time runs, up to a hundred thousand times")
-            }
-
-            if model.station == .aerial {
-                labelled("Bearing", String(format: "%.0f°", model.cameraAzimuth)) {
-                    Slider(value: $model.cameraAzimuth, in: 0...360)
-                }
-
-                labelled("Height", String(format: "%.0f°", model.cameraElevation)) {
-                    Slider(value: $model.cameraElevation, in: -2...80)
-                }
-
-                labelled("Range", String(format: "%.0f m", model.cameraDistance)) {
-                    Slider(value: $model.cameraDistance, in: 25...260)
-                }
-            }
-        }
-        .frame(maxWidth: 460)
-    }
-
-    // ── the wheel of the year ───────────────────────────────────────────────
-
-    /// Eight stations, and a jump that lands on the sunrise of each rather than
-    /// on midnight of a calendar date. The tier badge is not decoration: four of
-    /// these eight are modern tradition and the app says so at the point of use,
-    /// not in a disclaimer nobody reads.
-    private var wheel: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 6) {
-                ForEach(WheelStation.allCases) { station in
-                    Button(station.name) { model.jumpToSunrise(of: station) }
-                        .font(.caption2)
-                        .buttonStyle(.bordered)
-                        .accessibilityLabel("Jump to \(station.name) sunrise")
-                        .accessibilityHint(Lore.note(for: station).tier.rawValue)
-                }
-            }
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-
-            let note = model.stationNote
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(note.tier.shortLabel.uppercased())
-                    .font(.caption2.weight(.semibold))
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(tint(for: note.tier), in: Capsule())
-                Text(note.title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer(minLength: 0)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(note.title). \(note.tier.rawValue).")
-        }
-    }
-
-    /// What is coming, in the order it comes.
-    ///
-    /// Scrolls rather than truncates: an eclipse season puts three events in a
-    /// fortnight and a quiet stretch puts four in as many months, and flattening
-    /// that to a fixed count would hide exactly the clustering that makes the
-    /// sky legible.
-    private var ribbon: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(model.upcoming.prefix(24)) { event in
-                    ribbonButton(for: event)
-                }
-            }
-            .padding(.horizontal, 2)
-        }
-        .frame(height: 44)
-    }
-
-    /// Split out of `ribbon` because the type-checker times out on the label
-    /// builder when the string formatting is inlined into the ForEach.
-    private func ribbonButton(for event: AstronomicalEvent) -> some View {
-        let days = Int((event.instant.value - model.time.value).rounded())
-        return Button {
-            model.time = event.instant
-        } label: {
-            VStack(spacing: 1) {
-                Text(event.kind.name)
-                    .font(.caption2)
-                Text("\(days) d")
-                    .font(.system(.caption2, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .buttonStyle(.bordered)
-        .tint(isEclipse(event) ? Color.orange : Color.accentColor)
-        .accessibilityLabel("\(event.kind.name), in \(days) days")
-    }
-
-    private func isEclipse(_ event: AstronomicalEvent) -> Bool {
-        if case .eclipsePossible = event.kind { return true }
-        return false
-    }
-
-    private func tint(for tier: LoreTier) -> some ShapeStyle {
-        switch tier {
-        case .established: Color.green.opacity(0.25)
-        case .debated: Color.orange.opacity(0.25)
-        case .modernTradition: Color.purple.opacity(0.25)
-        }
-    }
-
-    private func labelled<Control: View>(_ title: String, _ value: String,
-                                         @ViewBuilder control: () -> Control) -> some View {
-        HStack(spacing: 12) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(width: 58, alignment: .leading)
-            control()
-            Text(value)
-                .font(.system(.caption, design: .monospaced))
-                .monospacedDigit()
-                .frame(width: 56, alignment: .trailing)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title): \(value)")
-    }
+    // ── the clock ───────────────────────────────────────────────────────────
 
     /// Drive the time-lapse from a clock rather than from frame callbacks, so
     /// the rate means the same thing whether the display runs at 60 or 120 Hz.

@@ -75,13 +75,19 @@ public struct DrawUniforms {
     public var normalMatrix: float4x4
     /// Linear albedo, w = roughness.
     public var albedo: SIMD4<Float>
+    /// x: 0 for a stone (triplanar), 1 for the ground (tiled by world XZ).
+    /// y: metres covered by one tile of the texture.
+    /// z: normal-map strength. w: 1 when textured, 0 for flat shading.
+    public var surface: SIMD4<Float>
 
     public init(model: float4x4 = matrix_identity_float4x4,
                 normalMatrix: float4x4 = matrix_identity_float4x4,
-                albedo: SIMD4<Float> = SIMD4(0.55, 0.53, 0.48, 0.85)) {
+                albedo: SIMD4<Float> = SIMD4(0.55, 0.53, 0.48, 0.85),
+                surface: SIMD4<Float> = SIMD4(0, 1.4, 1.0, 1)) {
         self.model = model
         self.normalMatrix = normalMatrix
         self.albedo = albedo
+        self.surface = surface
     }
 }
 
