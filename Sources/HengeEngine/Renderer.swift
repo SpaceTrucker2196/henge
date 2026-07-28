@@ -60,6 +60,15 @@ public struct SceneState: Sendable {
     /// ways and compare.
     public var weathering: Bool
 
+    /// Whether the golden hours march light shafts through the haze.
+    ///
+    /// On everywhere the app runs; a switch because it is one more detail
+    /// layer standing between a measurement test and the thing it measures,
+    /// and each of those gets its own switch (see `soilBanks`). The pass also
+    /// gates itself on the sun's altitude — see `Haze.twilightBoost` — so
+    /// outside the golden hours this flag changes nothing at all.
+    public var lightShafts: Bool
+
     /// Whether surfaces carry their photographic detail.
     ///
     /// On everywhere the app runs. Off in the tests that measure *geometry* —
@@ -113,7 +122,8 @@ public struct SceneState: Sendable {
                 grassBlades: Bool = true,
                 soilBanks: Bool = true,
                 windBearing: Double = 250,
-                windTime: Double = 0) {
+                windTime: Double = 0,
+                lightShafts: Bool = true) {
         self.sun = sun
         self.moon = moon
         self.moonAngularRadius = moonAngularRadius
@@ -130,6 +140,7 @@ public struct SceneState: Sendable {
         self.soilBanks = soilBanks
         self.windBearing = windBearing
         self.windTime = windTime
+        self.lightShafts = lightShafts
     }
 
     /// Build the state for a moment in time at a site. This is the only path
@@ -252,6 +263,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     private var grassBladeCount = 0
     private let shadowPipeline: MTLRenderPipelineState
     private let skyPipeline: MTLRenderPipelineState
+    private let hazePipeline: MTLRenderPipelineState
     private let sceneDepthState: MTLDepthStencilState
     private let shadowDepthState: MTLDepthStencilState
     private let skyDepthState: MTLDepthStencilState
@@ -353,6 +365,27 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                         colour: Self.colourFormat,
                                         depth: Self.depthFormat,
                                         useVertexDescriptor: false)
+
+        // The light-shaft pass draws over the finished frame with no depth
+        // attachment of its own — it *samples* the scene's depth instead. The
+        // blend is `inscatter + transmittance × frame`: source factor one,
+        // destination factor source-alpha, with alpha carrying transmittance.
+        let hazeDescriptor = MTLRenderPipelineDescriptor()
+        hazeDescriptor.label = "light shafts"
+        hazeDescriptor.vertexFunction = library.makeFunction(name: "sky_vertex")
+        hazeDescriptor.fragmentFunction = library.makeFunction(name: "haze_fragment")
+        hazeDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        hazeDescriptor.colorAttachments[0].isBlendingEnabled = true
+        hazeDescriptor.colorAttachments[0].sourceRGBBlendFactor = .one
+        hazeDescriptor.colorAttachments[0].destinationRGBBlendFactor = .sourceAlpha
+        hazeDescriptor.colorAttachments[0].sourceAlphaBlendFactor = .zero
+        hazeDescriptor.colorAttachments[0].destinationAlphaBlendFactor = .one
+        hazeDescriptor.depthAttachmentPixelFormat = .invalid
+        do {
+            self.hazePipeline = try device.makeRenderPipelineState(descriptor: hazeDescriptor)
+        } catch {
+            throw RendererError.pipelineCreationFailed("light shafts: \(error)")
+        }
 
         // The camera renders reverse-Z, so nearer means *greater*.
         let sceneDepth = MTLDepthStencilDescriptor()
@@ -885,7 +918,18 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 let palette = SeasonPalette.colour(atSolarLongitude: state.solarLongitude)
                 return SIMD4(palette.tint, palette.dryness)
             }(),
-            shadowSource: SIMD4(moonCasts ? 1 : 0, 0, 0, 0)
+            shadowSource: SIMD4(moonCasts ? 1 : 0, 0, 0, 0),
+            haze: {
+                // The boost reaches zero before the moon-cast handover, so the
+                // beams can never sample the moon's shadow map — the gate here
+                // is belt and braces on top of that arithmetic.
+                let boost = moonCasts || !state.lightShafts
+                    ? 0 : Haze.twilightBoost(sunAltitude: state.sun.altitude)
+                // 0.0085 m⁻¹ at full boost: an optical depth of about 0.4
+                // over the ninety-metre march — mist you notice the sun in,
+                // not fog you lose the stones behind.
+                return SIMD4(Float(boost) * 0.0085, 90, 12, 0)
+            }()
         )
     }
 
@@ -1029,14 +1073,50 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         encodeShadowPass(commandBuffer, uniforms: uniforms)
 
+        // The light shafts need the finished depth buffer, so when they are
+        // due the scene's depth is kept rather than discarded. The view's
+        // depth texture must have been made sampleable by the bridge; when a
+        // host has not done that, the beams are skipped rather than crashed.
+        let depthTexture = descriptor.depthAttachment.texture
+        let wantsHaze = uniforms.haze.x > 0
+            && depthTexture?.usage.contains(.shaderRead) == true
+        if wantsHaze { descriptor.depthAttachment.storeAction = .store }
+
         if let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor) {
             encoder.label = "scene"
             encodeScenePass(encoder, uniformBuffer: uniformBuffer)
             encoder.endEncoding()
         }
 
+        if wantsHaze, let depthTexture {
+            encodeHazePass(commandBuffer, colour: drawable.texture,
+                           depth: depthTexture, uniformBuffer: uniformBuffer)
+        }
+
         commandBuffer.present(drawable)
         commandBuffer.commit()
+    }
+
+    /// The fullscreen light-shaft pass, blended over the finished frame.
+    private func encodeHazePass(_ commandBuffer: MTLCommandBuffer,
+                                colour: MTLTexture, depth: MTLTexture,
+                                uniformBuffer: MTLBuffer) {
+        let descriptor = MTLRenderPassDescriptor()
+        descriptor.colorAttachments[0].texture = colour
+        descriptor.colorAttachments[0].loadAction = .load
+        descriptor.colorAttachments[0].storeAction = .store
+
+        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
+        else { return }
+        encoder.label = "light shafts"
+        encoder.setRenderPipelineState(hazePipeline)
+        encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 0)
+        encoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 0)
+        encoder.setFragmentTexture(shadowMap, index: 0)
+        encoder.setFragmentTexture(depth, index: 1)
+        encoder.setFragmentSamplerState(shadowSampler, index: 0)
+        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        encoder.endEncoding()
     }
 
     // ── headless ────────────────────────────────────────────────────────────
@@ -1066,7 +1146,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: Self.depthFormat, width: width, height: height, mipmapped: false)
-        depthDescriptor.usage = keepDepth ? [.renderTarget, .shaderRead] : .renderTarget
+        // Always sampleable: the light-shaft pass reads it back even when the
+        // caller has no use for the depth. Shared storage only when the CPU
+        // will look at it.
+        depthDescriptor.usage = [.renderTarget, .shaderRead]
         depthDescriptor.storageMode = keepDepth ? .shared : .private
 
         guard let colour = device.makeTexture(descriptor: colourDescriptor),
@@ -1090,7 +1173,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         descriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
         descriptor.depthAttachment.texture = depth
         descriptor.depthAttachment.loadAction = .clear
-        descriptor.depthAttachment.storeAction = keepDepth ? .store : .dontCare
+        let wantsHaze = uniforms.haze.x > 0
+        descriptor.depthAttachment.storeAction = keepDepth || wantsHaze ? .store : .dontCare
         // Reverse-Z: the far plane is zero.
         descriptor.depthAttachment.clearDepth = 0.0
 
@@ -1098,6 +1182,11 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             encoder.label = "offscreen scene"
             encodeScenePass(encoder, uniformBuffer: uniformBuffer)
             encoder.endEncoding()
+        }
+
+        if wantsHaze {
+            encodeHazePass(commandBuffer, colour: colour, depth: depth,
+                           uniformBuffer: uniformBuffer)
         }
 
         commandBuffer.commit()

@@ -32,6 +32,8 @@ struct FrameUniforms {
     float4   night;          // rgb night ambient, w: visibility floor
     float4   season;         // rgb vegetation tint, w: dryness
     float4   shadowSource;   // x: 0 sun-cast shadows, 1 moon-cast
+    float4   haze;           // x: scatter per metre (0 skips the pass),
+                             // y: march distance m, z: scale height m, w spare
 };
 
 struct DrawUniforms {
@@ -1079,6 +1081,115 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
 
     sky = acesToneMap(sky * frame.skyParameters.y);
     return float4(sky, 1.0);
+}
+
+// ── light shafts ────────────────────────────────────────────────────────────
+//
+// Crepuscular beams through the stones, drawn honestly: the view ray is
+// marched through a thin ground haze and the *existing shadow cascades* are
+// asked, at each step, whether the sun can see that piece of air. Where a
+// trilithon blocks the light the haze goes dark, and the beams are whatever
+// is left — nothing here knows where the gaps between the stones are, any
+// more than the turf does.
+//
+// This runs as its own fullscreen pass after the scene, because it needs the
+// finished depth buffer: a stone five metres away must end its ray there, or
+// it would wear ninety metres of haze like a veil. The pass blends
+// `inscatter + transmittance × frame`, and is skipped entirely when
+// `haze.x` is zero — which is every hour outside the golden ones, so the
+// shadow-agreement oracle (sun at 30°) never sees it.
+//
+// One tap per step, no PCSS: a beam edge is already integrated over the
+// march, which softens it more honestly than filtering each tap would.
+static float hazeShadow(float3 p, constant FrameUniforms &frame,
+                        depth2d_array<float> shadowMap, sampler shadowSampler)
+{
+    float viewDepth = -(frame.view * float4(p, 1.0)).z;
+    uint cascade = 2;
+    if (viewDepth < frame.cascadeSplits.x)      cascade = 0;
+    else if (viewDepth < frame.cascadeSplits.y) cascade = 1;
+
+    float4 lightClip = frame.shadowMatrices[cascade] * float4(p, 1.0);
+    float3 projected = lightClip.xyz / lightClip.w;
+    float2 uv = projected.xy * float2(0.5, -0.5) + 0.5;
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || projected.z > 1.0) {
+        return 1.0;
+    }
+    float depth = shadowMap.sample(shadowSampler, uv, cascade);
+    return (projected.z - 0.0008) <= depth ? 1.0 : 0.0;
+}
+
+fragment float4 haze_fragment(SkyInOut in [[stage_in]],
+                              constant FrameUniforms &frame [[buffer(0)]],
+                              depth2d_array<float> shadowMap [[texture(0)]],
+                              depth2d<float> sceneDepth [[texture(1)]],
+                              sampler shadowSampler [[sampler(0)]])
+{
+    // Nearest, never linear: averaging depths across a stone's edge would
+    // invent distances that exist on neither side of it.
+    constexpr sampler depthSampler(coord::normalized, address::clamp_to_edge,
+                                   filter::nearest);
+
+    float4 nearPoint = frame.inverseViewProjection * float4(in.ndc, 1.0, 1.0);
+    float4 farPoint  = frame.inverseViewProjection * float4(in.ndc, 0.0001, 1.0);
+    float3 origin = nearPoint.xyz / nearPoint.w;
+    float3 direction = normalize(farPoint.xyz / farPoint.w - origin);
+
+    // The ray ends at the first surface, or at the march limit for sky
+    // pixels — reverse-Z clears to zero, so zero depth *is* the sky.
+    float2 uv = float2(in.ndc.x * 0.5 + 0.5, 1.0 - (in.ndc.y * 0.5 + 0.5));
+    float depthSample = sceneDepth.sample(depthSampler, uv);
+    float maxDistance = frame.haze.y;
+    bool hitsSurface = depthSample > 1e-7;
+    if (hitsSurface) {
+        float4 hit = frame.inverseViewProjection * float4(in.ndc, depthSample, 1.0);
+        maxDistance = min(maxDistance, length(hit.xyz / hit.w - origin));
+    }
+
+    // Henyey–Greenstein forward lobe. g = 0.65 is a generic aerosol: peaked
+    // enough that beams live near the sun's direction, which is where you
+    // stand to watch light come through a trilithon.
+    float3 l = normalize(frame.sunDirection.xyz);
+    float cosTheta = dot(direction, l);
+    const float g = 0.65;
+    float denom = 1.0 + g * g - 2.0 * g * cosTheta;
+    float phase = (1.0 - g * g) / (4.0 * M_PI_F * denom * sqrt(denom));
+
+    const int steps = 24;
+    float stepLength = maxDistance / float(steps);
+    // Per-pixel start offset hides the banding 24 steps would otherwise
+    // show. Deliberately static frame to frame: a time-jittered march would
+    // shimmer, and every offscreen test would become time-dependent.
+    float jitter = hash13(float3(in.ndc * 617.0, 9.0));
+
+    float3 inscatter = 0.0;
+    float transmittance = 1.0;
+    for (int i = 0; i < steps; ++i) {
+        float3 p = origin + direction * ((float(i) + jitter) * stepLength);
+        // Ground mist: densest on the turf, thinning with height. The beams
+        // this pass exists for happen in the bottom ten metres of air.
+        float density = frame.haze.x * exp(-max(p.y, 0.0) / frame.haze.z);
+        float extinction = density * stepLength;
+        float sunlit = hazeShadow(p, frame, shadowMap, shadowSampler);
+        // The small isotropic term is skylight scattered by the same haze —
+        // without it the shadowed air would be ink rather than mist.
+        inscatter += transmittance * frame.sunRadiance.rgb
+                   * (phase * sunlit + 0.04) * extinction;
+        transmittance *= exp(-extinction);
+    }
+
+    // Tonemapped to match the frame it lands on. Approximate — the scene was
+    // tonemapped without knowing this glow was coming — but the error is a
+    // slight softness in the brightest beam, which is the right way round.
+    //
+    // Surfaces sit behind the marched haze, so they wear its transmittance as
+    // a veil. The sky does not: it is not ninety metres away, it *is* the
+    // atmosphere continuing past the march, still scattering — extinguishing
+    // it here double-counts what the sky model already integrated, and the
+    // first calibration run showed exactly that as a sunset dimmed by its own
+    // golden hour. The background keeps its light; the beams are pure gain.
+    inscatter = acesToneMap(inscatter * frame.skyParameters.y);
+    return float4(inscatter, hitsSurface ? transmittance : 1.0);
 }
 
 // ── individual blades ───────────────────────────────────────────────────────

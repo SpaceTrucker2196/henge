@@ -53,6 +53,12 @@ public struct FrameUniforms {
     /// x: 0 when the cascades were fitted to the sun, 1 when to the moon.
     /// A single shadow map serves whichever light is actually casting.
     public var shadowSource: SIMD4<Float>
+    /// The golden-hour haze the light shafts march through.
+    /// x: scattering coefficient per metre — already scaled by
+    /// `Haze.twilightBoost`, so zero means the pass is skipped entirely.
+    /// y: how far each ray marches, metres. z: the haze's scale height,
+    /// metres — how quickly it thins with altitude. w: spare.
+    public var haze: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -72,7 +78,8 @@ public struct FrameUniforms {
                 grass: SIMD4<Float> = SIMD4(28, 6, 0, 0),
                 night: SIMD4<Float> = SIMD4(0.0075, 0.009, 0.0155, 0.0075),
                 season: SIMD4<Float> = SIMD4(1, 1, 1, 0.2),
-                shadowSource: SIMD4<Float> = .zero) {
+                shadowSource: SIMD4<Float> = .zero,
+                haze: SIMD4<Float> = SIMD4(0, 90, 12, 0)) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -91,6 +98,7 @@ public struct FrameUniforms {
         self.night = night
         self.season = season
         self.shadowSource = shadowSource
+        self.haze = haze
     }
 }
 

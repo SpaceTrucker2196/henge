@@ -277,7 +277,7 @@ final class RendererSetupTests: XCTestCase {
         // arithmetic rather than a magic number — adding a field on one side
         // only silently reinterprets every uniform after it, and the result is
         // a plausible-looking render rather than a crash.
-        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 13 * 16)
+        XCTAssertEqual(MemoryLayout<FrameUniforms>.size, 7 * 64 + 14 * 16)
         // 2 matrices + albedo + `surface` (which map set, tile size, normal
         // strength) + `weather` (the stone's foot, lichen, damp, seed)
         // + `reflectance` (specular strength, roughness floor, takes wind).

@@ -36,6 +36,10 @@ public struct HengeSceneView: PlatformViewRepresentable {
         view.depthStencilPixelFormat = HengeRenderer.depthFormat
         // Reverse-Z: clear to the far plane, which is zero.
         view.clearDepth = 0
+        // The light-shaft pass samples the scene's depth after the scene has
+        // drawn; without shader-read here the renderer quietly skips the
+        // beams, which is exactly the wrong kind of graceful.
+        view.depthStencilAttachmentTextureUsage = [.renderTarget, .shaderRead]
         view.preferredFramesPerSecond = 120     // ProMotion where it exists
         view.isPaused = false
         view.enableSetNeedsDisplay = false
