@@ -67,6 +67,35 @@ final class StarCatalogTests: XCTestCase {
                              "a red supergiant's index leans strongly warm")
     }
 
+    func testEveryProperNameBelongsToARealBrightStar() throws {
+        let byHip = Dictionary(uniqueKeysWithValues: try entries().map { ($0.hip, $0) })
+        XCTAssertGreaterThanOrEqual(StarCatalog.properNames.count, 20)
+        for (hip, name) in StarCatalog.properNames {
+            let star = try XCTUnwrap(byHip[hip],
+                                     "\(name) (HIP \(hip)) is not in the catalogue — "
+                                     + "a mistyped identifier would label the wrong star")
+            // Every named star is bright; Thuban, the dimmest with a reason
+            // to be here, is magnitude 3.67.
+            XCTAssertLessThanOrEqual(star.magnitude, 3.7,
+                                     "\(name) at magnitude \(star.magnitude) is too "
+                                     + "faint to be one of the storied names")
+        }
+        XCTAssertEqual(StarCatalog.properNames[32349], "Sirius")
+        XCTAssertEqual(StarCatalog.properNames[68756], "Thuban")
+    }
+
+    func testTheNamedStarsMoveLikeTheCatalogue() throws {
+        let catalog = try XCTUnwrap(Self.catalog)
+        let named = catalog.namedStars(at: JulianDay(2_451_545.0))
+        XCTAssertEqual(named.count, StarCatalog.properNames.count)
+        for star in named {
+            let length = (star.direction.x * star.direction.x
+                          + star.direction.y * star.direction.y
+                          + star.direction.z * star.direction.z).squareRoot()
+            XCTAssertEqual(length, 1, accuracy: 1e-9, star.name)
+        }
+    }
+
     func testInstancesCarryTheWholeCatalogueAsUnitVectors() throws {
         let catalog = try XCTUnwrap(Self.catalog)
         let instances = catalog.instances(at: JulianDay(2_451_545.0))

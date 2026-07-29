@@ -1503,8 +1503,11 @@ vertex StarInOut star_vertex(uint vertexID [[vertex_id]],
     out.clipPosition = frame.viewProjection
         * float4(frame.cameraPosition.xyz + world * 30000.0, 1.0);
     // Brighter stars draw larger as well as brighter — how the eye actually
-    // reports magnitude, since every star is far below one pixel.
-    out.pointSize = clamp(3.8 - 0.45 * magnitude, 1.2, 5.0);
+    // reports magnitude, since every star is far below one pixel. The slope
+    // is steep on purpose: at these sizes a gentle ramp reads as uniform
+    // grit, and the sky's hierarchy — Sirius, then the first magnitude,
+    // then the field — is most of what a sky looks like.
+    out.pointSize = clamp(5.0 - 0.6 * magnitude, 1.3, 6.5);
     out.colour = star.colour.rgb;
     // Pogson's ratio against magnitude 0, scaled into the sky pass's range.
     out.intensity = pow(10.0, -0.4 * magnitude) * visibility * 3.2;

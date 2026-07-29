@@ -347,6 +347,58 @@ public final class SkyModel {
     /// The sky's condition — dressing the user chooses, defaulting clear.
     public var weather: Weather = .clear
 
+    /// Whether the named stars carry their names on screen.
+    public var showsStarLabels = false
+
+    /// The star catalogue, loaded once beside the terrain.
+    private static let starCatalog = StarCatalog.load()
+
+    /// One on-screen star label: name and unit-fraction position.
+    public struct StarLabel: Identifiable {
+        public let id: String
+        public let x: Double
+        public let y: Double
+    }
+
+    /// The labels currently on screen.
+    ///
+    /// Star names only after dark — a name floating on a starless sky would
+    /// label nothing — and only for stars above the horizon. The Moon is
+    /// different: it hangs in the daytime sky half the month, drawn at its
+    /// true topocentric place, so its label rides whenever the disc is up.
+    public func starLabels(aspect: Double) -> [StarLabel] {
+        guard showsStarLabels else { return [] }
+        let eye = camera
+        var labels: [StarLabel] = []
+
+        if moon.altitude.degrees > 1.5 {
+            let v = moon.unitVector
+            if let point = eye.screenFraction(of: SIMD3(Float(v.x), Float(v.y), Float(v.z)),
+                                              aspect: Float(aspect)) {
+                labels.append(StarLabel(id: "Moon", x: point.x, y: point.y))
+            }
+        }
+
+        if sun.altitude.degrees < -3, let catalog = Self.starCatalog {
+            let rows = StarField.worldRows(
+                siderealTime: Sidereal.greenwichMean(at: time), site: site)
+            labels += catalog.namedStars(at: time.terrestrialTime).compactMap { star in
+                let world = SIMD3<Double>(
+                    rows.east.x * star.direction.x + rows.east.y * star.direction.y
+                        + rows.east.z * star.direction.z,
+                    rows.up.x * star.direction.x + rows.up.y * star.direction.y
+                        + rows.up.z * star.direction.z,
+                    rows.south.x * star.direction.x + rows.south.y * star.direction.y
+                        + rows.south.z * star.direction.z)
+                guard world.y > 0.03 else { return nil }
+                guard let point = eye.screenFraction(of: SIMD3<Float>(world),
+                                                     aspect: Float(aspect)) else { return nil }
+                return StarLabel(id: star.name, x: point.x, y: point.y)
+            }
+        }
+        return labels
+    }
+
     public var sceneState: SceneState {
         var state = SceneState.at(time, site: site, camera: camera)
         state.windTime = windTime

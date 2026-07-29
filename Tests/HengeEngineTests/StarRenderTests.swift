@@ -42,6 +42,25 @@ final class StarRenderTests: XCTestCase {
         return bright
     }
 
+    /// The projection the label layer stands on: the camera's own look
+    /// direction lands dead centre, a direction behind the camera lands
+    /// nowhere, and one just off-axis lands off-centre the right way.
+    func testScreenFractionFixtures() {
+        let camera = Camera(position: SIMD3(0, 2, 10), target: SIMD3(0, 2, -10))
+        let forward = SIMD3<Float>(0, 0, -1)
+        let centre = camera.screenFraction(of: forward, aspect: 1.5)
+        XCTAssertEqual(centre?.x ?? -1, 0.5, accuracy: 1e-4)
+        XCTAssertEqual(centre?.y ?? -1, 0.5, accuracy: 1e-4)
+
+        XCTAssertNil(camera.screenFraction(of: SIMD3(0, 0, 1), aspect: 1.5),
+                     "a direction behind the camera has no screen point")
+
+        // A direction tilted upward lands in the frame's upper half —
+        // screen y runs downward.
+        let up = camera.screenFraction(of: SIMD3<Float>(0, 0.3, -1), aspect: 1.5)
+        XCTAssertLessThan(up?.y ?? 1, 0.5)
+    }
+
     func testTheNightSkyHasStarsAndNoonHasNone() throws {
         let night = try brightSkyPixels(sunAltitude: -25, stars: true)
         let dark = try brightSkyPixels(sunAltitude: -25, stars: false)

@@ -112,6 +112,24 @@ public struct Camera: Sendable {
         MetalMath.perspective(fovyRadians: fieldOfView, aspect: aspect, near: near, far: far)
     }
 
+    /// Where a world-space direction lands on screen, as unit fractions —
+    /// (0,0) top-left, (1,1) bottom-right — or nil when it is behind the
+    /// camera or comfortably outside the frame.
+    ///
+    /// This exists for the star labels: the label layer is SwiftUI, and
+    /// projecting there would be logic in a view where no test can reach
+    /// it. Here the fixture is one line: the camera's own look direction
+    /// must land dead centre.
+    public func screenFraction(of worldDirection: SIMD3<Float>,
+                               aspect: Float) -> (x: Double, y: Double)? {
+        let world = position + worldDirection * 1000
+        let clip = projection(aspect: aspect) * view() * SIMD4(world, 1)
+        guard clip.w > 0 else { return nil }
+        let ndc = SIMD2(clip.x / clip.w, clip.y / clip.w)
+        guard abs(ndc.x) < 1.1, abs(ndc.y) < 1.1 else { return nil }
+        return (Double(ndc.x) * 0.5 + 0.5, 1 - (Double(ndc.y) * 0.5 + 0.5))
+    }
+
     /// Orbit at a given distance and bearing — the M1 camera control.
     public static func orbiting(distance: Float, azimuthDegrees: Float,
                                 elevationDegrees: Float,

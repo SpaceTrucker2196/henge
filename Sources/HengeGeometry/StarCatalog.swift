@@ -99,13 +99,17 @@ public struct StarCatalog: Sendable {
 
     /// B−V to a linear RGB impression: blue-white for the hot stars, solar
     /// white near 0.65, ember orange past 1.5. Piecewise between published
-    /// anchor temperatures, but the palette itself is an artistic choice.
+    /// anchor temperatures, but the palette itself is an artistic choice —
+    /// deliberately more saturated than a photometric conversion, because at
+    /// three pixels the eye needs the type to *read*: Rigel against
+    /// Betelgeuse is the sky's own lesson in stellar type, and a timid
+    /// palette teaches nothing.
     static func colour(forIndex bv: Double) -> SIMD3<Float> {
         let anchors: [(index: Double, colour: SIMD3<Float>)] = [
-            (-0.30, SIMD3(0.62, 0.72, 1.00)),
-            (0.00, SIMD3(0.78, 0.85, 1.00)),
-            (0.65, SIMD3(1.00, 0.96, 0.88)),
-            (1.50, SIMD3(1.00, 0.62, 0.36))
+            (-0.30, SIMD3(0.50, 0.64, 1.00)),
+            (0.00, SIMD3(0.70, 0.80, 1.00)),
+            (0.65, SIMD3(1.00, 0.95, 0.84)),
+            (1.50, SIMD3(1.00, 0.55, 0.26))
         ]
         if bv <= anchors[0].index { return anchors[0].colour }
         for i in 1..<anchors.count where bv <= anchors[i].index {
@@ -114,5 +118,49 @@ public struct StarCatalog: Sendable {
             return a.colour + (b.colour - a.colour) * t
         }
         return anchors[anchors.count - 1].colour
+    }
+
+    // ── proper names ────────────────────────────────────────────────────────
+
+    /// The stars with names worth drawing, keyed by HIP identifier.
+    ///
+    /// Names as standardised by the IAU Working Group on Star Names
+    /// (2016–2018 bulletins); the selection is the brightest and the
+    /// best-storied of the northern sky, plus Thuban — dim, but the pole
+    /// star the builders had, and the whole reason the deep-time mode
+    /// exists. Canopus and Fomalhaut ride along for southern viewpoints;
+    /// from Wiltshire they sit low or below the horizon and simply do not
+    /// come up.
+    public static let properNames: [Int: String] = [
+        32349: "Sirius", 30438: "Canopus", 69673: "Arcturus",
+        91262: "Vega", 24608: "Capella", 24436: "Rigel",
+        37279: "Procyon", 27989: "Betelgeuse", 97649: "Altair",
+        21421: "Aldebaran", 65474: "Spica", 80763: "Antares",
+        37826: "Pollux", 113368: "Fomalhaut", 102098: "Deneb",
+        49669: "Regulus", 36850: "Castor", 11767: "Polaris",
+        68756: "Thuban", 54061: "Dubhe", 67301: "Alkaid",
+        72607: "Kochab"
+    ]
+
+    /// The named stars, moved to a date — the label layer's whole diet.
+    public func namedStars(at tt: JulianDay)
+        -> [(name: String, direction: SIMD3<Double>, magnitude: Double)] {
+        entries.compactMap { entry in
+            guard let name = Self.properNames[entry.hip] else { return nil }
+            let moved = StarField.properMotionApplied(
+                rightAscension: entry.rightAscension,
+                declination: entry.declination,
+                pmRACosDec: entry.pmRACosDec,
+                pmDeclination: entry.pmDeclination,
+                at: tt)
+            let dated = StarField.equatorialOfDate(
+                rightAscension: moved.rightAscension,
+                declination: moved.declination,
+                at: tt)
+            return (name,
+                    StarField.unitVector(rightAscension: dated.rightAscension,
+                                         declination: dated.declination),
+                    entry.magnitude)
+        }
     }
 }

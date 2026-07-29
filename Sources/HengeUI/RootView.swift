@@ -58,6 +58,28 @@ public struct RootView: View {
             .padding(.horizontal, Henge.Space.margin)
             .padding(.bottom, Henge.Space.panel)
         }
+        .overlay {
+            // The named stars' labels, projected through the same camera the
+            // sky is drawn with. The projection itself lives in HengeEngine
+            // (`Camera.screenFraction`) where a test holds it; this layer
+            // only places text. Not hit-testable — a label must never steal
+            // a drag from the sky it annotates.
+            if model.showsStarLabels {
+                GeometryReader { proxy in
+                    let aspect = proxy.size.height > 0
+                        ? proxy.size.width / proxy.size.height : 1
+                    ForEach(model.starLabels(aspect: Double(aspect))) { label in
+                        Text(label.id)
+                            .font(Henge.body(.caption2))
+                            .foregroundStyle(Henge.stone.opacity(Henge.Ink.dim))
+                            .shadow(color: .black.opacity(0.6), radius: 2)
+                            .position(x: label.x * proxy.size.width,
+                                      y: label.y * proxy.size.height - 12)
+                    }
+                }
+                .allowsHitTesting(false)
+            }
+        }
         .overlay(alignment: .top) {
             // The almanac runs the width of the view: a reading strip tight
             // against the top edge, columns side by side, scrolling
@@ -82,6 +104,7 @@ public struct RootView: View {
                     markerToggle
                     torchToggle
                     weatherToggle
+                    starLabelToggle
                 }
             }
             .padding(Henge.Space.margin)
@@ -454,6 +477,24 @@ public struct RootView: View {
         case .rain: "cloud.rain"
         case .frost: "snowflake"
         }
+    }
+
+    /// Names on the named stars, from the IAU register.
+    private var starLabelToggle: some View {
+        Button {
+            model.showsStarLabels.toggle()
+        } label: {
+            Image(systemName: "textformat")
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .hengeControl(isSelected: model.showsStarLabels)
+        .foregroundStyle(model.showsStarLabels ? Henge.bronze : Henge.stone)
+        .accessibilityLabel(model.showsStarLabels
+                            ? "Hide the star names" : "Show the star names")
+        .accessibilityHint("Names the brightest stars on the night sky — "
+                           + "IAU proper names, only while their stars are up")
     }
 
     /// Hoyle's markers, standing gold in the Aubrey holes.
