@@ -32,3 +32,4 @@ the whole ledger: `ledger.py --energy-total`.
 | cd2dd3b | 2026-07-29T05:12:11Z | claude-fable-5 | 60 | 23982 | 24875014 | 47018 | 27.0151 | Compact layout fixes, verified via simulator screenshots |
 | a28d0ba | 2026-07-29T05:19:48Z | claude-fable-5 | 30 | 10587 | 12705437 | 22517 | 13.6854 | App icon installed for both targets, verified on springboard |
 | 4e3c62e | 2026-07-29T05:26:04Z | claude-fable-5 | 58 | 29952 | 25173688 | 54372 | 27.7593 | Mistletoe & Oak visual pass, simulator-verified |
+| 2748735 | 2026-07-29T05:29:59Z | claude-fable-5 | 24 | 15907 | 10619230 | 25308 | 11.9210 | Drawer handles offset clear of panel text |
