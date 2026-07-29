@@ -18,6 +18,7 @@ public struct LoreView: View {
 
     let notes: [LoreNote]
     @State private var expanded: Set<String> = []
+    @Environment(\.dismiss) private var dismiss
 
     public init(notes: [LoreNote]) {
         self.notes = notes
@@ -34,6 +35,26 @@ public struct LoreView: View {
             }
             .padding(20)
         }
+        // An explicit way out. The sheet's swipe-to-dismiss still works,
+        // but the reading fills the height and the scroll owns the drag —
+        // on a phone the sheet was effectively a room with no door.
+        .overlay(alignment: .topTrailing) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 30, height: 30)
+                    .hengeControl()
+                    .frame(width: Henge.Hit.control, height: Henge.Hit.control)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Henge.stone)
+            .padding(Henge.Space.tight)
+            .accessibilityLabel("Close the lore")
+        }
+        .presentationDragIndicator(.visible)
     }
 
     private func panel(_ note: LoreNote) -> some View {
