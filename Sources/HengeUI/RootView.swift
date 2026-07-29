@@ -27,6 +27,8 @@ public struct RootView: View {
     @State private var lastDrag: CGSize = .zero
     @State private var lastZoom: CGFloat = 1
     @State private var showingLore = false
+    @State private var showingTravel = false
+    @State private var showingInfo = false
     @State private var showingAlmanac = true
     /// Whether each panel is on screen or slid away to its edge, leaving a
     /// handle. The monument is the point of the app; every piece of chrome
@@ -203,6 +205,16 @@ public struct RootView: View {
         .foregroundStyle(Henge.stone)
         .tint(Henge.bronze)
         .task { await runClock() }
+        .sheet(isPresented: $showingInfo) {
+            InfoView()
+                .presentationBackground(.ultraThinMaterial)
+        }
+        .sheet(isPresented: $showingTravel) {
+            DateTravelView(initial: model.calendarDate) { date in
+                model.time = JulianDay(date)
+            }
+            .presentationBackground(.ultraThinMaterial)
+        }
         .sheet(isPresented: $showingLore) {
             // The coming station first, then the monument itself — so the panel
             // opens on whatever the user was just looking at.
@@ -444,6 +456,14 @@ public struct RootView: View {
             .accessibilityLabel("Lore")
             .accessibilityHint("What is known, what is argued, and what is modern "
                                + "tradition — each with its sources")
+
+            Button { showingInfo = true } label: {
+                Image(systemName: "info.circle").frame(width: 34, height: 30)
+            }
+            .buttonStyle(.plain).hengeControl()
+            .accessibilityLabel("About and attributions")
+            .accessibilityHint("What this app is, and the catalogues, "
+                               + "surveys and algorithms it stands on")
     }
 
     // ── what is coming ──────────────────────────────────────────────────────
@@ -722,6 +742,21 @@ public struct RootView: View {
                          ? "local apparent solar time" : model.formattedTime)
                         .font(Henge.figure(.caption2))
                         .opacity(Henge.Ink.faint)
+                    // The door to anywhen: under the date, because the date
+                    // is the thing it changes.
+                    Button {
+                        showingTravel = true
+                    } label: {
+                        Label("Travel", systemImage: "calendar")
+                            .font(Henge.body(.caption2))
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .hengeControl()
+                    .padding(.top, 2)
+                    .accessibilityHint("Set the sky to any date from 3000 BC "
+                                       + "to AD 3000")
                 }
 
                 columnRule
