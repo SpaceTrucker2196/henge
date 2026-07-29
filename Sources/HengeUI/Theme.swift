@@ -95,8 +95,11 @@ public enum Henge {
         public static let hair: CGFloat = 2
         public static let tight: CGFloat = 6
         public static let element: CGFloat = 8
-        public static let panel: CGFloat = 10
-        public static let margin: CGFloat = 14
+        public static let panel: CGFloat = 12
+        public static let margin: CGFloat = 12
+        // panel and margin deliberately agree: the gap between two plates
+        // and the gap between a plate and the screen's edge are the same
+        // twelve points, so the chrome reads as one evenly-set column.
     }
 
     /// Two radii, deliberately: glass panels share one, and controls are
@@ -167,18 +170,25 @@ public extension View {
         }
     }
 
-    /// A glass control — same material, tighter radius, for buttons and tabs.
+    /// A control's dress: nothing until it is selected, a bronze capsule
+    /// when it is.
+    ///
+    /// The unselected case used to wear its own glass capsule, which put a
+    /// box around every chip inside a plate that was already a box —
+    /// enclosure carrying no information, the exact ink Tufte says to
+    /// spend on data or not at all. A control's affordance comes from its
+    /// place in a control row; its *state* is what deserves the ink.
     @ViewBuilder
     func hengeControl(isSelected: Bool = false) -> some View {
         let shape = Capsule(style: .continuous)
-        if #available(iOS 26.0, macOS 26.0, *) {
-            self.glassEffect(isSelected ? .regular.tint(Henge.bronze.opacity(0.45))
-                                        : .regular,
-                             in: shape)
+        if isSelected {
+            if #available(iOS 26.0, macOS 26.0, *) {
+                self.glassEffect(.regular.tint(Henge.bronze.opacity(0.45)), in: shape)
+            } else {
+                self.background(Henge.bronze.opacity(0.35), in: shape)
+            }
         } else {
-            self.background(isSelected ? AnyShapeStyle(Henge.bronze.opacity(0.35))
-                                       : AnyShapeStyle(.ultraThinMaterial),
-                            in: shape)
+            self.contentShape(shape)
         }
     }
 }

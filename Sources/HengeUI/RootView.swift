@@ -174,7 +174,7 @@ public struct RootView: View {
             // rightward, because a drawer goes the way its wall faces.
             if railDrawerOpen {
                 HengeGlass {
-                    VStack(spacing: Henge.Space.element) {
+                    VStack(spacing: Henge.Space.tight) {
                         almanacToggle
                         overlayToggle
                         markerToggle
@@ -184,6 +184,12 @@ public struct RootView: View {
                         zodiacToggle
                         monumentToggle
                     }
+                    .padding(.vertical, Henge.Space.tight)
+                    // One plate for the whole rail: eight floating capsules
+                    // were eight enclosures saying nothing; the plate says
+                    // "controls live here" once, and bronze marks the
+                    // active ones.
+                    .hengePanel()
                 }
                 .padding(Henge.Space.margin)
                 .overlay(alignment: .leading) {
