@@ -36,6 +36,8 @@ struct FrameUniforms {
                              // y: march distance m, z: scale height m, w spare
     float4   torch;          // xyz: torch position, w: night-gated intensity
                              // (0 removes the term)
+    float4   weatherState;   // x: cloud cover, y: wetness, z: frost, w spare
+                             // — all zero under the default clear sky
 };
 
 struct DrawUniforms {
@@ -275,6 +277,17 @@ static float fbm(float3 p)
         amplitude *= 0.5;                  // lining their features up
     }
     return sum;
+}
+
+// The overcast greying, shared by every path that shows the sky's colour:
+// the fill light, the aerial-perspective fog, the specular reflection. One
+// function, because the first cut greyed only the fill and left wet stones
+// mirroring a blue sky under a grey deck.
+static float3 weatherGreyed(float3 skyColour, float cover)
+{
+    if (cover <= 0.0) { return skyColour; }
+    float luminance = dot(skyColour, float3(0.2126, 0.7152, 0.0722));
+    return mix(skyColour, luminance * float3(1.02, 1.0, 0.98), cover * 0.7);
 }
 
 // ── surface texture ─────────────────────────────────────────────────────────
@@ -630,6 +643,13 @@ static Surface sampleGround(float3 worldPosition, float3 n, float turf,
     // world change hue like a filter rather than the grass changing colour.
     material *= mix(frame.season.rgb, float3(1.0), soilness);
     out.albedo = material * (colour / kGrassMean);
+    // Rain soaks the turf dark; frost lays a pale matte rime over it. Both
+    // arrive as CPU decisions in the weather uniform — zero on a clear day.
+    out.albedo *= mix(1.0, 0.6, frame.weatherState.y);
+    if (frame.weatherState.z > 0.0) {
+        float rime = frame.weatherState.z * (0.5 + 0.5 * fineMottle);
+        out.albedo = mix(out.albedo, float3(0.30, 0.33, 0.40), rime * 0.5);
+    }
     out.normal = bent;
     // Floored high. The old floor was 0.2, which is a polished floor, not a
     // hillside — and combined with a dielectric F0 of 0.04 and Fresnel at
@@ -639,6 +659,11 @@ static Surface sampleGround(float3 worldPosition, float3 n, float turf,
     out.roughness = clamp(draw.albedo.w
                           * roughnessMap.sample(surfaceSampler, uv).r * 2.0,
                           draw.reflectance.y, 1.0);
+    // Wet ground gleams: the roughness falls toward its floor, and the
+    // floor is doing the guarding — grass never becomes a mirror.
+    out.roughness = mix(out.roughness,
+                        max(out.roughness * 0.55, draw.reflectance.y),
+                        frame.weatherState.y);
     return out;
 }
 
@@ -761,17 +786,32 @@ static Surface blowGrass(Surface surface, float3 worldPosition,
 // across frames — a weathering that shimmered as the camera moved would be
 // worse than none.
 static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
-                            constant DrawUniforms &draw)
+                            constant DrawUniforms &draw,
+                            constant FrameUniforms &frame)
 {
     float lichenAmount = draw.weather.y;
-    if (lichenAmount <= 0.0) { return surface; }
+    float wet = frame.weatherState.y;
+    float frostAmount = frame.weatherState.z;
+    if (lichenAmount <= 0.0 && wet <= 0.0 && frostAmount <= 0.0) {
+        return surface;
+    }
+    // Four millennia of weathering and this morning's weather are different
+    // claims on different switches: `aged` gates the lichen, pits, wash and
+    // scour that the weathering toggle owns, while rain and frost are the
+    // present sky's business and must survive weathering = false. The first
+    // cut routed both through the lichen early-out, and a rain-soaked
+    // landscape stood around bone-dry stones.
+    float aged = lichenAmount > 0.0 ? 1.0 : 0.0;
 
     float height = max(worldPosition.y - draw.weather.x, 0.0);
     float3 p = worldPosition + draw.weather.w;
 
     // Damp foot. Softened by noise so the line is not a bathtub ring.
-    float damp = 1.0 - smoothstep(0.0, max(draw.weather.z, 0.05), height);
+    float damp = (1.0 - smoothstep(0.0, max(draw.weather.z, 0.05), height)) * aged;
     damp *= 0.55 + 0.45 * fbm(p * 0.8);
+    // Rain is the damp course all the way up: the same darkening and gloss
+    // the foot always had, patchy with the same noise, covering the stone.
+    damp = max(damp, wet * (0.7 + 0.3 * fbm(p * 0.8)));
 
     // Shelter: upward-facing, and the north-east half. World +Z is south, so
     // north is -Z and east is +X — the sheltered quarter faces -Z and +X.
@@ -786,15 +826,17 @@ static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
     // Solution hollows. Rain standing on a horizontal ledge dissolves the
     // silcrete's carbonate cement and leaves pits — the pocked upper surfaces
     // that are the most distinctive thing about a weathered sarsen close to.
-    float pits = smoothstep(0.55, 0.85, fbm(p * 4.5)) * clamp(n.y, 0.0, 1.0);
+    float pits = smoothstep(0.55, 0.85, fbm(p * 4.5)) * clamp(n.y, 0.0, 1.0)
+               * aged;
 
     // Rain wash: vertical channels, so the noise is stretched hard along Y.
     float vertical = 1.0 - up;
     float streak = fbm(float3(p.x * 7.0, p.y * 0.30, p.z * 7.0));
-    float wash = vertical * smoothstep(0.52, 0.88, streak) * (1.0 - damp);
+    float wash = vertical * smoothstep(0.52, 0.88, streak) * (1.0 - damp) * aged;
 
     // Wind scour: the exposed top, above the damp and away from the shelter.
-    float scour = clamp(up - 0.55, 0.0, 1.0) * 2.2 * smoothstep(0.3, 1.2, height);
+    float scour = clamp(up - 0.55, 0.0, 1.0) * 2.2 * smoothstep(0.3, 1.2, height)
+                * aged;
 
     const float3 dampTint   = float3(0.52, 0.53, 0.50);
     const float3 lichenTint = float3(0.74, 0.79, 0.48);
@@ -819,6 +861,18 @@ static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
                           fbm(p * 9.0 + 43.0) - 0.5);
     float3 normal = normalize(surface.normal + crust * lichen * 0.35
                               + crust * pits * 0.55);
+
+    // Frost: a pale rime on everything that faces the open sky, matte as
+    // chalk, patchy where the surface held its cold. It arrives melted
+    // against the sun's altitude — the CPU decided that — so a frost
+    // morning warms itself away by the time the sun stands high.
+    float frost = frostAmount;
+    if (frost > 0.0) {
+        float rime = frost * clamp(n.y, 0.0, 1.0)
+                   * (0.55 + 0.45 * fbm(p * 5.0 + 71.0));
+        albedo = mix(albedo, float3(0.82, 0.86, 0.92), rime * 0.55);
+        roughness = mix(roughness, 1.0, rime * 0.6);
+    }
 
     Surface out;
     out.albedo = albedo;
@@ -939,7 +993,8 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
         } else {
             surface = sampleStone(in.worldPosition, geometricNormal, draw,
                                   albedoMap, normalMap, roughnessMap, surfaceSampler);
-            surface = weatherStone(surface, in.worldPosition, geometricNormal, draw);
+            surface = weatherStone(surface, in.worldPosition, geometricNormal,
+                                   draw, frame);
         }
     } else {
         surface.albedo = draw.albedo.rgb;
@@ -1050,7 +1105,10 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     float3 groundBounce = float3(0.26, 0.28, 0.16) * frame.sunRadiance.rgb * 0.045;
 
     float upwards = n.y * 0.5 + 0.5;
-    float3 skyFill = mix(horizonColour, skyColour, upwards);
+    // Under a closed deck the ambient is the deck: flat, grey, directionless.
+    // The blue's luminance is kept — overcast light is dull, not dark.
+    float cover = frame.weatherState.x;
+    float3 skyFill = weatherGreyed(mix(horizonColour, skyColour, upwards), cover);
     // Strength matters as much as direction. Too little and every face turned
     // from the sun collapses to the same black; too much and the fill drowns
     // the sun, which is worse — the stones go flat pale and stop reading as
@@ -1067,7 +1125,12 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // twilight is the most-looked-at hour here and a step in it would be the
     // first thing anyone noticed.
     float nightness = 1.0 - smoothstep(-0.10, 0.06, frame.sunDirection.y);
-    float3 nightAmbient = frame.night.rgb * (0.35 + 0.65 * upwards);
+    // The deck stands between the stones and the moonlit sky, so the tinted
+    // night ambient thins with cover — but the legibility floor (night.w)
+    // is deliberately untouched: the darkest overcast night must still be
+    // an image, not a black rectangle.
+    float3 nightAmbient = frame.night.rgb * (0.35 + 0.65 * upwards)
+                        * (1.0 - cover * 0.6);
     ambient += albedo * nightAmbient * nightness;
     ambient += albedo * frame.night.w * nightness;
 
@@ -1085,10 +1148,14 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // is most of why wet things look wet — and folded down by roughness, since
     // a rough surface scatters the reflection into the diffuse term instead.
     float3 reflected = reflect(-v, n);
-    float3 skyReflection = preethamSky(normalize(float3(reflected.x,
-                                                        max(reflected.y, 0.02),
-                                                        reflected.z)),
-                                       l, frame.skyParameters.x);
+    // Greyed with the deck, like the fill: a wet stone under a grey sky
+    // gleams grey, and the first cut had it mirroring a blue the sky pass
+    // no longer drew.
+    float3 skyReflection = weatherGreyed(
+        preethamSky(normalize(float3(reflected.x,
+                                     max(reflected.y, 0.02),
+                                     reflected.z)),
+                    l, frame.skyParameters.x), cover);
     float grazing = fresnelSchlick(max(dot(n, v), 0.0), f0).r;
     float gloss = (1.0 - roughness) * (1.0 - roughness);
     ambient += skyReflection * grazing * gloss * draw.reflectance.x * 0.85;
@@ -1108,8 +1175,11 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // reading as cardboard cut-outs.
     float distance = length(frame.cameraPosition.xyz - in.worldPosition);
     float fogAmount = 1.0 - exp(-distance * 0.0016);
-    float3 fogColour = preethamSky(normalize(float3(v.x, max(v.y, 0.02), v.z) * -1.0),
-                                   l, frame.skyParameters.x);
+    // Greyed with the deck, or the far plain would fade toward a blue haze
+    // that meets a grey sky in a hard seam at the horizon.
+    float3 fogColour = weatherGreyed(
+        preethamSky(normalize(float3(v.x, max(v.y, 0.02), v.z) * -1.0),
+                    l, frame.skyParameters.x), cover);
 
     float3 colour = mix(direct + ambient, fogColour, clamp(fogAmount, 0.0, 0.85));
     colour = acesToneMap(colour * frame.skyParameters.y);
@@ -1134,6 +1204,46 @@ vertex SkyInOut sky_vertex(uint vertexID [[vertex_id]])
     return out;
 }
 
+// How much cloud stands in a given sky direction, 0 clear to 1 solid.
+//
+// A flat cloud deck at a nominal 1,200 m, sampled where the view ray pierces
+// it and advected on the wind — the same wind the grass answers, several
+// times faster aloft, which is true of real decks and is what makes the
+// shadowless overcast still feel like weather. Coverage lowers the noise
+// threshold rather than scaling the field, so scattered clouds keep their
+// shapes as the cover closes in instead of fading uniformly grey.
+static float cloudAmount(float3 direction, constant FrameUniforms &frame)
+{
+    float cover = frame.weatherState.x;
+    if (cover <= 0.001) { return 0.0; }
+
+    // The ray's elevation is floored before the plane intersection so the
+    // arithmetic stays finite at grazing angles; the *blend* below uses the
+    // true elevation. One continuous expression, deliberately: the first
+    // cut had an early-out "closed at the horizon" branch and a "thin at
+    // the horizon" fade that never met, and the seam was a hard grey line
+    // under a clear ring from 1° to 5° — exactly where the rising sun sits.
+    float y = max(direction.y, 0.02);
+    float2 deck = frame.cameraPosition.xz + direction.xz * (1200.0 / y);
+    float2 drift = frame.wind.xz * (frame.wind.y * 6.0 * frame.wind.w);
+    float2 uv = (deck - drift) * 0.00021;
+    float field = fbm(float3(uv.x, 23.0, uv.y))
+        + 0.35 * fbm(float3(uv.x * 4.7, 31.0, uv.y * 4.7));
+    field /= 1.35;
+
+    float threshold = 0.62 - cover * 0.5;
+    float amount = smoothstep(threshold, threshold + 0.22, field);
+
+    // Near the horizon a deck reads as its mean cover — hundreds of cloud
+    // widths stack along a grazing ray — so the sampled field fades into
+    // plain cover there, and everything fades out just below the horizon
+    // line itself.
+    float pierced = smoothstep(0.02, 0.09, direction.y);
+    return mix(cover, amount, pierced)
+         * smoothstep(-0.03, 0.005, direction.y);
+}
+
+
 fragment float4 sky_fragment(SkyInOut in [[stage_in]],
                              constant FrameUniforms &frame [[buffer(0)]])
 {
@@ -1146,9 +1256,26 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
     float3 l = normalize(frame.sunDirection.xyz);
     float3 sky = preethamSky(direction, l, frame.skyParameters.x);
 
+    // The cloud deck, laid over the blue and under the sun's disc. Colour
+    // is the sky's own brightness gone grey — a cloud is lit by everything
+    // around it — with the belly darkening as the cover closes and a warm
+    // forward glow where the hidden sun stands behind it.
+    float cloud = cloudAmount(direction, frame);
+    if (cloud > 0.0) {
+        float skyLum = dot(sky, float3(0.2126, 0.7152, 0.0722));
+        float3 cloudColour = float3(1.06, 1.03, 1.0) * skyLum
+            * (1.0 - frame.weatherState.x * 0.38);
+        cloudColour += frame.sunRadiance.rgb
+            * pow(max(dot(direction, l), 0.0), 12.0) * 0.05;
+        sky = mix(sky, cloudColour, cloud);
+    }
+
     // The sun's disc at its true angular size, with limb darkening. The brief's
     // definition of done is measured in solar diameters, so this is not
-    // decoration — it is the ruler.
+    // decoration — it is the ruler. A cloud standing in front of it takes
+    // nearly all of it; the radiance itself was already cut by the weather's
+    // transmission on the CPU, so an overcast disc is doubly faint — a pale
+    // patch you can look at, which is what an overcast sun is.
     float cosAngle = dot(direction, l);
     float angle = acos(clamp(cosAngle, -1.0, 1.0));
     float radius = frame.sunRadiance.w;
@@ -1156,7 +1283,8 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
         float r = angle / radius;
         float mu = sqrt(max(1.0 - r * r, 0.0));
         float limb = 0.3 + 0.7 * pow(mu, 0.55);   // Eddington-like darkening
-        sky += frame.sunRadiance.rgb * 12.0 * limb;
+        sky += frame.sunRadiance.rgb * 12.0 * limb
+             * (1.0 - cloudAmount(l, frame) * 0.92);
     }
 
     // ── the moon ────────────────────────────────────────────────────────────
@@ -1191,7 +1319,11 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
         float3 surface = frame.moonLight.rgb * 26.0 * pow(lit, 0.65);
         float3 earthshine = float3(0.055, 0.062, 0.085)
                           * (1.0 - frame.moonLight.w) * 0.6;
-        sky += surface + earthshine;
+        // The deck stands in front of the moon exactly as it stands in
+        // front of the sun — the first cut let a full moon shine crisply
+        // through solid rain cover, and the weather ended at sunset.
+        sky += (surface + earthshine)
+             * (1.0 - cloudAmount(m, frame) * 0.92);
     }
 
     sky = acesToneMap(sky * frame.skyParameters.y);
@@ -1346,6 +1478,10 @@ vertex StarInOut star_vertex(uint vertexID [[vertex_id]],
     float threshold = -3.0 - max(magnitude, 0.0);
     float t = clamp((threshold - sunAltitude) / 2.0, 0.0, 1.0);
     float visibility = t * t * (3.0 - 2.0 * t);
+    // Cloud cover takes the stars with it: a closed deck is a starless
+    // night, and the fraction between is an honest average of what a
+    // broken sky hides.
+    visibility *= 1.0 - frame.weatherState.x;
 
     // Below the horizon, washed out by twilight, or standing inside the
     // moon's disc: clip z outside [0,1] discards the point entirely. The
@@ -1534,6 +1670,11 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
     const float3 straw = float3(0.42, 0.36, 0.19);
     albedo = mix(albedo, straw * in.tint,
                  frame.season.w * in.heightAlongBlade * 0.75);
+    // Rain darkens the blades; frost silvers their tips first, the way a
+    // rimed sward whitens from the top down.
+    albedo *= mix(1.0, 0.7, frame.weatherState.y);
+    albedo = mix(albedo, float3(0.55, 0.58, 0.65),
+                 frame.weatherState.z * in.heightAlongBlade * 0.5);
 
     float shadow = sampleShadow(shadowMap, shadowSampler, in.worldPosition,
                                 frame, in.viewDepth, max(dot(n, l), 0.05));
@@ -1571,8 +1712,9 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
 
     float distance = length(frame.cameraPosition.xyz - in.worldPosition);
     float fogAmount = 1.0 - exp(-distance * 0.0016);
-    float3 fogColour = preethamSky(normalize(float3(v.x, max(v.y, 0.02), v.z) * -1.0),
-                                   l, frame.skyParameters.x);
+    float3 fogColour = weatherGreyed(
+        preethamSky(normalize(float3(v.x, max(v.y, 0.02), v.z) * -1.0),
+                    l, frame.skyParameters.x), frame.weatherState.x);
 
     float3 colour = mix(direct + ambient, fogColour, clamp(fogAmount, 0.0, 0.85));
     colour = acesToneMap(colour * frame.skyParameters.y);

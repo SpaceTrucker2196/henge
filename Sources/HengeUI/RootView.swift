@@ -1,5 +1,6 @@
 import SwiftUI
 import HengeAstro
+import HengeEngine
 import HengeGeometry
 
 /// The screen: the light on the stones, and the numbers that prove it.
@@ -78,6 +79,7 @@ public struct RootView: View {
                     overlayToggle
                     markerToggle
                     torchToggle
+                    weatherToggle
                 }
             }
             .padding(16)
@@ -405,6 +407,35 @@ public struct RootView: View {
         .accessibilityHint("A carried flame that lights the stones at night "
                            + "from the ground stations; it fades out in "
                            + "daylight and stays unlit from the air")
+    }
+
+    /// The sky's condition, cycled: clear, overcast, rain, frost. Dressing,
+    /// not forecast — the sun's position stays the almanac's business.
+    private var weatherToggle: some View {
+        Button {
+            let all = Weather.allCases
+            let index = all.firstIndex(of: model.weather) ?? 0
+            model.weather = all[(index + 1) % all.count]
+        } label: {
+            Image(systemName: weatherSymbol)
+                .frame(width: 36, height: 32)
+        }
+        .buttonStyle(.plain)
+        .hengeControl(isSelected: model.weather != .clear)
+        .foregroundStyle(model.weather != .clear ? Henge.bronze : Henge.stone)
+        .accessibilityLabel("Weather")
+        .accessibilityValue(model.weather.rawValue)
+        .accessibilityHint("Cycles the sky: clear, overcast, rain, frost. "
+                           + "Dressing only — the sun keeps the almanac's truth")
+    }
+
+    private var weatherSymbol: String {
+        switch model.weather {
+        case .clear: "sun.max"
+        case .overcast: "cloud"
+        case .rain: "cloud.rain"
+        case .frost: "snowflake"
+        }
     }
 
     /// Hoyle's markers, standing gold in the Aubrey holes.

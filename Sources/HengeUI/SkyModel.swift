@@ -344,6 +344,9 @@ public final class SkyModel {
     /// Whether the ceremony torch is lit. See `SceneState.torchlight`.
     public var torchlight = false
 
+    /// The sky's condition — dressing the user chooses, defaulting clear.
+    public var weather: Weather = .clear
+
     public var sceneState: SceneState {
         var state = SceneState.at(time, site: site, camera: camera)
         state.windTime = windTime
@@ -353,6 +356,7 @@ public final class SkyModel {
         // the night sky and wash the monument warm. It relights the moment
         // you stand back on the ground.
         state.torchlight = torchlight && station != .aerial
+        state.weather = weather
         return state
     }
 

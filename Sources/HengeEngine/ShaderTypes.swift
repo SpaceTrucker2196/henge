@@ -63,6 +63,12 @@ public struct FrameUniforms {
     /// w: intensity, already night-gated and flickered by
     /// `SceneState.torchIntensity`; zero means no torch term at all.
     public var torch: SIMD4<Float>
+    /// The weather's consequences, decided by `Weather` on the CPU.
+    /// x: cloud cover 0–1. y: wetness 0–1 — rain-soaked stone and turf.
+    /// z: frost 0–1, already melted against the sun's altitude. w: spare.
+    /// All zero under the default clear sky, which is what keeps every
+    /// weather term out of the shadow-agreement oracle's frames.
+    public var weatherState: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -84,7 +90,8 @@ public struct FrameUniforms {
                 season: SIMD4<Float> = SIMD4(1, 1, 1, 0.2),
                 shadowSource: SIMD4<Float> = .zero,
                 haze: SIMD4<Float> = SIMD4(0, 90, 12, 0),
-                torch: SIMD4<Float> = .zero) {
+                torch: SIMD4<Float> = .zero,
+                weatherState: SIMD4<Float> = .zero) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -105,6 +112,7 @@ public struct FrameUniforms {
         self.shadowSource = shadowSource
         self.haze = haze
         self.torch = torch
+        self.weatherState = weatherState
     }
 }
 

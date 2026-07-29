@@ -5,6 +5,63 @@ import simd
 import HengeAstro
 import HengeGeometry
 
+/// The sky's mood, chosen rather than simulated.
+///
+/// Weather is dressing, not forecast: the user picks a condition and the
+/// renderer draws its consequences. The *decisions* — how much cloud, how
+/// much of the sun survives it, how wet the world is, when frost melts —
+/// are pure functions here, where a test can hold each one, and the shader
+/// only ever sees their results in a uniform. `clear` is the default and
+/// contributes exactly nothing, which is what keeps every weather term out
+/// of the shadow-agreement oracle's frames.
+public enum Weather: String, Sendable, CaseIterable, Hashable {
+    case clear
+    case overcast
+    case rain
+    case frost
+
+    /// Fraction of sky the cloud field aims to cover.
+    public var cloudCover: Double {
+        switch self {
+        case .clear: 0
+        case .overcast: 0.9
+        case .rain: 1.0
+        // A frost morning is a clear morning — that is why it froze. Zero,
+        // exactly: the first cut gave it a decorative 0.12 veil, and the
+        // render test rightly refused the contradiction — once the frost
+        // melts, a frost day must be byte-identical to a clear one.
+        case .frost: 0
+        }
+    }
+
+    /// How much of the sun's radiance reaches the ground.
+    ///
+    /// Scaled *before* the shader sees the radiance, so the direct light,
+    /// the shadows' contrast, the sun disc and the golden-hour beams all
+    /// dim together without one of them being forgotten.
+    public var sunTransmission: Double {
+        switch self {
+        case .clear, .frost: 1.0
+        case .overcast: 0.32
+        case .rain: 0.2
+        }
+    }
+
+    /// How soaked the world is: rain wets everything the damp course wets,
+    /// all the way up.
+    public var wetness: Double { self == .rain ? 1 : 0 }
+
+    /// Frost against the climbing sun: full through the night and dawn,
+    /// gone by the time the sun stands 12° high — melted, as the real thing
+    /// is by mid-morning. A Hermite fade from 4° so the going is gradual.
+    public static func frostAmount(condition: Weather,
+                                   sunAltitudeDegrees: Double) -> Double {
+        guard condition == .frost else { return 0 }
+        let t = min(max((sunAltitudeDegrees - 4) / 8, 0), 1)
+        return 1 - t * t * (3 - 2 * t)
+    }
+}
+
 /// Everything the renderer needs to know about the moment being drawn.
 public struct SceneState: Sendable {
 
@@ -93,6 +150,10 @@ public struct SceneState: Sendable {
     /// test asserts the shipping path has texturing on.
     public var surfaceTexturing: Bool
 
+    /// The sky's condition. See `Weather` — clear by default, and clear
+    /// means every weather term is exactly absent.
+    public var weather: Weather
+
     /// Whether the stars come out at night.
     ///
     /// A switch for the same reason the grass and the soil banks have one:
@@ -148,7 +209,8 @@ public struct SceneState: Sendable {
                 torchlight: Bool = false,
                 stars: Bool = true,
                 epoch: JulianDay = JulianDay(2_451_545.0),
-                site: GeographicSite = .stonehenge) {
+                site: GeographicSite = .stonehenge,
+                weather: Weather = .clear) {
         self.sun = sun
         self.moon = moon
         self.moonAngularRadius = moonAngularRadius
@@ -170,6 +232,7 @@ public struct SceneState: Sendable {
         self.stars = stars
         self.epoch = epoch
         self.site = site
+        self.weather = weather
     }
 
     /// How hard the torch burns, before the shader's falloff.
@@ -997,7 +1060,13 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             radii = SIMD4(m0.radius, m1.radius, m2.radius, Self.shadowDepthSpan)
         }
 
-        let radiance = state.sunRadiance
+        // The weather takes its cut of the sun before anything downstream
+        // sees it: direct light, shadow contrast, the drawn disc and the
+        // golden-hour beams all dim by the same factor, because they all
+        // read this one value.
+        let radiance = state.sunRadiance * Float(state.weather.sunTransmission)
+        let frost = Weather.frostAmount(condition: state.weather,
+                                        sunAltitudeDegrees: state.sun.altitude.degrees)
         return FrameUniforms(
             viewProjection: viewProjection,
             view: view,
@@ -1011,7 +1080,12 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             skyParameters: SIMD4(state.turbidity, state.exposure, 0,
                                  1.0 / Float(shadowResolution)),
             moonDirection: SIMD4(state.moonDirection, Float(state.moonAngularRadius)),
-            moonLight: SIMD4(state.moonRadiance, Float(state.moonIllumination)),
+            // The deck takes the same cut of moonlight it takes of sunlight
+            // — the review's sharpest finding was a rain that ceased to
+            // exist at sunset, full moon and stars blazing through solid
+            // cover.
+            moonLight: SIMD4(state.moonRadiance * Float(state.weather.sunTransmission),
+                             Float(state.moonIllumination)),
             cascadeRadii: radii,
             wind: {
                 // Bearing is where the wind comes *from*; the shader wants the
@@ -1039,8 +1113,13 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 // and unlike the curve it cannot cause a visible pop, because
                 // when it fires the curve has already been zero for a fifth
                 // of a degree.
+                // Cloud cover closes the beams: a crepuscular shaft is
+                // direct sunlight made visible, and a deck that hides the
+                // disc admits none. Scaled rather than gated so a broken
+                // sky keeps a fraction of its rays.
                 let boost = moonCasts || !state.lightShafts
                     ? 0 : Haze.twilightBoost(sunAltitude: state.sun.altitude)
+                        * (1 - state.weather.cloudCover)
                 // 0.0085 m⁻¹ at full boost: an optical depth of about 0.4
                 // over the ninety-metre march — mist you notice the sun in,
                 // not fog you lose the stones behind.
@@ -1058,7 +1137,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                     sunAltitudeDegrees: state.sun.altitude.degrees,
                     flickerAt: state.windTime)
                 return SIMD4(position, Float(intensity))
-            }()
+            }(),
+            weatherState: SIMD4(Float(state.weather.cloudCover),
+                                Float(state.weather.wetness),
+                                Float(frost), 0)
         )
     }
 
