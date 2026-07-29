@@ -28,6 +28,10 @@ public struct RootView: View {
     @State private var lastZoom: CGFloat = 1
     @State private var showingLore = false
     @State private var showingAlmanac = true
+    /// Whether the bottom control stack is on screen or slid away to the
+    /// left. The monument is the point of the app; the controls should be
+    /// dismissible to nothing but a handle.
+    @State private var controlsDrawerOpen = true
     /// MISSION.md invariant 7. Time-lapse is the app's one continuous motion,
     /// and at 100,000× the whole sky wheels — which is exactly the kind of
     /// thing this setting exists to stop. Honoured by capping the rate rather
@@ -41,22 +45,36 @@ public struct RootView: View {
         ZStack(alignment: .bottom) {
             scene
 
-            HengeGlass(spacing: Henge.Space.margin) {
-                VStack(spacing: Henge.Space.panel) {
-                    // The research note behind the marker mode is binding:
-                    // "the mode must say so on screen, every time." A lore
-                    // sheet the user may never open does not satisfy that,
-                    // and neither does a VoiceOver hint — this chip is the
-                    // on-screen badge, present exactly as long as the gold
-                    // stones are.
-                    if model.showsLunarMarkers { hypothesisBadge }
-                    if showingAlmanac { events }
-                    timeBar
-                    stations
+            // The control stack is a drawer: tap the handle at its left edge
+            // and it slides off westward, leaving only the handle to bring
+            // it back. The stones deserve the whole frame sometimes.
+            if controlsDrawerOpen {
+                HengeGlass(spacing: Henge.Space.margin) {
+                    VStack(spacing: Henge.Space.panel) {
+                        // The research note behind the marker mode is binding:
+                        // "the mode must say so on screen, every time." A lore
+                        // sheet the user may never open does not satisfy that,
+                        // and neither does a VoiceOver hint — this chip is the
+                        // on-screen badge, present exactly as long as the gold
+                        // stones are.
+                        if model.showsLunarMarkers { hypothesisBadge }
+                        if showingAlmanac { events }
+                        timeBar
+                        stations
+                    }
                 }
+                .padding(.horizontal, Henge.Space.margin)
+                .padding(.bottom, Henge.Space.panel)
+                .overlay(alignment: .leading) { drawerHandle }
+                .transition(.move(edge: .leading).combined(with: .opacity))
             }
-            .padding(.horizontal, Henge.Space.margin)
-            .padding(.bottom, Henge.Space.panel)
+        }
+        .overlay(alignment: .bottomLeading) {
+            if !controlsDrawerOpen {
+                drawerHandle
+                    .padding(.leading, 2)
+                    .padding(.bottom, 72)
+            }
         }
         .overlay {
             // The named stars' labels, projected through the same camera the
@@ -120,6 +138,31 @@ public struct RootView: View {
                 // present behind the reading rather than being boxed out.
                 .presentationBackground(.ultraThinMaterial)
         }
+    }
+
+    /// The drawer's handle: a slim capsule the eye reads as an edge-tab,
+    /// with a hit region at the platform's 44-point floor — the visual may
+    /// be fourteen points wide, but what it accepts must not be (the rail
+    /// taught that lesson the same day this shipped).
+    private var drawerHandle: some View {
+        Button {
+            withAnimation(Henge.settle(reduceMotion)) {
+                controlsDrawerOpen.toggle()
+            }
+        } label: {
+            Image(systemName: controlsDrawerOpen ? "chevron.left" : "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .frame(width: 14, height: 56)
+                .hengeControl()
+                .frame(width: Henge.Hit.control, height: 64)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Henge.stone)
+        .accessibilityLabel(controlsDrawerOpen
+                            ? "Hide the control panels" : "Show the control panels")
+        .accessibilityHint("The time bar, the events and the stations slide "
+                           + "away to the left; the handle stays to bring them back")
     }
 
     // ── the monument ────────────────────────────────────────────────────────
