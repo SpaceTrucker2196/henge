@@ -40,3 +40,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 043d131 | 2026-07-29T15:07:16Z | claude-fable-5 | 33 | 29712 | 16853458 | 32533 | 18.9900 | Date-travel picker + attributions info view |
 | 42c95a7 | 2026-07-29T15:14:11Z | claude-fable-5 | 14 | 9414 | 6652252 | 4778 | 7.2187 | Twilight sky dimming for star visibility |
 | f477a25 | 2026-07-29T15:36:25Z | claude-fable-5 | 51 | 37864 | 27013124 | 39254 | 29.6919 | Moon shadows: caster-gated lookup + radiance rebalance |
+| 109fd27 | 2026-07-29T15:39:59Z | claude-fable-5 | 12 | 12905 | 5876405 | 8666 | 6.6951 | Zodiac constellation labels with glyphs |
