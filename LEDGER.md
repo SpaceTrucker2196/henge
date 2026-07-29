@@ -34,3 +34,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 4e3c62e | 2026-07-29T05:26:04Z | claude-fable-5 | 58 | 29952 | 25173688 | 54372 | 27.7593 | Mistletoe & Oak visual pass, simulator-verified |
 | 2748735 | 2026-07-29T05:29:59Z | claude-fable-5 | 24 | 15907 | 10619230 | 25308 | 11.9210 | Drawer handles offset clear of panel text |
 | 0f6b1b8 | 2026-07-29T05:35:31Z | claude-fable-5 | 19 | 13029 | 9831228 | 16376 | 10.8104 | Monument state toggle promoted to the rail |
+| 1bbec71 | 2026-07-29T14:49:21Z | claude-fable-5 | 12 | 3860 | 2773041 | 2633168 | 55.6295 | Lore sheet close button |
