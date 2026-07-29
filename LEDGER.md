@@ -35,3 +35,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 2748735 | 2026-07-29T05:29:59Z | claude-fable-5 | 24 | 15907 | 10619230 | 25308 | 11.9210 | Drawer handles offset clear of panel text |
 | 0f6b1b8 | 2026-07-29T05:35:31Z | claude-fable-5 | 19 | 13029 | 9831228 | 16376 | 10.8104 | Monument state toggle promoted to the rail |
 | 1bbec71 | 2026-07-29T14:49:21Z | claude-fable-5 | 12 | 3860 | 2773041 | 2633168 | 55.6295 | Lore sheet close button |
+| 9eec9bc | 2026-07-29T14:55:56Z | claude-fable-5 | 17 | 14982 | 8147938 | 8377 | 9.0647 | Dynamic inks for light appearance |
