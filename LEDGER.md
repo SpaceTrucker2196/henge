@@ -43,3 +43,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 109fd27 | 2026-07-29T15:39:59Z | claude-fable-5 | 12 | 12905 | 5876405 | 8666 | 6.6951 | Zodiac constellation labels with glyphs |
 | d845807 | 2026-07-29T16:07:42Z | claude-fable-5 | 9 | 13273 | 5923116 | 9106 | 6.7690 | Tufte pass: selection-only enclosures, unified 12pt rhythm, plated rail |
 | b6927c0 | 2026-07-29T16:16:04Z | claude-fable-5 | 20 | 10090 | 4288222 | 134187 | 7.4767 | Restore glass pills on interactive controls; readouts stay bare |
+| adbfa14 | 2026-07-29T16:35:24Z | claude-fable-5 | 50 | 48930 | 2279848 | 209930 | 8.9254 | Drawer UX: tabs fused to plates, rail handle joins its column, flush closed tabs |
