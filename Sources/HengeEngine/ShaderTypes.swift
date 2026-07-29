@@ -65,9 +65,11 @@ public struct FrameUniforms {
     public var torch: SIMD4<Float>
     /// The weather's consequences, decided by `Weather` on the CPU.
     /// x: cloud cover 0–1. y: wetness 0–1 — rain-soaked stone and turf.
-    /// z: frost 0–1, already melted against the sun's altitude. w: spare.
-    /// All zero under the default clear sky, which is what keeps every
-    /// weather term out of the shadow-agreement oracle's frames.
+    /// z: frost 0–1, already melted against the sun's altitude.
+    /// w: 1 when the Moon's photograph is bound — an unbound texture
+    /// samples as zero, which would render the disc black rather than plain.
+    /// x, y and z are all zero under the default clear sky, which is what
+    /// keeps every weather term out of the shadow-agreement oracle's frames.
     public var weatherState: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,

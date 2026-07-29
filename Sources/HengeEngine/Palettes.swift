@@ -34,7 +34,13 @@ public enum NightPalette {
     /// that **the darkest night is still just legible**. Without it the app
     /// would be technically correct and, for several hours a month, a black
     /// rectangle.
-    public static let new = SIMD4<Float>(0.0075, 0.0090, 0.0155, 0.0075)
+    ///
+    /// The colour is starlight's: pale and *whitish*-blue, not the deep blue
+    /// of the sky it falls from. Integrated starlight averages warm-white —
+    /// most bright stars are hotter than the sun — and the Purkinje shift
+    /// cools it at the eye; the earlier value leaned as blue as the zenith
+    /// and the ground read dyed rather than dim.
+    public static let new = SIMD4<Float>(0.0135, 0.0150, 0.0185, 0.0080)
 
     /// Where this night sits between the two.
     ///

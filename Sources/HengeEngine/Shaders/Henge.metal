@@ -1245,7 +1245,9 @@ static float cloudAmount(float3 direction, constant FrameUniforms &frame)
 
 
 fragment float4 sky_fragment(SkyInOut in [[stage_in]],
-                             constant FrameUniforms &frame [[buffer(0)]])
+                             constant FrameUniforms &frame [[buffer(0)]],
+                             texture2d<float> moonMap [[texture(1)]],
+                             sampler moonSampler [[sampler(1)]])
 {
     // Unproject the pixel into a world ray. The renderer supplies the inverse
     // view-projection ready-made rather than inverting a matrix per pixel.
@@ -1255,6 +1257,21 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
 
     float3 l = normalize(frame.sunDirection.xyz);
     float3 sky = preethamSky(direction, l, frame.skyParameters.x);
+
+    // The night's own colour. Preetham is a daylight model and simply goes
+    // out below the horizon, leaving true black — but the real moonless sky
+    // is not black, it is the deepest blue there is: airglow and scattered
+    // starlight through a long column of air. A Prussian-blue floor, almost
+    // black and deliberately not quite, faded in through the same twilight
+    // the ground's night palette uses, lifting slightly toward the horizon
+    // where the air is thickest. An artistic reading of a real phenomenon,
+    // and labelled as one.
+    float nightness = 1.0 - smoothstep(-0.10, 0.06, l.y);
+    if (nightness > 0.0) {
+        const float3 kPrussianNight = float3(0.006, 0.016, 0.040);
+        float horizonLift = 1.0 + 0.6 * (1.0 - clamp(direction.y, 0.0, 1.0));
+        sky += kPrussianNight * horizonLift * nightness;
+    }
 
     // The cloud deck, laid over the blue and under the sun's disc. Colour
     // is the sky's own brightness gone grey — a cloud is lit by everything
@@ -1300,25 +1317,51 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
     float moonAngle = acos(clamp(dot(direction, m), -1.0, 1.0));
 
     if (moonAngle < moonRadius && m.y > -0.15) {
-        // A frame on the moon's disc: u toward the sun, v across it.
-        float3 u = normalize(l - m * dot(l, m));
-        float3 v = cross(m, u);
+        // A frame on the disc pinned to the sky, not to the sun: north-ish
+        // up, east right. The old frame took its x-axis from the sun's
+        // direction, which was fine while the disc was a plain sphere and
+        // would have spun the maria with the phase once it wore its
+        // photograph.
+        float3 northish = normalize(float3(0.0, 1.0, 0.0) - m * m.y);
+        float3 eastish = cross(northish, m);
 
         // Where on the disc this pixel falls, in units of the moon's radius.
         float3 offset = direction / max(dot(direction, m), 1e-4) - m;
-        float2 disc = float2(dot(offset, u), dot(offset, v)) / moonRadius;
+        float2 disc = float2(dot(offset, eastish), dot(offset, northish)) / moonRadius;
         float r2 = clamp(disc.x * disc.x + disc.y * disc.y, 0.0, 1.0);
 
-        // The surface normal of the sphere at that point, facing us.
-        float3 normal = disc.x * u + disc.y * v + sqrt(1.0 - r2) * m;
+        // The surface normal of the sphere at that point, facing us — the
+        // component along the view axis is *negative*, toward the viewer.
+        // The old `+ m` pointed every centre normal at the far side, which
+        // inverted the Lambert term; at a true quarter-degree disc of two
+        // pixels nothing showed, but the photograph would have worn its
+        // phases backwards.
+        float3 normal = eastish * disc.x + northish * disc.y - m * sqrt(1.0 - r2);
         float lit = max(dot(normal, l), 0.0);
+
+        // The Moon's own face: NASA's LRO colour map, nearside centred and
+        // north up — the same face the tide-lock shows everyone. Libration
+        // and the seasonal position-angle tilt are real and smaller than
+        // this disc's pixels; stated rather than faked. Normalised by the
+        // map's measured linear mean (0.333, 0.324, 0.297) so the disc's
+        // calibrated brightness is untouched — the photograph supplies
+        // maria and highlands, not luminance.
+        float3 albedo = float3(1.0);
+        if (frame.weatherState.w > 0.5) {
+            float lon = atan2(disc.x, sqrt(1.0 - r2));
+            float lat = asin(clamp(disc.y, -1.0, 1.0));
+            float2 uv = float2(0.5 + lon / (2.0 * M_PI_F),
+                               0.5 - lat / M_PI_F);
+            albedo = moonMap.sample(moonSampler, uv).rgb
+                   / float3(0.333, 0.324, 0.297);
+        }
 
         // Lambert, softened at the limb the way a dusty regolith actually
         // scatters, plus earthshine: the dark side is not black, it is lit by
-        // a gibbous Earth hanging in its sky.
-        float3 surface = frame.moonLight.rgb * 26.0 * pow(lit, 0.65);
+        // a gibbous Earth hanging in its sky — and it shows the same face.
+        float3 surface = frame.moonLight.rgb * 26.0 * pow(lit, 0.65) * albedo;
         float3 earthshine = float3(0.055, 0.062, 0.085)
-                          * (1.0 - frame.moonLight.w) * 0.6;
+                          * (1.0 - frame.moonLight.w) * 0.6 * albedo;
         // The deck stands in front of the moon exactly as it stands in
         // front of the sun — the first cut let a full moon shine crisply
         // through solid rain cover, and the weather ended at sunset.
@@ -1511,6 +1554,21 @@ vertex StarInOut star_vertex(uint vertexID [[vertex_id]],
     out.colour = star.colour.rgb;
     // Pogson's ratio against magnitude 0, scaled into the sky pass's range.
     out.intensity = pow(10.0, -0.4 * magnitude) * visibility * 3.2;
+
+    // Scintillation. The air twinkles the stars, and hardest near the
+    // horizon where the column is longest — the same physics that reddens
+    // the low sun. Each star rides its own phase (hashed from its index) on
+    // the *wall clock* (wind.w), for the reason every ambient motion here
+    // does: at a day a second an astronomical-clock twinkle would strobe.
+    // The planetary discs do not twinkle, and neither does anything else in
+    // this sky — steadiness is how the eye tells a planet from a star, and
+    // one day this sky may earn planets.
+    float airmass = 1.0 - clamp(world.y, 0.0, 1.0);
+    float depth = 0.12 + 0.38 * airmass * airmass;
+    float phase = fract(float(vertexID) * 0.61803398875) * 6.2831853;
+    float rate = 5.0 + fract(float(vertexID) * 0.7548776662) * 4.0;
+    float twinkle = 1.0 - depth * (0.5 + 0.5 * sin(frame.wind.w * rate + phase));
+    out.intensity *= twinkle;
     return out;
 }
 

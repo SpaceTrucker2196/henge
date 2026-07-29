@@ -414,6 +414,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// to the flat-shaded look the renderer had before, not take the app down.
     /// The almanac is still correct without a photograph of a rock.
     private var surfaces: [SurfaceTextures] = []
+    /// The Moon's own face — NASA's LRO colour map (public domain; see
+    /// SECURITY.md). Optional like every photograph here: absent, the disc
+    /// falls back to the plain lit sphere it was.
+    private var moonTexture: MTLTexture?
     private let shadowMap: MTLTexture
     private let shadowResolution: Int
 
@@ -607,6 +611,16 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         self.surfaces = SurfaceTextures.Kind.allCases.compactMap {
             SurfaceTextures.load($0, device: device)
         }
+        self.moonTexture = {
+            guard let url = Bundle.module.url(forResource: "moon-albedo",
+                                              withExtension: "jpg") else { return nil }
+            return try? MTKTextureLoader(device: device).newTexture(URL: url, options: [
+                .textureUsage: NSNumber(value: MTLTextureUsage.shaderRead.rawValue),
+                .textureStorageMode: NSNumber(value: MTLStorageMode.private.rawValue),
+                .generateMipmaps: NSNumber(value: true),
+                .SRGB: NSNumber(value: true)
+            ])
+        }()
 
         let shadowDescriptor = MTLTextureDescriptor()
         shadowDescriptor.textureType = .type2DArray
@@ -1140,7 +1154,12 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             }(),
             weatherState: SIMD4(Float(state.weather.cloudCover),
                                 Float(state.weather.wetness),
-                                Float(frost), 0)
+                                Float(frost),
+                                // w doubles as "the moon's photograph is
+                                // bound": an unbound texture samples as
+                                // zero, which would render the disc black
+                                // rather than plain.
+                                moonTexture == nil ? 0 : 1)
         )
     }
 
@@ -1217,6 +1236,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         encoder.setDepthStencilState(skyDepthState)
         encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 0)
         encoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 0)
+        if let moon = moonTexture {
+            encoder.setFragmentTexture(moon, index: 1)
+            encoder.setFragmentSamplerState(surfaceSampler, index: 1)
+        }
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
 
         // The stars, over the sky and under the stones. Skipped whenever the
