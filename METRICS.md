@@ -17,3 +17,4 @@ One row per production order run through the converge loop
 | chat | 5a7480d | 2026-07-28 | 2 | 251 | yes | Planets (VSOP87D truncated, Meeus fixtures, elongation pipeline test); star/moon display sizes doubled |
 | chat | 84f1aae | 2026-07-28 | 2 | 251 | yes | Mistletoe & Oak sighted pass; simulator screenshot loop established |
 | chat | 74f0ff2 | 2026-07-29 | 1 | 251 | yes | Async scene rebuild with progress card; dynamic inks; lore door; monument toggle |
+| chat | dac8a02 | 2026-07-29 | 3 | 254 | yes | Moon shadows (caster-gate bug found by probe image); twilight yield; zodiac layer |
