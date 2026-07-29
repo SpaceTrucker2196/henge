@@ -20,3 +20,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 469ade9 | 2026-07-29T03:45:58Z | claude-fable-5 | 206 | 172946 | 61457360 | 206686 | 74.2404 | Weather dressing: clouds/rain/frost with 7 review findings fixed |
 | 4aa2414 | 2026-07-29T03:54:21Z | claude-fable-5 | 98 | 35439 | 32091832 | 58708 | 35.0389 | Design system vocabulary: tokens for spacing/radius/ink/motion |
 | 9789aa9 | 2026-07-29T03:57:00Z | claude-fable-5 | 18 | 6292 | 6052905 | 8937 | 6.5464 | Session close: progress note |
+| f8ac053 | 2026-07-29T04:04:42Z | claude-fable-5 | 16 | 9580 | 5422476 | 4375 | 5.9891 | Rail hit targets: 44pt floor + capsule content shape |
