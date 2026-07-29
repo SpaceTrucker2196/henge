@@ -72,6 +72,10 @@ public struct RootView: View {
                                  label: "Hide the control panels") {
                         controlsDrawerOpen = false
                     }
+                    // Half into the margin: the capsule rides the plates'
+                    // edge like a tab instead of sitting on the day bar's
+                    // hour labels.
+                    .offset(x: -Henge.Space.panel)
                 }
                 .transition(.move(edge: .leading).combined(with: .opacity))
             }
@@ -127,6 +131,7 @@ public struct RootView: View {
                                      label: "Hide the almanac strip") {
                             stripDrawerOpen = false
                         }
+                        .offset(x: -Henge.Space.panel)
                     }
                     .transition(.move(edge: .leading).combined(with: .opacity))
             }
@@ -759,10 +764,11 @@ public struct RootView: View {
             }
             .padding(.vertical, Henge.Space.tight)
             .padding(.trailing, Henge.Space.panel)
-            // The drawer handle rides the strip's leading edge; the readout
-            // starts past its lane rather than underneath it — the first
-            // simulator screenshot showed the handle sitting on the date.
-            .padding(.leading, 22)
+            // The drawer handle rides the strip's leading edge, shifted half
+            // into the margin; the readout starts past its lane with clear
+            // air — the first simulator screenshot showed the handle
+            // sitting on the date.
+            .padding(.leading, 24)
         }
         // A ScrollView is greedy in *both* axes, and the overlay proposes
         // the whole screen — without this the glass ran the full height of
