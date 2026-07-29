@@ -158,6 +158,7 @@ public struct RootView: View {
                         torchToggle
                         weatherToggle
                         starLabelToggle
+                        monumentToggle
                     }
                 }
                 .padding(Henge.Space.margin)
@@ -615,6 +616,33 @@ public struct RootView: View {
         }
     }
 
+    /// As built, or as it stands: the completed Stage-2 monument of
+    /// c. 2200 BC against today's ruin. Two labelled states, never blended
+    /// — invariant 8. Promoted from the strip's buried tail to the rail
+    /// after the switch quietly cost the owner half the circle: a control
+    /// that can remove thirty stones should not be an easter egg.
+    private var monumentToggle: some View {
+        Button {
+            model.monumentState = model.monumentState == .asItWas
+                ? .asItStands : .asItWas
+        } label: {
+            Image(systemName: model.monumentState == .asItWas
+                  ? "building.columns.fill" : "building.columns")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.monumentState == .asItWas)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(model.monumentState == .asItWas ? Henge.bronze : Henge.stone)
+        .accessibilityLabel(model.monumentState == .asItWas
+                            ? "Showing the monument as built"
+                            : "Showing the ruin as it stands")
+        .accessibilityHint("Switches between the completed monument of about "
+                           + "2200 BC and today's ruin — two surveyed states, "
+                           + "never a blend")
+    }
+
     /// Names on the named stars, from the IAU register.
     private var starLabelToggle: some View {
         Button {
@@ -751,15 +779,6 @@ public struct RootView: View {
                                 .buttonStyle(.plain)
                         }
                     }
-                    Button(model.monumentState == .asItStands ? "Ruin" : "Whole") {
-                        model.monumentState = model.monumentState == .asItStands
-                            ? .asItWas : .asItStands
-                    }
-                    .font(Henge.body(.caption2))
-                    .padding(.horizontal, 8).padding(.vertical, 5)
-                    .hengeControl()
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Switch between the completed monument and the ruin")
                 }
             }
             .padding(.vertical, Henge.Space.tight)
