@@ -18,15 +18,46 @@ import SwiftUI
 public enum Henge {
 
     // ── colour ──────────────────────────────────────────────────────────────
+    //
+    // The inks are *dynamic*: the glass takes its brightness from the system
+    // appearance, so an ink that ignores it is illegible half the time —
+    // the first light-mode screenshot was pale stone on pale glass. In dark
+    // appearance the inks are the original palette; in light they turn to
+    // the oak end of the same wood.
 
-    /// Weathered sarsen. The default ink.
-    public static let stone = Color(red: 0.87, green: 0.85, blue: 0.80)
-    /// Wet oak bark — the darker ink, for panels that need one.
+    /// A colour that answers the system appearance.
+    private static func dynamic(light: (Double, Double, Double),
+                                dark: (Double, Double, Double)) -> Color {
+        #if canImport(UIKit)
+        Color(uiColor: UIColor { trait in
+            let c = trait.userInterfaceStyle == .dark ? dark : light
+            return UIColor(red: c.0, green: c.1, blue: c.2, alpha: 1)
+        })
+        #else
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let c = isDark ? dark : light
+            return NSColor(red: c.0, green: c.1, blue: c.2, alpha: 1)
+        })
+        #endif
+    }
+
+    /// The default ink: weathered sarsen on dark glass, wet oak on light.
+    public static let stone = dynamic(light: (0.24, 0.20, 0.16),
+                                      dark: (0.87, 0.85, 0.80))
+    /// Wet oak bark — the darker ink, for panels that need one regardless.
     public static let oak = Color(red: 0.20, green: 0.16, blue: 0.13)
-    /// Old bronze. The accent, and the only warm note.
-    public static let bronze = Color(red: 0.72, green: 0.55, blue: 0.28)
+    /// Old bronze. The accent, and the only warm note — deepened on light
+    /// glass so it keeps its contrast.
+    public static let bronze = dynamic(light: (0.55, 0.40, 0.15),
+                                       dark: (0.72, 0.55, 0.28))
     /// Mistletoe. Used sparingly, for the thing that is currently true.
-    public static let mistletoe = Color(red: 0.62, green: 0.72, blue: 0.55)
+    public static let mistletoe = dynamic(light: (0.33, 0.45, 0.27),
+                                          dark: (0.62, 0.72, 0.55))
+    /// Fixed pale ink for text drawn on the *scene* rather than on glass —
+    /// the star labels sit on the night sky, which is dark in every system
+    /// appearance, and a dynamic ink would vanish there at noon-mode.
+    public static let starlight = Color(red: 0.87, green: 0.85, blue: 0.80)
 
     // ── type ────────────────────────────────────────────────────────────────
 

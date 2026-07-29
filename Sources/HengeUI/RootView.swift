@@ -103,7 +103,9 @@ public struct RootView: View {
                     ForEach(model.starLabels(aspect: Double(aspect))) { label in
                         Text(label.id)
                             .font(Henge.body(.caption2))
-                            .foregroundStyle(Henge.stone.opacity(Henge.Ink.dim))
+                            // Starlight, not the adaptive ink: these sit on
+                            // the night sky, dark in every appearance.
+                            .foregroundStyle(Henge.starlight.opacity(Henge.Ink.dim))
                             .shadow(color: .black.opacity(0.6), radius: 2)
                             .position(x: label.x * proxy.size.width,
                                       y: label.y * proxy.size.height - 12)
