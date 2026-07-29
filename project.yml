@@ -56,6 +56,26 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_PREVIEWS: YES
 
+  # ── iOS UI tests ───────────────────────────────────────────────────────
+  # Pixel-level inspection. The package tests cannot see how a window
+  # *composites* — the rebuild card once drew upside down in landscape
+  # while the accessibility tree swore it was fine — so this bundle drives
+  # the real app in the simulator and reads the screen back through OCR.
+  # Run with `make uitest`; it is minutes rather than seconds, which is why
+  # it is not part of `make test`.
+  HengeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: UITests
+    dependencies:
+      - target: Henge
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.river.henge.uitests
+        TEST_TARGET_NAME: Henge
+
   # ── macOS ──────────────────────────────────────────────────────────────
   # Same bundle id as iOS on purpose: one App Store Connect record covering
   # both platforms, the way MeowPassword ships.
@@ -90,8 +110,13 @@ schemes:
     build:
       targets:
         Henge: all
+        HengeUITests: test
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - HengeUITests
   Henge-macOS:
     build:
       targets:

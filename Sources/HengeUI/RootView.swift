@@ -136,7 +136,10 @@ public struct RootView: View {
                         .frame(width: 180)
                 }
                 .padding(Henge.Space.margin)
-                .hengePanel()
+                // Material rather than glass — `hengeCard` records why: in
+                // a landscape window the glass portal drew this very card
+                // upside down.
+                .hengeCard()
                 .allowsHitTesting(false)
                 .transition(.opacity)
             }
@@ -208,6 +211,17 @@ public struct RootView: View {
         .foregroundStyle(Henge.stone)
         .tint(Henge.bronze)
         .task { await runClock() }
+        .task {
+            // The UI test's fixture (`BuildFlowUITests`): pin the rebuild
+            // card open so the orientation inspection can read it at
+            // leisure — the real card lives for about a second, long
+            // enough to mislead a user and too short to screenshot
+            // reliably. Inert unless the harness asks for it by name.
+            if ProcessInfo.processInfo
+                .environment["HENGE_UITEST_PIN_REBUILD_CARD"] != nil {
+                model.rebuildProgress = 0.4
+            }
+        }
         .sheet(isPresented: $showingInfo) {
             InfoView()
                 .presentationBackground(.ultraThinMaterial)

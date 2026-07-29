@@ -170,6 +170,26 @@ public extension View {
         }
     }
 
+    /// The dress for a panel that floats alone over the scene: the same
+    /// rounded plate, in plain material rather than glass.
+    ///
+    /// Not glass, deliberately. `glassEffect` composites its content
+    /// through a backdrop portal, and in a rotated (landscape) window that
+    /// portal missed the interface transform: the rebuild card — the one
+    /// panel floating outside the chrome's `GlassEffectContainer` — drew
+    /// its text rotated 180° from every other panel, and moving it *into*
+    /// a container displaced it off screen instead. A card that lives for
+    /// a second while the meshes rebuild needs legibility, not lensing;
+    /// `.ultraThinMaterial` is the dress the panels already wear below
+    /// OS 26, and it obeys the window transform in every orientation.
+    /// `BuildFlowUITests` reads the card off the pixels to hold this.
+    @ViewBuilder
+    func hengeCard(cornerRadius: CGFloat = Henge.Radius.panel) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        self.background(.ultraThinMaterial, in: shape)
+            .overlay(shape.strokeBorder(Henge.stone.opacity(0.18), lineWidth: 1))
+    }
+
     /// A control's dress: a quiet glass pill always, bronze when selected.
     ///
     /// The Tufte pass stripped unselected controls bare, and the owner

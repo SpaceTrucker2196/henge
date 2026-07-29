@@ -2,13 +2,24 @@
 # `make test` is the oracle (factory/converge.md step 4): green plus a
 # warning-clean `make build` means the factory is operational.
 
-.PHONY: test build build-ios build-mac generate clean run-mac
+.PHONY: test uitest build build-ios build-mac generate clean run-mac
 
 # The oracle. Runs against the shared engine through SwiftPM, so it needs no
 # simulator and no Xcode project — which is what keeps it fast enough to run
 # on every change. Logic belongs in HengeAstro/HengeGeometry for that reason.
 test:
 	swift test
+
+# Pixel-level inspection: drives the real iOS app in the simulator and OCRs
+# the screen. Exists because the rebuild card once drew upside down in a
+# landscape window while the accessibility tree swore it was fine — a class
+# of bug only the pixels can witness. Minutes rather than seconds, so it is
+# its own target; run it when the chrome's compositing changes.
+uitest: generate
+	set -o pipefail; xcodebuild -project Henge.xcodeproj -scheme Henge \
+		-destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+		-configuration Debug CODE_SIGNING_ALLOWED=NO test | \
+		{ grep -E "error:|warning:|Test Suite|Test Case.*(passed|failed)|BUILD|TEST" || true; }
 
 # Regenerate Henge.xcodeproj from project.yml. The .xcodeproj is generated —
 # never hand-edit it, and never commit it (see .gitignore).
