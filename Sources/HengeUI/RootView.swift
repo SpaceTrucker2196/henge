@@ -203,6 +203,7 @@ public struct RootView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .frame(width: 14, height: 56)
                 .hengeControl()
+                .opacity(Henge.Ink.dim)
                 .frame(width: Henge.Hit.control, height: 64)
                 .contentShape(Rectangle())
         }
@@ -288,6 +289,7 @@ public struct RootView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 9)
                     .foregroundStyle(model.station == station ? Henge.bronze : Henge.stone)
+                    .hengeControl(isSelected: model.station == station)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(station.rawValue)
@@ -324,7 +326,7 @@ public struct RootView: View {
             DayBar(model: model)
             timeControls
         }
-        .padding(10)
+        .padding(Henge.Space.panel)
         .hengePanel()
     }
 
@@ -449,7 +451,7 @@ public struct RootView: View {
                 }
             }
         }
-        .padding(10)
+        .padding(Henge.Space.panel)
         .hengePanel()
     }
 
@@ -494,14 +496,15 @@ public struct RootView: View {
             }
         } label: {
             Image(systemName: showingAlmanac ? "text.justify" : "text.alignleft")
+                .frame(width: 36, height: 32)
+                .hengeControl()
+                // The glass reads at thirty-six points; the finger gets
+                // the full platform floor around it. Visual weight and
+                // hit target are different budgets.
                 .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
-                // The capsule the eye aims at must be the shape the
-                // finger hits — without this the tappable region is
-                // the glyph's own frame, smaller than the glass.
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .hengeControl()
         .foregroundStyle(Henge.stone)
         .accessibilityLabel(showingAlmanac ? "Hide the almanac" : "Show the almanac")
     }
@@ -518,14 +521,15 @@ public struct RootView: View {
             model.showsAlignmentOverlay.toggle()
         } label: {
             Image(systemName: "safari")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.showsAlignmentOverlay)
+                // The glass reads at thirty-six points; the finger gets
+                // the full platform floor around it. Visual weight and
+                // hit target are different budgets.
                 .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
-                // The capsule the eye aims at must be the shape the
-                // finger hits — without this the tappable region is
-                // the glyph's own frame, smaller than the glass.
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .hengeControl(isSelected: model.showsAlignmentOverlay)
         .foregroundStyle(model.showsAlignmentOverlay ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.showsAlignmentOverlay
                             ? "Hide the alignment lines" : "Show the alignment lines")
@@ -556,14 +560,15 @@ public struct RootView: View {
             model.torchlight.toggle()
         } label: {
             Image(systemName: model.torchlight ? "flame.fill" : "flame")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.torchlight)
+                // The glass reads at thirty-six points; the finger gets
+                // the full platform floor around it. Visual weight and
+                // hit target are different budgets.
                 .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
-                // The capsule the eye aims at must be the shape the
-                // finger hits — without this the tappable region is
-                // the glyph's own frame, smaller than the glass.
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .hengeControl(isSelected: model.torchlight)
         .foregroundStyle(model.torchlight ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.torchlight ? "Put out the torch" : "Light the torch")
         .accessibilityHint("A carried flame that lights the stones at night "
@@ -580,14 +585,15 @@ public struct RootView: View {
             model.weather = all[(index + 1) % all.count]
         } label: {
             Image(systemName: weatherSymbol)
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.weather != .clear)
+                // The glass reads at thirty-six points; the finger gets
+                // the full platform floor around it. Visual weight and
+                // hit target are different budgets.
                 .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
-                // The capsule the eye aims at must be the shape the
-                // finger hits — without this the tappable region is
-                // the glyph's own frame, smaller than the glass.
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .hengeControl(isSelected: model.weather != .clear)
         .foregroundStyle(model.weather != .clear ? Henge.bronze : Henge.stone)
         .accessibilityLabel("Weather")
         .accessibilityValue(model.weather.rawValue)
@@ -610,11 +616,12 @@ public struct RootView: View {
             model.showsStarLabels.toggle()
         } label: {
             Image(systemName: "textformat")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.showsStarLabels)
                 .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .hengeControl(isSelected: model.showsStarLabels)
         .foregroundStyle(model.showsStarLabels ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.showsStarLabels
                             ? "Hide the star names" : "Show the star names")
@@ -628,14 +635,15 @@ public struct RootView: View {
             model.showsLunarMarkers.toggle()
         } label: {
             Image(systemName: "record.circle")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.showsLunarMarkers)
+                // The glass reads at thirty-six points; the finger gets
+                // the full platform floor around it. Visual weight and
+                // hit target are different budgets.
                 .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
-                // The capsule the eye aims at must be the shape the
-                // finger hits — without this the tappable region is
-                // the glyph's own frame, smaller than the glass.
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .hengeControl(isSelected: model.showsLunarMarkers)
         .foregroundStyle(model.showsLunarMarkers ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.showsLunarMarkers
                             ? "Hide the eclipse markers" : "Show the eclipse markers")

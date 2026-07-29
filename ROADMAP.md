@@ -63,8 +63,11 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       **Not done, and why.** Ambient sound and torchlit ceremony mode are real
       work with no blocker other than time. Weather dressing beyond the haze
       (cloud, rain, frost) likewise.
-      "Mistletoe & Oak" as a full design language is unstarted — what exists is
-      a functional layout, not a designed one. Hosek–Wilkie still waits on its
+      "Mistletoe & Oak" landed as a working language on 2026-07-28: the
+      vocabulary (five spacings, one panel radius, three inks, two motions,
+      a hit-target floor) in Theme.swift, and a sighted pass over the chrome
+      iterated against simulator screenshots. A language is never finished,
+      but it is no longer merely a layout. Hosek–Wilkie still waits on its
       data licence. MetalFX is unexplored; 120 Hz is set on the view but has not
       been profiled. (Moon-cast shadows are no longer on this list: the shared
       cascades are fitted to the moon when it is up and bright enough, and only
