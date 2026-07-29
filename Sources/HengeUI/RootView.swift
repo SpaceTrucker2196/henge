@@ -329,7 +329,34 @@ public struct RootView: View {
     }
 
     private var timeControls: some View {
-        HStack(spacing: Henge.Space.element) {
+        // One row on a wide window, two on a phone: the row overflowed a
+        // compact width and SwiftUI compressed the rate labels into
+        // one-letter-per-line ribbons. ViewThatFits keeps both layouts
+        // honest instead of letting either squeeze.
+        ViewThatFits(in: .horizontal) {
+            timeControlRow(split: false)
+            timeControlRow(split: true)
+        }
+    }
+
+    @ViewBuilder
+    private func timeControlRow(split: Bool) -> some View {
+        if split {
+            VStack(alignment: .leading, spacing: Henge.Space.element) {
+                HStack(spacing: Henge.Space.element) { playAndRates }
+                HStack(spacing: Henge.Space.element) { jumpAndLore }
+            }
+        } else {
+            HStack(spacing: Henge.Space.element) {
+                playAndRates
+                Spacer(minLength: 0)
+                jumpAndLore
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var playAndRates: some View {
             // The play button is the row's one verb, and it was the row's
             // most cramped control. Full hit floor, and a clear gap before
             // the rates so a thumb aiming at "run" cannot land on "1×".
@@ -349,6 +376,7 @@ public struct RootView: View {
                 let allowed = !reduceMotion || rate.value <= 100
                 Button(rate.label) { model.rate = rate.value }
                     .font(Henge.figure(.caption2))
+                    .fixedSize()
                     .padding(.horizontal, 9).padding(.vertical, 7)
                     .hengeControl(isSelected: abs(model.rate - rate.value) < 0.5)
                     .buttonStyle(.plain)
@@ -357,9 +385,10 @@ public struct RootView: View {
                     .accessibilityLabel("\(rate.label) per second")
                     .accessibilityHint(allowed ? "" : "Unavailable while Reduce Motion is on")
             }
+    }
 
-            Spacer(minLength: 0)
-
+    @ViewBuilder
+    private var jumpAndLore: some View {
             Button { model.jump(toDaysFromNow: -1) } label: {
                 Image(systemName: "chevron.left").frame(width: 28, height: 30)
             }
@@ -368,6 +397,7 @@ public struct RootView: View {
 
             Button("Now") { model.time = JulianDay(Date()) }
                 .font(Henge.body(.caption))
+                .fixedSize()
                 .padding(.horizontal, 10).padding(.vertical, 7)
                 .hengeControl()
                 .buttonStyle(.plain)
@@ -385,7 +415,6 @@ public struct RootView: View {
             .accessibilityLabel("Lore")
             .accessibilityHint("What is known, what is argued, and what is modern "
                                + "tradition — each with its sources")
-        }
     }
 
     // ── what is coming ──────────────────────────────────────────────────────
@@ -720,8 +749,12 @@ public struct RootView: View {
                     .accessibilityHint("Switch between the completed monument and the ruin")
                 }
             }
-            .padding(.horizontal, Henge.Space.panel)
             .padding(.vertical, Henge.Space.tight)
+            .padding(.trailing, Henge.Space.panel)
+            // The drawer handle rides the strip's leading edge; the readout
+            // starts past its lane rather than underneath it — the first
+            // simulator screenshot showed the handle sitting on the date.
+            .padding(.leading, 22)
         }
         // A ScrollView is greedy in *both* axes, and the overlay proposes
         // the whole screen — without this the glass ran the full height of
@@ -735,6 +768,11 @@ public struct RootView: View {
 
     private func column(@ViewBuilder _ content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: Henge.Space.hair, content: content)
+            // Ideal width, always: without this a compact screen compresses
+            // the trailing column to a one-character ribbon of stacked
+            // letters — seen on the first simulator screenshot — instead of
+            // letting the strip scroll.
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     private var columnRule: some View {
