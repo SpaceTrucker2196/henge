@@ -23,12 +23,14 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       distance and apparent size from a truncated ELP-2000; topocentric
       parallax; the 18.61-year nodal cycle and standstill envelope, emerging
       from the arithmetic rather than scripted. Rendered as a sphere lit by the
-      real sun direction, with earthshine, plus unshadowed moonlight on the
-      stones. **Remaining:** Moon with correct phase geometry, earthshine and
-      apparent size; the 18.61-year nodal cycle so standstills emerge rather
-      than being scripted. Hipparcos star catalogue, constellation lines, Milky
-      Way. Precession and deep-time mode — Thuban as pole star.
-      **Blocked until `SECURITY.md`'s constellation-figure licence is settled.**
+      real sun direction, with earthshine, plus moonlight on the stones.
+      *Landed 2026-07-28:* the Hipparcos naked-eye sky with proper motion and
+      precession — Thuban emerges at the 2800 BC pole from arithmetic; the
+      five naked-eye planets from truncated VSOP87D, steady among shimmering
+      stars; the Moon's photographed face (NASA LRO) at a doubled display
+      size; the full IAU name register in a labels layer; Prussian night and
+      starlit ground. **Remaining:** the Milky Way (licence undecided);
+      constellation lines stay dropped.
 
 - [x] **M4 — The Calendar (M–L).** *In progress.* The Wheel of the Year has
       landed: eight stations solved from apparent solar longitude, festival
@@ -60,9 +62,12 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       geometry overlay and gold Aubrey-marker modes, tier-badged on screen;
       the almanac as a top strip with phase glyphs.
 
-      **Not done, and why.** Ambient sound and torchlit ceremony mode are real
-      work with no blocker other than time. Weather dressing beyond the haze
-      (cloud, rain, frost) likewise.
+      *Also landed 2026-07-28:* the torchlit ceremony mode (night-gated,
+      wall-clock flicker); weather as chosen dressing — overcast, rain,
+      frost — with every decision a tested CPU function; the app icon.
+
+      **Not done, and why.** Ambient sound is real work with no blocker but
+      time — and a licence conversation for any recorded material.
       "Mistletoe & Oak" landed as a working language on 2026-07-28: the
       vocabulary (five spacings, one panel radius, three inks, two motions,
       a hit-target floor) in Theme.swift, and a sighted pass over the chrome
