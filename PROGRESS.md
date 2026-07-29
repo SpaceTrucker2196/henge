@@ -1281,3 +1281,42 @@ The session closed with a fourteen-agent adversarial review of its own diff
 eight fixed, the moon marker's one-hole lag among them.
 
 212 tests, both platforms warning-clean.
+
+## 2026-07-28 (evening) — The torch, the stars, the weather, and the vocabulary
+
+The second half of the day, each order through the same loop: implement,
+adversarial review by agents told to refute, fix what survives, converge,
+ship.
+
+**The torch.** A carried flame at the viewer's hand for the ceremony mode:
+night-gated and flickered on the CPU where the tests hold both curves, so a
+torch at noon is byte-identical to no torch at all. The review caught the
+flame coupled to the *hidden* sun's Fresnel term — facing the sunset azimuth
+at night extinguished it — and a sourceless sky-torch in the aerial station.
+
+**The stars.** The owner unblocked the Hipparcos vendoring: 8,870 naked-eye
+stars with proper motion (Arcturus walks its published 2.84° across the deep
+span) and precession through the pole star's own series — Thuban's
+declination of date in 2800 BC pinned above 89.3°, the builders' pole star
+out of arithmetic. The review caught a toggle that left the sky permanently
+starless, and one honest recalibration: the first render test asked a 55°
+field for hundreds of stars, forgetting it holds six percent of the sphere.
+
+**The weather.** Clear, overcast, rain, frost as chosen dressing, every
+decision a pure CPU function, the sun's radiance taking the weather's cut
+before anything downstream reads it. The review confirmed seven findings —
+night exempt from weather, a clear ring in the deck exactly where the rising
+sun sits, a rain test whose threshold survived deletion of the very soak it
+claimed to pin (proven by mutation, recalibrated from both measurements).
+
+**The chrome.** The almanac strip's full-height bug was a greedy ScrollView
+accepting the overlay's whole-screen proposal — fixedSize pins it to the sun
+column now. And Mistletoe & Oak gained its vocabulary: five spacings, one
+panel radius, three inks, two durations that honour Reduce Motion by
+construction. The taste half waits for eyes on a running window.
+
+Also in-tree: the sarsen geology research note, re-run clean from the
+prompt-injection loss, audited against primary texts — parked unapplied,
+per the owner.
+
+242 tests, both platforms warning-clean.
