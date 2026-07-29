@@ -1307,6 +1307,87 @@ fragment float4 haze_fragment(SkyInOut in [[stage_in]],
     return float4(inscatter, hitsSurface ? transmittance : 1.0);
 }
 
+// ── the stars ───────────────────────────────────────────────────────────────
+//
+// The Hipparcos naked-eye sky as point sprites. Each star arrives as a unit
+// vector in the equatorial frame of the drawn epoch; one matrix — built by
+// `StarField.worldRows` from sidereal time and latitude — turns the whole
+// sky, so the buffer itself only rebuilds when precession has crept far
+// enough to matter. Drawn after the sky dome and before the stones, so a
+// trilithon occludes the stars behind it by ordinary depth test.
+struct StarVertex {
+    float4 direction;        // xyz: equatorial unit vector, w: V magnitude
+    float4 colour;           // rgb: B−V impression, w spare
+};
+
+struct StarInOut {
+    float4 clipPosition [[position]];
+    float  pointSize [[point_size]];
+    float3 colour;
+    float  intensity;
+};
+
+vertex StarInOut star_vertex(uint vertexID [[vertex_id]],
+                             constant StarVertex *stars [[buffer(1)]],
+                             constant FrameUniforms &frame [[buffer(0)]],
+                             constant float4x4 &equatorialToWorld [[buffer(2)]])
+{
+    StarVertex star = stars[vertexID];
+    float magnitude = star.direction.w;
+    float3 world = (equatorialToWorld * float4(star.direction.xyz, 0.0)).xyz;
+
+    StarInOut out;
+    // Restates StarField.visibility by hand — MSL cannot import it — the
+    // ShaderTypes arrangement: change there, change here, and the render
+    // test that demands a starless noon is the alarm. sunDirection.y is
+    // sin(altitude); the threshold slides one degree per magnitude.
+    float sunAltitude = asin(clamp(frame.sunDirection.y, -1.0, 1.0))
+                      * (180.0 / M_PI_F);
+    float threshold = -3.0 - max(magnitude, 0.0);
+    float t = clamp((threshold - sunAltitude) / 2.0, 0.0, 1.0);
+    float visibility = t * t * (3.0 - 2.0 * t);
+
+    // Below the horizon, washed out by twilight, or standing inside the
+    // moon's disc: clip z outside [0,1] discards the point entirely. The
+    // moon clause restates StarField.hiddenByMoon — matched by hand, and
+    // the unit tests on the CPU side are the oracle for the rule.
+    float moonOcclusion = dot(world, normalize(frame.moonDirection.xyz));
+    bool hidden = world.y < -0.01
+        || visibility <= 0.0
+        || (frame.moonDirection.y > -0.1
+            && moonOcclusion > cos(frame.moonDirection.w * 1.6));
+    if (hidden) {
+        out.clipPosition = float4(0.0, 0.0, 2.0, 1.0);
+        out.pointSize = 0.0;
+        out.colour = float3(0.0);
+        out.intensity = 0.0;
+        return out;
+    }
+
+    out.clipPosition = frame.viewProjection
+        * float4(frame.cameraPosition.xyz + world * 30000.0, 1.0);
+    // Brighter stars draw larger as well as brighter — how the eye actually
+    // reports magnitude, since every star is far below one pixel.
+    out.pointSize = clamp(3.8 - 0.45 * magnitude, 1.2, 5.0);
+    out.colour = star.colour.rgb;
+    // Pogson's ratio against magnitude 0, scaled into the sky pass's range.
+    out.intensity = pow(10.0, -0.4 * magnitude) * visibility * 3.2;
+    return out;
+}
+
+fragment float4 star_fragment(StarInOut in [[stage_in]],
+                              constant FrameUniforms &frame [[buffer(0)]],
+                              float2 pointCoord [[point_coord]])
+{
+    // A round star with a soft edge, from the point sprite's own coords.
+    float radius = length(pointCoord - 0.5) * 2.0;
+    float falloff = clamp(1.0 - radius * radius, 0.0, 1.0);
+    float3 colour = in.colour * in.intensity * falloff * falloff;
+    // Tonemapped like every other pass, then blended additively onto the
+    // finished sky — starlight only ever adds.
+    return float4(acesToneMap(colour * frame.skyParameters.y), 1.0);
+}
+
 // ── individual blades ───────────────────────────────────────────────────────
 //
 // The shading model above is right for the middle distance: a hundred metres

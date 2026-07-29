@@ -284,6 +284,9 @@ final class RendererSetupTests: XCTestCase {
         // + `reflectance` (specular strength, roughness floor, takes wind).
         XCTAssertEqual(MemoryLayout<DrawUniforms>.size, 2 * 64 + 4 * 16)
         XCTAssertEqual(MemoryLayout<MeshVertex>.stride, 32)
+        // Two float4s: direction+magnitude, colour. The star buffer is sized
+        // by this stride and read by the MSL StarVertex — same contract.
+        XCTAssertEqual(MemoryLayout<StarVertex>.stride, 2 * 16)
     }
 
     /// Reverse-Z: the near plane maps to 1 and distance tends to 0.

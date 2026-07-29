@@ -34,7 +34,7 @@ adding a data set a deliberate act rather than a convenience.
 | Sky model | Preetham et al. (1999), closed form | Published formula, no data tables to vendor | **In use** (M1) |
 | **Surface textures** | **ambientCG** `Rock030` and `Grass004`, 1K JPG sets (colour, normal, roughness) | **CC0 1.0 Universal** — public domain dedication, no attribution required. Credited anyway | **In use** — `Sources/HengeEngine/Resources/{rock,grass}-{albedo,normal,roughness}.jpg`, 1.7 MB total, colour and normal downsampled to 1024/512 |
 | **Terrain** | **SRTM 1-arc-second (NASA/USGS)**, fetched as Skadi `.hgt` tiles N51W002 and N51W003 | **Public domain** (US government work). Baked by `scripts/bake_terrain.py`; the bake script and the tile names are in-tree so the result is reproducible | **In use** — `Sources/HengeGeometry/Resources/salisbury-plain.heightfield`, 1.18 MB, 768x768 at 40 m (±15.3 km) |
-| Star catalogue | **Hipparcos / Tycho-2 (ESA)** | Free with attribution, no share-alike | **Decided, not yet vendored** (M3) |
+| Star catalogue | **Hipparcos (ESA)** — ESA, 1997, *The Hipparcos and Tycho Catalogues*, ESA SP-1200, via CDS I/239 `hip_main.dat` | Free with attribution, no share-alike — attribution here and in `StarCatalog.swift` | **In use** — `Sources/HengeGeometry/Resources/hipparcos-bright.csv`, the 8,870 stars with V ≤ 6.5 (HIP, ICRS J1991.25 position, V, B−V, proper motions), 443 KB |
 | Constellation figures | — | — | **Dropped from scope** (owner, 2026-07-27). Stars will be drawn as a field without lines, which removes the only GPL entanglement in the project |
 | Lunar theory | ELP2000 truncation, from the IMCCE-published series | To be confirmed before vendoring | Pending (M3) |
 | Milky Way texture | undecided | — | Pending (M3) |

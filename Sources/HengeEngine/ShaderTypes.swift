@@ -144,6 +144,23 @@ public struct DrawUniforms {
     }
 }
 
+/// One star, matching the MSL `StarVertex` struct.
+///
+/// `direction` is the unit vector against the equator and equinox of the
+/// drawn epoch, with the visual magnitude riding in `w`; `colour` is the
+/// B−V impression with `w` spare. The equatorial→world rotation is a frame
+/// uniform, so this buffer only rebuilds when precession has moved the frame
+/// — every couple of simulated years — never per frame.
+public struct StarVertex {
+    public var direction: SIMD4<Float>
+    public var colour: SIMD4<Float>
+
+    public init(direction: SIMD4<Float>, colour: SIMD4<Float>) {
+        self.direction = direction
+        self.colour = colour
+    }
+}
+
 /// One vertex, matching the MSL `Vertex` struct.
 public struct MeshVertex {
     /// xyz world position; **w carries a blend value** — 0 for bare soil, 1 for

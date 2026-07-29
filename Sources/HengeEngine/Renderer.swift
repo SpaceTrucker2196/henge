@@ -93,6 +93,20 @@ public struct SceneState: Sendable {
     /// test asserts the shipping path has texturing on.
     public var surfaceTexturing: Bool
 
+    /// Whether the stars come out at night.
+    ///
+    /// A switch for the same reason the grass and the soil banks have one:
+    /// the star field is several thousand bright points, and a test measuring
+    /// darkness must be able to turn the sky's own lights off.
+    public var stars: Bool
+
+    /// The moment being drawn, as UT. The stars need it twice over: sidereal
+    /// time turns the sky, and precession plus proper motion decide *which*
+    /// sky — 2500 BC is not tonight with the labels changed.
+    public var epoch: JulianDay
+    /// Where the observer stands; latitude and longitude orient the sky.
+    public var site: GeographicSite
+
     /// Where the sun is, from `HengeAstro`. Never set by hand — invariant 1.
     public var moon: HorizontalCoordinate
     /// Apparent angular radius of the moon, radians.
@@ -131,7 +145,10 @@ public struct SceneState: Sendable {
                 windBearing: Double = 250,
                 windTime: Double = 0,
                 lightShafts: Bool = true,
-                torchlight: Bool = false) {
+                torchlight: Bool = false,
+                stars: Bool = true,
+                epoch: JulianDay = JulianDay(2_451_545.0),
+                site: GeographicSite = .stonehenge) {
         self.sun = sun
         self.moon = moon
         self.moonAngularRadius = moonAngularRadius
@@ -150,6 +167,9 @@ public struct SceneState: Sendable {
         self.windTime = windTime
         self.lightShafts = lightShafts
         self.torchlight = torchlight
+        self.stars = stars
+        self.epoch = epoch
+        self.site = site
     }
 
     /// How hard the torch burns, before the shader's falloff.
@@ -202,7 +222,9 @@ public struct SceneState: Sendable {
                           moonIllumination: phase.illuminatedFraction,
                           solarLongitude: position.apparentLongitude,
                           sunAngularRadius: position.angularDiameter.radians / 2,
-                          camera: camera)
+                          camera: camera,
+                          epoch: ut,
+                          site: site)
     }
 
     /// Unit vector toward the moon in world axes.
@@ -306,6 +328,17 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     private let shadowPipeline: MTLRenderPipelineState
     private let skyPipeline: MTLRenderPipelineState
     private let hazePipeline: MTLRenderPipelineState
+    private let starPipeline: MTLRenderPipelineState
+    /// The Hipparcos naked-eye sky. Nil degrades to a starless night — the
+    /// almanac does not die for want of decoration.
+    private let starCatalog = StarCatalog.load()
+    private var starBuffer: MTLBuffer?
+    private var starCount = 0
+    /// The epoch the star buffer was built for. Proper motion and precession
+    /// move slowly, so the buffer stands until the drawn epoch drifts two
+    /// years from it — a deep-time scrub rebuilds a few times per millennium
+    /// crossed, never per frame.
+    private var starEpoch = Double.infinity
     private let sceneDepthState: MTLDepthStencilState
     private let shadowDepthState: MTLDepthStencilState
     private let skyDepthState: MTLDepthStencilState
@@ -430,6 +463,22 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             self.hazePipeline = try device.makeRenderPipelineState(descriptor: hazeDescriptor)
         } catch {
             throw RendererError.pipelineCreationFailed("light shafts: \(error)")
+        }
+
+        // Stars: point sprites blended additively over the finished sky.
+        let starDescriptor = MTLRenderPipelineDescriptor()
+        starDescriptor.label = "stars"
+        starDescriptor.vertexFunction = library.makeFunction(name: "star_vertex")
+        starDescriptor.fragmentFunction = library.makeFunction(name: "star_fragment")
+        starDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        starDescriptor.colorAttachments[0].isBlendingEnabled = true
+        starDescriptor.colorAttachments[0].sourceRGBBlendFactor = .one
+        starDescriptor.colorAttachments[0].destinationRGBBlendFactor = .one
+        starDescriptor.depthAttachmentPixelFormat = Self.depthFormat
+        do {
+            self.starPipeline = try device.makeRenderPipelineState(descriptor: starDescriptor)
+        } catch {
+            throw RendererError.pipelineCreationFailed("stars: \(error)")
         }
 
         // The camera renders reverse-Z, so nearer means *greater*.
@@ -1052,6 +1101,33 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
     }
 
+    /// Rebuild the star buffer when the drawn epoch has drifted far enough
+    /// for precession and proper motion to matter.
+    private func refreshStarsIfNeeded() {
+        guard state.stars, let catalog = starCatalog else {
+            starCount = 0
+            // Forget the epoch too, or re-enabling within two simulated
+            // years finds the drift guard satisfied and the count still
+            // zero — a permanently starless night the review caught.
+            starEpoch = .infinity
+            return
+        }
+        guard abs(state.epoch.value - starEpoch) > 730 else { return }
+        let instances = catalog.instances(at: state.epoch.terrestrialTime)
+        let vertices = instances.map { star in
+            StarVertex(direction: SIMD4(SIMD3<Float>(star.direction),
+                                        Float(star.magnitude)),
+                       colour: SIMD4(star.colour, 0))
+        }
+        starBuffer = device.makeBuffer(
+            bytes: vertices,
+            length: MemoryLayout<StarVertex>.stride * vertices.count,
+            options: .storageModeShared)
+        starBuffer?.label = "stars"
+        starCount = starBuffer == nil ? 0 : vertices.count
+        starEpoch = state.epoch.value
+    }
+
     private func encodeScenePass(_ encoder: MTLRenderCommandEncoder,
                                  uniformBuffer: MTLBuffer) {
         // Sky first, filling the frame; the stones then draw over it.
@@ -1060,6 +1136,20 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 0)
         encoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 0)
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+
+        // The stars, over the sky and under the stones. Skipped whenever the
+        // brightest star could not survive the twilight — the vertex shader
+        // would cull every point anyway, and the encoder is cheaper unissued.
+        if state.stars, starCount > 0, let stars = starBuffer,
+           state.sun.altitude.degrees < -1.5 {
+            encoder.setRenderPipelineState(starPipeline)
+            encoder.setDepthStencilState(skyDepthState)
+            encoder.setVertexBuffer(stars, offset: 0, index: 1)
+            var equatorialToWorld = Self.starMatrix(state: state)
+            encoder.setVertexBytes(&equatorialToWorld,
+                                   length: MemoryLayout<float4x4>.stride, index: 2)
+            encoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: starCount)
+        }
 
         encoder.setRenderPipelineState(scenePipeline)
         encoder.setDepthStencilState(sceneDepthState)
@@ -1132,6 +1222,21 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
     }
 
+    /// The rotation carrying equatorial star vectors into world axes, from
+    /// sidereal time and the site — `StarField.worldRows` as a matrix the
+    /// GPU can apply. Rows become columns of the transpose; simd's
+    /// row-constructor keeps the intent readable.
+    static func starMatrix(state: SceneState) -> float4x4 {
+        let sidereal = Sidereal.greenwichMean(at: state.epoch)
+        let rows = StarField.worldRows(siderealTime: sidereal, site: state.site)
+        return float4x4(rows: [
+            SIMD4<Float>(SIMD3<Float>(rows.east), 0),
+            SIMD4<Float>(SIMD3<Float>(rows.up), 0),
+            SIMD4<Float>(SIMD3<Float>(rows.south), 0),
+            SIMD4<Float>(0, 0, 0, 1)
+        ])
+    }
+
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         aspectRatio = size.height > 0 ? Float(size.width / size.height) : 1
     }
@@ -1147,6 +1252,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         frameIndex = (frameIndex + 1) % Self.framesInFlight
         let uniformBuffer = frameUniformBuffers[frameIndex]
+        refreshStarsIfNeeded()
         var uniforms = buildFrameUniforms(aspect: aspectRatio)
         uniformBuffer.contents().copyMemory(from: &uniforms,
                                             byteCount: MemoryLayout<FrameUniforms>.stride)
@@ -1239,6 +1345,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
 
         let aspect = Float(width) / Float(height)
+        refreshStarsIfNeeded()
         var uniforms = buildFrameUniforms(aspect: aspect)
         let uniformBuffer = frameUniformBuffers[0]
         uniformBuffer.contents().copyMemory(from: &uniforms,

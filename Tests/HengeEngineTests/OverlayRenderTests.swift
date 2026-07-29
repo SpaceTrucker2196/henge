@@ -18,11 +18,14 @@ final class OverlayRenderTests: XCTestCase {
             throw XCTSkip("No Metal device; the overlay's unlit path is unverified here.")
         }
 
-        // Deep night, new moon: the darkest frame the app can draw.
+        // Deep night, new moon: the darkest frame the app can draw. Stars
+        // off — this test measures the overlay's own light against darkness,
+        // and the sky's several thousand bright points are not the overlay.
         let camera = Camera(position: SIMD3(0, 55, 70), target: SIMD3(0, 0, 0))
-        let state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: -25),
+        var state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: -25),
                                                          azimuth: Angle(degrees: 0)),
                                camera: camera, grassBlades: false)
+        state.stars = false
         let renderer = try HengeRenderer(device: device, state: state,
                                          shadowResolution: 512)
         try renderer.load(scene: MonumentScene(stones: []))

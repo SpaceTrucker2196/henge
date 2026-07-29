@@ -72,11 +72,12 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
 
 ## Still open, needing a decision
 
-- **Hipparcos star catalogue** (M3). ESA, free with attribution. Vendoring a
-  second data set is a stops-and-asks under invariant 5 — unasked as yet, so
-  the sky has no stars.
 - **The Milky Way** (M3). Needs a licensed texture. May be worth dropping the
   way constellation figures were.
+
+(The Hipparcos star catalogue was asked, answered and vendored 2026-07-28 —
+the naked-eye sky is in, with proper motion and precession, attribution in
+`SECURITY.md`. Constellation lines remain blocked on their licence.)
 
 ## Definition of done for the demo
 
