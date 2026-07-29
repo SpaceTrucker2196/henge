@@ -67,21 +67,22 @@ final class StarCatalogTests: XCTestCase {
                              "a red supergiant's index leans strongly warm")
     }
 
-    func testEveryProperNameBelongsToARealBrightStar() throws {
+    func testEveryProperNameBelongsToARealCatalogueStar() throws {
         let byHip = Dictionary(uniqueKeysWithValues: try entries().map { ($0.hip, $0) })
-        XCTAssertGreaterThanOrEqual(StarCatalog.properNames.count, 20)
+        // The full IAU register, filtered to this catalogue at generation:
+        // 338 names matched when the table was built, and losing a swathe
+        // of them would mean the generator and the catalogue disagree.
+        XCTAssertGreaterThanOrEqual(StarCatalog.properNames.count, 330)
         for (hip, name) in StarCatalog.properNames {
-            let star = try XCTUnwrap(byHip[hip],
-                                     "\(name) (HIP \(hip)) is not in the catalogue — "
-                                     + "a mistyped identifier would label the wrong star")
-            // Every named star is bright; Thuban, the dimmest with a reason
-            // to be here, is magnitude 3.67.
-            XCTAssertLessThanOrEqual(star.magnitude, 3.7,
-                                     "\(name) at magnitude \(star.magnitude) is too "
-                                     + "faint to be one of the storied names")
+            _ = try XCTUnwrap(byHip[hip],
+                              "\(name) (HIP \(hip)) is not in the catalogue — "
+                              + "a mistyped identifier would label the wrong star")
         }
         XCTAssertEqual(StarCatalog.properNames[32349], "Sirius")
         XCTAssertEqual(StarCatalog.properNames[68756], "Thuban")
+        XCTAssertEqual(StarCatalog.properNames[65477], "Alcor",
+                       "the register's depth — a fourth-magnitude rider on "
+                       + "Mizar — should have survived the matching")
     }
 
     func testTheNamedStarsMoveLikeTheCatalogue() throws {
