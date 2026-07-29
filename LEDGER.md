@@ -18,3 +18,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 8d16b7d | 2026-07-28T20:45:52Z | claude-fable-5 | 100 | 71097 | 23773964 | 111382 | 29.5575 | Torchlit ceremony mode with adversarial review fixes |
 | a924825 | 2026-07-29T03:20:37Z | claude-fable-5 | 180 | 188631 | 43267151 | 3356050 | 119.8215 | Hipparcos star catalogue + almanac strip tightening |
 | 469ade9 | 2026-07-29T03:45:58Z | claude-fable-5 | 206 | 172946 | 61457360 | 206686 | 74.2404 | Weather dressing: clouds/rain/frost with 7 review findings fixed |
+| 4aa2414 | 2026-07-29T03:54:21Z | claude-fable-5 | 98 | 35439 | 32091832 | 58708 | 35.0389 | Design system vocabulary: tokens for spacing/radius/ink/motion |
