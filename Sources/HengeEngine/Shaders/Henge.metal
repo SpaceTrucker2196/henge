@@ -1026,7 +1026,16 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // swings n by tens of degrees on a rough rock face, and feeding that into
     // the slope-scaled bias would make the bias flicker from texel to texel —
     // acne on some pixels, peter-panning on their neighbours.
-    float geometricNdotl = max(dot(geometricNormal, l), 0.0);
+    //
+    // And against the light that is actually *casting* this frame. The gate
+    // used to ask the sun's n·l unconditionally — and on a moon-cast night
+    // the sun is below the horizon, that dot product is zero on every
+    // surface, and the lookup was skipped before the moon's own map was
+    // ever sampled. The cascades were faithfully fitted to the moon and
+    // faithfully ignored: a full moon that could not cast a shadow.
+    float3 caster = frame.shadowSource.x > 0.5
+        ? normalize(frame.moonDirection.xyz) : l;
+    float geometricNdotl = max(dot(geometricNormal, caster), 0.0);
     float shadow = geometricNdotl > 0.0
         ? sampleShadow(shadowMap, shadowSampler, in.worldPosition, frame,
                        in.viewDepth, geometricNdotl)
@@ -1369,7 +1378,11 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
         // Lambert, softened at the limb the way a dusty regolith actually
         // scatters, plus earthshine: the dark side is not black, it is lit by
         // a gibbous Earth hanging in its sky — and it shows the same face.
-        float3 surface = frame.moonLight.rgb * 26.0 * pow(lit, 0.65) * albedo;
+        // 1.45, not the old 26: the radiance grew eighteen-fold to
+        // carry real shadows on the ground, and the disc must not
+        // bloom with it — 26 x 0.055 = 1.43 is the brightness the
+        // disc was calibrated at, held constant across the change.
+        float3 surface = frame.moonLight.rgb * 1.45 * pow(lit, 0.65) * albedo;
         float3 earthshine = float3(0.055, 0.062, 0.085)
                           * (1.0 - frame.moonLight.w) * 0.6 * albedo;
         // The deck stands in front of the moon exactly as it stands in

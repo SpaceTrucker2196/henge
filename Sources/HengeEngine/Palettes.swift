@@ -20,7 +20,12 @@ public enum NightPalette {
     /// very slightly *warmer* than sunlight — it is the Purkinje shift, the eye
     /// handing over from cones to rods and becoming more sensitive to blue as
     /// it does. Painting it neutral is physically right and looks wrong.
-    public static let full = SIMD4<Float>(0.052, 0.068, 0.115, 0.030)
+    ///
+    /// Rebalanced when the moon's directional term grew teeth: this ambient
+    /// is now the moonlit *sky's* glow alone — the stones themselves are
+    /// modelled by the shadowed moonlight, which is what lets a full moon
+    /// cast the shadow you can watch at the real monument.
+    public static let full = SIMD4<Float>(0.020, 0.028, 0.052, 0.030)
 
     /// A night with no moon at all.
     ///

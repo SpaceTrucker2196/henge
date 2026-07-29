@@ -299,12 +299,19 @@ public struct SceneState: Sendable {
     /// Moonlight radiance. Faint, cool, and scaled by how much of the disc is
     /// lit — a full moon is roughly ten times a quarter moon, not twice, since
     /// the lit crescent is both smaller and more steeply lit.
+    ///
+    /// Strong enough to *model*: the first calibration put nearly all of a
+    /// moonlit night's light into the unshadowed ambient palette and left
+    /// this directional term a whisper — the cascades were duly fitted to
+    /// the moon and the shadows duly drawn, then washed invisible by their
+    /// own ambient. A full moon casts a shadow you can stand in; now the
+    /// term carries enough of the night's energy to draw one.
     public var moonRadiance: SIMD3<Float> {
         let altitude = Float(moon.altitude.radians)
         guard altitude > -0.05 else { return .zero }
         let fraction = Float(moonIllumination)
         let brightness = pow(fraction, 2.2) * min(1, max(0, altitude * 4 + 0.2))
-        return SIMD3<Float>(0.62, 0.72, 1.0) * brightness * 0.055
+        return SIMD3<Float>(0.62, 0.72, 1.0) * brightness * 1.0
     }
 
     /// Unit vector toward the sun in world axes.
