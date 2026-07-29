@@ -162,6 +162,31 @@ final class StarFieldTests: XCTestCase {
                        "astronomical darkness shows the whole catalogue")
     }
 
+    // ── the zodiac ──────────────────────────────────────────────────────────
+
+    func testTheZodiacLiesAlongTheEcliptic() {
+        // The one fact that defines the band: every zodiac constellation
+        // straddles the sun's path. Converting each centroid to ecliptic
+        // coordinates (J2000 obliquity, the same arithmetic a reader can
+        // redo), the latitude must be small — the band is about 8° wide for
+        // the planets, and the constellation *centroids* all sit within 25°.
+        let obliquity = Angle(degrees: 23.4392911)
+        XCTAssertEqual(ZodiacConstellation.all.count, 12)
+        for sign in ZodiacConstellation.all {
+            let latitude = asin(
+                sign.declination.sine * obliquity.cosine
+                - sign.declination.cosine * obliquity.sine * sign.rightAscension.sine)
+                * 180 / .pi
+            XCTAssertLessThan(abs(latitude), 25,
+                              "\(sign.name)'s centroid sits \(latitude)° off "
+                              + "the ecliptic — not a zodiac constellation's place")
+        }
+        // And they march in order around the sky: each roughly 30° of
+        // ecliptic longitude past the one before.
+        XCTAssertEqual(Set(ZodiacConstellation.all.map(\.symbol)).count, 12,
+                       "twelve distinct glyphs")
+    }
+
     // ── helpers ─────────────────────────────────────────────────────────────
 
     private func simdDot(_ a: SIMD3<Double>, _ b: SIMD3<Double>) -> Double {

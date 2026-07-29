@@ -181,6 +181,7 @@ public struct RootView: View {
                         torchToggle
                         weatherToggle
                         starLabelToggle
+                        zodiacToggle
                         monumentToggle
                     }
                 }
@@ -655,6 +656,29 @@ public struct RootView: View {
         case .rain: "cloud.rain"
         case .frost: "snowflake"
         }
+    }
+
+    /// The twelve zodiac constellations, glyphed at their true places —
+    /// and their true places is the point: precession has carried them a
+    /// full sign from the astrological calendar, which this app is exactly
+    /// the instrument to show.
+    private var zodiacToggle: some View {
+        Button {
+            model.showsZodiac.toggle()
+        } label: {
+            Image(systemName: "sparkles")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.showsZodiac)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(model.showsZodiac ? Henge.bronze : Henge.stone)
+        .accessibilityLabel(model.showsZodiac
+                            ? "Hide the zodiac" : "Show the zodiac")
+        .accessibilityHint("The twelve constellations at their true places "
+                           + "on the night sky — the star patterns, not the "
+                           + "astrological signs they have drifted from")
     }
 
     /// As built, or as it stands: the completed Stage-2 monument of

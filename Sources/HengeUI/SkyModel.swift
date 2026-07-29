@@ -355,6 +355,9 @@ public final class SkyModel {
     /// Whether the named stars carry their names on screen.
     public var showsStarLabels = false
 
+    /// Whether the zodiac constellations carry their glyphs on the sky.
+    public var showsZodiac = false
+
     /// The star catalogue, loaded once beside the terrain.
     private static let starCatalog = StarCatalog.load()
 
@@ -372,11 +375,11 @@ public final class SkyModel {
     /// different: it hangs in the daytime sky half the month, drawn at its
     /// true topocentric place, so its label rides whenever the disc is up.
     public func starLabels(aspect: Double) -> [StarLabel] {
-        guard showsStarLabels else { return [] }
+        guard showsStarLabels || showsZodiac else { return [] }
         let eye = camera
         var labels: [StarLabel] = []
 
-        if moon.altitude.degrees > 1.5 {
+        if showsStarLabels, moon.altitude.degrees > 1.5 {
             let v = moon.unitVector
             if let point = eye.screenFraction(of: SIMD3(Float(v.x), Float(v.y), Float(v.z)),
                                               aspect: Float(aspect)) {
@@ -384,7 +387,32 @@ public final class SkyModel {
             }
         }
 
-        if sun.altitude.degrees < -3, let catalog = Self.starCatalog {
+        if sun.altitude.degrees < -3, showsZodiac {
+            let rows = StarField.worldRows(
+                siderealTime: Sidereal.greenwichMean(at: time), site: site)
+            labels += ZodiacConstellation.all.compactMap { sign in
+                // Centres precess with their stars — the same route the
+                // catalogue takes, minus proper motion, which a region
+                // spanning tens of degrees does not feel.
+                let dated = StarField.equatorialOfDate(
+                    rightAscension: sign.rightAscension,
+                    declination: sign.declination,
+                    at: time.terrestrialTime)
+                let d = StarField.unitVector(rightAscension: dated.rightAscension,
+                                             declination: dated.declination)
+                let world = SIMD3<Double>(
+                    rows.east.x * d.x + rows.east.y * d.y + rows.east.z * d.z,
+                    rows.up.x * d.x + rows.up.y * d.y + rows.up.z * d.z,
+                    rows.south.x * d.x + rows.south.y * d.y + rows.south.z * d.z)
+                guard world.y > 0.05 else { return nil }
+                guard let point = eye.screenFraction(of: SIMD3<Float>(world),
+                                                     aspect: Float(aspect)) else { return nil }
+                return StarLabel(id: "\(sign.symbol) \(sign.name)",
+                                 x: point.x, y: point.y)
+            }
+        }
+
+        if sun.altitude.degrees < -3, showsStarLabels, let catalog = Self.starCatalog {
             let rows = StarField.worldRows(
                 siderealTime: Sidereal.greenwichMean(at: time), site: site)
 
