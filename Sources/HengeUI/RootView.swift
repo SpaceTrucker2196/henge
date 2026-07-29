@@ -64,21 +64,24 @@ public struct RootView: View {
                         if model.showsLunarMarkers { hypothesisBadge }
                         if showingAlmanac { events }
                         timeBar
+                            // The tab lives *inside* the glass container and
+                            // straddles the plate's edge, so the material
+                            // merges the two into one silhouette — a pull on
+                            // the drawer, not a chip floating beside it. It
+                            // rides the time bar in particular because a tab
+                            // centred over a stack of plates lands on a seam.
+                            .overlay(alignment: .leading) {
+                                drawerHandle(isOpen: true, edge: .leading,
+                                             label: "Hide the control panels") {
+                                    controlsDrawerOpen = false
+                                }
+                                .offset(x: drawerTabOverhang)
+                            }
                         stations
                     }
                 }
                 .padding(.horizontal, Henge.Space.margin)
                 .padding(.bottom, Henge.Space.panel)
-                .overlay(alignment: .leading) {
-                    drawerHandle(isOpen: true, edge: .leading,
-                                 label: "Hide the control panels") {
-                        controlsDrawerOpen = false
-                    }
-                    // Half into the margin: the capsule rides the plates'
-                    // edge like a tab instead of sitting on the day bar's
-                    // hour labels.
-                    .offset(x: -Henge.Space.panel)
-                }
                 .transition(.move(edge: .leading).combined(with: .opacity))
             }
         }
@@ -88,7 +91,10 @@ public struct RootView: View {
                              label: "Show the control panels") {
                     controlsDrawerOpen = true
                 }
-                .padding(.leading, 2)
+                // Flush with the screen edge, the way a closed drawer's tab
+                // should be: the capsule touches the bezel and the hit
+                // region runs off it — edge targets are the easy ones.
+                .offset(x: drawerTabTuck)
                 .padding(.bottom, 72)
             }
         }
@@ -143,20 +149,24 @@ public struct RootView: View {
             // chrome's — the strip spends as little of it as legibility
             // allows. The toggle keeps its corner, so the strip stops short.
             if showingAlmanac, stripDrawerOpen {
-                HengeGlass { almanac }
-                    .padding(.top, 4)
-                    .padding(.leading, Henge.Space.panel)
-                    // The toggle rail's width plus a margin either side
-                    // — the strip stops where the rail begins.
-                    .padding(.trailing, Henge.Hit.control + Henge.Space.margin * 2)
-                    .overlay(alignment: .leading) {
-                        drawerHandle(isOpen: true, edge: .leading,
-                                     label: "Hide the almanac strip") {
-                            stripDrawerOpen = false
+                HengeGlass {
+                    almanac
+                        // Same construction as the control stack's tab: in
+                        // the container, on the plate's edge, one material.
+                        .overlay(alignment: .leading) {
+                            drawerHandle(isOpen: true, edge: .leading,
+                                         label: "Hide the almanac strip") {
+                                stripDrawerOpen = false
+                            }
+                            .offset(x: drawerTabOverhang)
                         }
-                        .offset(x: -Henge.Space.panel)
-                    }
-                    .transition(.move(edge: .leading).combined(with: .opacity))
+                }
+                .padding(.top, 4)
+                .padding(.leading, Henge.Space.panel)
+                // The toggle rail's width plus a margin either side
+                // — the strip stops where the rail begins.
+                .padding(.trailing, Henge.Hit.control + Henge.Space.margin * 2)
+                .transition(.move(edge: .leading).combined(with: .opacity))
             }
         }
         .overlay(alignment: .topLeading) {
@@ -165,7 +175,7 @@ public struct RootView: View {
                              label: "Show the almanac strip") {
                     stripDrawerOpen = true
                 }
-                .padding(.leading, 2)
+                .offset(x: drawerTabTuck)
                 .padding(.top, 8)
             }
         }
@@ -175,6 +185,7 @@ public struct RootView: View {
             if railDrawerOpen {
                 HengeGlass {
                     VStack(spacing: Henge.Space.tight) {
+                        railHandle(isOpen: true)
                         almanacToggle
                         overlayToggle
                         markerToggle
@@ -187,21 +198,11 @@ public struct RootView: View {
                     .padding(.vertical, Henge.Space.tight)
                 }
                 .padding(Henge.Space.margin)
-                .overlay(alignment: .leading) {
-                    drawerHandle(isOpen: true, edge: .trailing,
-                                 label: "Hide the mode toggles") {
-                        railDrawerOpen = false
-                    }
-                    .offset(x: -Henge.Space.tight)
-                }
                 .transition(.move(edge: .trailing).combined(with: .opacity))
             } else {
-                drawerHandle(isOpen: false, edge: .trailing,
-                             label: "Show the mode toggles") {
-                    railDrawerOpen = true
-                }
-                .padding(.trailing, 2)
-                .padding(.top, 40)
+                railHandle(isOpen: false)
+                    .padding(Henge.Space.margin)
+                    .padding(.top, Henge.Space.tight)
             }
         }
         .foregroundStyle(Henge.stone)
@@ -227,12 +228,32 @@ public struct RootView: View {
         }
     }
 
+    /// The width of a tab's visual capsule; the hit frame stays at the
+    /// platform's 44-point floor around it.
+    private static let drawerTabWidth: CGFloat = 14
+
+    /// How far an open drawer's tab shifts so its capsule straddles the
+    /// plate's leading edge — half on the glass, half in the margin. Inside
+    /// the glass container that overlap merges the two shapes into one
+    /// silhouette: a pull on the drawer's edge rather than a chip beside it.
+    private var drawerTabOverhang: CGFloat {
+        -(Henge.Hit.control - Self.drawerTabWidth) / 2 - Self.drawerTabWidth / 2
+    }
+
+    /// How far a *closed* tab shifts so its capsule sits flush against the
+    /// screen edge, the way a closed drawer's tab should: touching the bezel,
+    /// with the hit region running off it.
+    private var drawerTabTuck: CGFloat {
+        -(Henge.Hit.control - Self.drawerTabWidth) / 2
+    }
+
     /// A drawer's handle: a slim capsule the eye reads as an edge-tab, with
     /// a hit region at the platform's 44-point floor — the visual may be
     /// fourteen points wide, but what it accepts must not be (the rail
     /// taught that lesson the same day this shipped). One builder for every
     /// panel, so the chevron grammar cannot drift: it always points the way
-    /// the panel will go.
+    /// the panel will go. Compact chevrons, because that is the system's own
+    /// grabber glyph and the eye already knows what it means.
     private func drawerHandle(isOpen: Bool, edge: HorizontalEdge,
                               label: String,
                               toggle: @escaping () -> Void) -> some View {
@@ -240,9 +261,9 @@ public struct RootView: View {
             withAnimation(Henge.settle(reduceMotion)) { toggle() }
         } label: {
             Image(systemName: (edge == .leading) == isOpen
-                  ? "chevron.left" : "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .frame(width: 14, height: 56)
+                  ? "chevron.compact.left" : "chevron.compact.right")
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: Self.drawerTabWidth, height: 56)
                 .hengeControl()
                 .opacity(Henge.Ink.dim)
                 .frame(width: Henge.Hit.control, height: 64)
@@ -253,6 +274,31 @@ public struct RootView: View {
         .accessibilityLabel(label)
         .accessibilityHint("Slides the panel away to its edge; the handle "
                            + "stays to bring it back")
+    }
+
+    /// The rail's handle is one of its own pills — the first in the column,
+    /// dressed exactly like the toggles below it. Collapsing leaves the pill
+    /// where it stood and opening unfurls the toggles beneath it, so the
+    /// handle never moves: a handle that stays put is a handle you can find
+    /// again without looking.
+    private func railHandle(isOpen: Bool) -> some View {
+        Button {
+            withAnimation(Henge.settle(reduceMotion)) { railDrawerOpen.toggle() }
+        } label: {
+            Image(systemName: isOpen
+                  ? "chevron.compact.right" : "chevron.compact.left")
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: 36, height: 32)
+                .hengeControl()
+                .opacity(Henge.Ink.dim)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Henge.stone)
+        .accessibilityLabel(isOpen ? "Hide the mode toggles" : "Show the mode toggles")
+        .accessibilityHint("Slides the toggle rail away to the right edge; "
+                           + "the handle stays to bring it back")
     }
 
     // ── the monument ────────────────────────────────────────────────────────
