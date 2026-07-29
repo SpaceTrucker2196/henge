@@ -382,6 +382,22 @@ public final class SkyModel {
         if sun.altitude.degrees < -3, let catalog = Self.starCatalog {
             let rows = StarField.worldRows(
                 siderealTime: Sidereal.greenwichMean(at: time), site: site)
+
+            // The wanderers carry their names beside the fixed stars'.
+            labels += PlanetEphemeris.all(at: time.terrestrialTime).compactMap { entry in
+                let d = StarField.unitVector(
+                    rightAscension: entry.place.rightAscension,
+                    declination: entry.place.declination)
+                let world = SIMD3<Double>(
+                    rows.east.x * d.x + rows.east.y * d.y + rows.east.z * d.z,
+                    rows.up.x * d.x + rows.up.y * d.y + rows.up.z * d.z,
+                    rows.south.x * d.x + rows.south.y * d.y + rows.south.z * d.z)
+                guard world.y > 0.03 else { return nil }
+                guard let point = eye.screenFraction(of: SIMD3<Float>(world),
+                                                     aspect: Float(aspect)) else { return nil }
+                return StarLabel(id: entry.planet.name, x: point.x, y: point.y)
+            }
+
             labels += catalog.namedStars(at: time.terrestrialTime).compactMap { star in
                 let world = SIMD3<Double>(
                     rows.east.x * star.direction.x + rows.east.y * star.direction.y

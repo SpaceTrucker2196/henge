@@ -1093,7 +1093,14 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             cascadeSplits: splits,
             skyParameters: SIMD4(state.turbidity, state.exposure, 0,
                                  1.0 / Float(shadowResolution)),
-            moonDirection: SIMD4(state.moonDirection, Float(state.moonAngularRadius)),
+            // The drawn moon is twice its true angular size — a legibility
+            // choice the owner made with eyes on the sky, like the night
+            // floor: the honest half-degree read as a distant dot, and the
+            // moon illusion means everyone's memory disagrees with the
+            // protractor. The *almanac's* numbers stay true; only the disc
+            // is enlarged, and the sun — the ruler the definition of done is
+            // measured with — keeps its exact size.
+            moonDirection: SIMD4(state.moonDirection, Float(state.moonAngularRadius * 2)),
             // The deck takes the same cut of moonlight it takes of sunlight
             // — the review's sharpest finding was a rain that ceased to
             // exist at sunset, full moon and stars blazing through solid
@@ -1254,6 +1261,17 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             encoder.setVertexBytes(&equatorialToWorld,
                                    length: MemoryLayout<float4x4>.stride, index: 2)
             encoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: starCount)
+
+            // The wanderers, rebuilt every frame because wandering is the
+            // whole point. Five vertices ride inline; the shader knows them
+            // by the flag in colour.w and holds them steady — the eye tells
+            // a planet from a star by exactly that steadiness.
+            var planets = Self.planetVertices(at: state.epoch.terrestrialTime)
+            encoder.setVertexBytes(&planets,
+                                   length: MemoryLayout<StarVertex>.stride * planets.count,
+                                   index: 1)
+            encoder.drawPrimitives(type: .point, vertexStart: 0,
+                                   vertexCount: planets.count)
         }
 
         encoder.setRenderPipelineState(scenePipeline)
@@ -1324,6 +1342,20 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                           indexBuffer: indices,
                                           indexBufferOffset: 0,
                                           instanceCount: grassBladeCount)
+        }
+    }
+
+    /// The five naked-eye planets as star vertices, in the same
+    /// equatorial-of-date frame the star buffer uses. `colour.w = 1` is the
+    /// planet flag the shader reads to withhold the twinkle.
+    static func planetVertices(at tt: JulianDay) -> [StarVertex] {
+        PlanetEphemeris.all(at: tt).map { entry in
+            let direction = StarField.unitVector(
+                rightAscension: entry.place.rightAscension,
+                declination: entry.place.declination)
+            return StarVertex(direction: SIMD4(SIMD3<Float>(direction),
+                                               Float(entry.place.magnitude)),
+                              colour: SIMD4(entry.planet.colour, 1))
         }
     }
 

@@ -1550,7 +1550,10 @@ vertex StarInOut star_vertex(uint vertexID [[vertex_id]],
     // is steep on purpose: at these sizes a gentle ramp reads as uniform
     // grit, and the sky's hierarchy — Sirius, then the first magnitude,
     // then the field — is most of what a sky looks like.
-    out.pointSize = clamp(5.0 - 0.6 * magnitude, 1.3, 6.5);
+    // Doubled from the first calibration at the owner's eye: at true scale
+    // the field read as dust. The hierarchy survives doubling; the ratios
+    // are what carry it.
+    out.pointSize = clamp(10.0 - 1.2 * magnitude, 2.6, 13.0);
     out.colour = star.colour.rgb;
     // Pogson's ratio against magnitude 0, scaled into the sky pass's range.
     out.intensity = pow(10.0, -0.4 * magnitude) * visibility * 3.2;
@@ -1563,19 +1566,24 @@ vertex StarInOut star_vertex(uint vertexID [[vertex_id]],
     // The planetary discs do not twinkle, and neither does anything else in
     // this sky — steadiness is how the eye tells a planet from a star, and
     // one day this sky may earn planets.
-    float airmass = 1.0 - clamp(world.y, 0.0, 1.0);
-    float depth = 0.18 + 0.45 * airmass * airmass;
-    float phase = fract(float(vertexID) * 0.61803398875) * 6.2831853;
-    // Two incommensurate rates per star, fast — real scintillation is a
-    // shimmer of several flickers a second, not a slow breath, and the
-    // beat between the two sines is what keeps it from ever settling into
-    // a rhythm the eye could count.
-    float rate1 = 18.0 + fract(float(vertexID) * 0.7548776662) * 14.0;
-    float rate2 = 23.0 + fract(float(vertexID) * 0.9301043027) * 17.0;
-    float flick = 0.5 * sin(frame.wind.w * rate1 + phase)
-                + 0.5 * sin(frame.wind.w * rate2 + phase * 3.7);
-    float twinkle = 1.0 - depth * (0.5 + 0.5 * flick);
-    out.intensity *= twinkle;
+    // Planets carry a flag in colour.w and do not twinkle: their discs are
+    // wide enough to average the air's shimmer away, and that steadiness is
+    // how the eye has told a wanderer from a star for as long as anyone has
+    // looked up.
+    if (star.colour.w < 0.5) {
+        float airmass = 1.0 - clamp(world.y, 0.0, 1.0);
+        float depth = 0.18 + 0.45 * airmass * airmass;
+        float phase = fract(float(vertexID) * 0.61803398875) * 6.2831853;
+        // Two incommensurate rates per star, fast — real scintillation is a
+        // shimmer of several flickers a second, not a slow breath, and the
+        // beat between the two sines is what keeps it from ever settling into
+        // a rhythm the eye could count.
+        float rate1 = 18.0 + fract(float(vertexID) * 0.7548776662) * 14.0;
+        float rate2 = 23.0 + fract(float(vertexID) * 0.9301043027) * 17.0;
+        float flick = 0.5 * sin(frame.wind.w * rate1 + phase)
+                    + 0.5 * sin(frame.wind.w * rate2 + phase * 3.7);
+        out.intensity *= 1.0 - depth * (0.5 + 0.5 * flick);
+    }
     return out;
 }
 
