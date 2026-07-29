@@ -949,7 +949,17 @@ static float3 preethamSky(float3 direction, float3 sunDirection, float turbidity
         dot(XYZ, float3(-0.9689,  1.8758,  0.0415)),
         dot(XYZ, float3( 0.0557, -0.2040,  1.0570))
     );
-    return max(rgb, 0.0) * 0.05;
+
+    // Twilight yields faster than Preetham admits. The model is a daylight
+    // model: below the horizon its glow lingers far too long, and the early
+    // stars drowned in a dome that should already have gone over to them.
+    // A Hermite fall from sunset to nautical twilight (−12°, sin ≈ 0.208)
+    // takes the whole model down — and because every consumer of the sky's
+    // colour comes through here (the dome, the ambient fill, the wet-stone
+    // reflections, the fog), the world dims in one piece rather than the
+    // sky outrunning the ground.
+    float dusk = smoothstep(0.0, 0.208, -sunDirection.y);
+    return max(rgb, 0.0) * 0.05 * mix(1.0, 0.16, dusk);
 }
 
 // ACES filmic curve, fitted form. Keeps the sun's core from clipping to a

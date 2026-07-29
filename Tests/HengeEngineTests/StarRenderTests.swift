@@ -61,6 +61,52 @@ final class StarRenderTests: XCTestCase {
         XCTAssertLessThan(up?.y ?? 1, 0.5)
     }
 
+    /// The dome yields through twilight: by nautical dark the sky band must
+    /// hold a small fraction of its just-after-sunset brightness, or the
+    /// early stars drown in Preetham's lingering glow.
+    func testTwilightYieldsToTheStars() throws {
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            throw XCTSkip("No Metal device; the dusk is unverified here.")
+        }
+        func skyBandMean(sunAltitude: Double) throws -> Double {
+            let camera = Camera(position: SIMD3(0, 1.7, 0), target: SIMD3(0, 40, -60))
+            var state = SceneState(sun: HorizontalCoordinate(altitude: Angle(degrees: sunAltitude),
+                                                             azimuth: Angle(degrees: 300)),
+                                   camera: camera, grassBlades: false)
+            state.stars = false
+            let renderer = try HengeRenderer(device: device, state: state,
+                                             shadowResolution: 512)
+            try renderer.load(scene: MonumentScene(stones: []))
+            let texture = try renderer.renderOffscreen(width: Self.size, height: Self.size)
+            var pixels = [UInt8](repeating: 0, count: Self.size * Self.size * 4)
+            pixels.withUnsafeMutableBytes { raw in
+                texture.getBytes(raw.baseAddress!, bytesPerRow: Self.size * 4,
+                                 from: MTLRegionMake2D(0, 0, Self.size, Self.size),
+                                 mipmapLevel: 0)
+            }
+            var total = 0.0
+            let band = (Self.size / 8)..<(Self.size / 2)
+            for y in band {
+                for x in 0..<Self.size {
+                    let offset = (y * Self.size + x) * 4
+                    total += 0.2126 * Double(pixels[offset + 2])
+                        + 0.7152 * Double(pixels[offset + 1])
+                        + 0.0722 * Double(pixels[offset])
+                }
+            }
+            return total / Double(band.count * Self.size)
+        }
+
+        let justSet = try skyBandMean(sunAltitude: -1)
+        let nautical = try skyBandMean(sunAltitude: -10)
+        XCTAssertGreaterThan(justSet, 8,
+                             "the just-set sky is too dark to measure a fade against")
+        XCTAssertLessThan(nautical, justSet * 0.45,
+                          "at -10° the sky band holds \(nautical) against "
+                          + "\(justSet) just after sunset — the dome is not "
+                          + "yielding to the stars")
+    }
+
     func testTheNightSkyHasStarsAndNoonHasNone() throws {
         let night = try brightSkyPixels(sunAltitude: -25, stars: true)
         let dark = try brightSkyPixels(sunAltitude: -25, stars: false)
