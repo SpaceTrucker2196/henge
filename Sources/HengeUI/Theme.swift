@@ -46,6 +46,54 @@ public enum Henge {
     public static func figure(_ style: Font.TextStyle = .caption) -> Font {
         .system(style, design: .monospaced)
     }
+
+    // ── the system ──────────────────────────────────────────────────────────
+    //
+    // The numbers below are the design language's whole vocabulary. The
+    // chrome grew organically and every panel had its own paddings, radii
+    // and fades — plausible one at a time, arbitrary in aggregate. A view
+    // that needs a spacing not named here should argue for a new name, not
+    // reach for a literal: the system stays a system only while its
+    // vocabulary stays small.
+
+    /// Spacing, on a 4-point rhythm. `hair` separates a label from its
+    /// value; `tight` stacks rows; `element` separates controls; `panel`
+    /// pads glass from its content; `margin` floats glass off the screen
+    /// edge and off other glass.
+    public enum Space {
+        public static let hair: CGFloat = 2
+        public static let tight: CGFloat = 6
+        public static let element: CGFloat = 8
+        public static let panel: CGFloat = 10
+        public static let margin: CGFloat = 14
+    }
+
+    /// Two radii, deliberately: glass panels share one, and controls are
+    /// capsules. A third radius is a design decision, not a tweak.
+    public enum Radius {
+        public static let panel: CGFloat = 14
+    }
+
+    /// Ink emphasis levels over glass. Full ink is the default; `dim` is
+    /// supporting text; `faint` is provenance and units; `hairline` is a
+    /// rule that should be sensed rather than read.
+    public enum Ink {
+        public static let dim = 0.75
+        public static let faint = 0.65
+        public static let hairline = 0.22
+    }
+
+    /// The two durations chrome is allowed: `quick` for state that flips,
+    /// `settle` for things that travel. Both return nil under Reduce Motion
+    /// so every call site honours the setting by construction — invariant 7
+    /// as an API rather than a discipline.
+    public static func quick(_ reduceMotion: Bool) -> Animation? {
+        reduceMotion ? nil : .easeInOut(duration: 0.2)
+    }
+
+    public static func settle(_ reduceMotion: Bool) -> Animation? {
+        reduceMotion ? nil : .easeOut(duration: 0.3)
+    }
 }
 
 public extension View {
@@ -56,7 +104,7 @@ public extension View {
     /// The fallback is not a consolation prize — the material already takes its
     /// colour from the sky behind it, which is the property that matters here.
     @ViewBuilder
-    func hengePanel(cornerRadius: CGFloat = 18) -> some View {
+    func hengePanel(cornerRadius: CGFloat = Henge.Radius.panel) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         if #available(iOS 26.0, macOS 26.0, *) {
             self.glassEffect(.regular, in: shape)

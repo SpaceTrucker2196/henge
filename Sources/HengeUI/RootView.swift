@@ -41,8 +41,8 @@ public struct RootView: View {
         ZStack(alignment: .bottom) {
             scene
 
-            HengeGlass(spacing: 14) {
-                VStack(spacing: 10) {
+            HengeGlass(spacing: Henge.Space.margin) {
+                VStack(spacing: Henge.Space.panel) {
                     // The research note behind the marker mode is binding:
                     // "the mode must say so on screen, every time." A lore
                     // sheet the user may never open does not satisfy that,
@@ -55,8 +55,8 @@ public struct RootView: View {
                     stations
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.bottom, 10)
+            .padding(.horizontal, Henge.Space.margin)
+            .padding(.bottom, Henge.Space.panel)
         }
         .overlay(alignment: .top) {
             // The almanac runs the width of the view: a reading strip tight
@@ -68,13 +68,15 @@ public struct RootView: View {
             if showingAlmanac {
                 HengeGlass { almanac }
                     .padding(.top, 4)
-                    .padding(.leading, 10)
-                    .padding(.trailing, 64)
+                    .padding(.leading, Henge.Space.panel)
+                    // The toggle rail's width (36) plus a margin either side
+                    // — the strip stops where the rail begins.
+                    .padding(.trailing, 36 + Henge.Space.margin * 2)
             }
         }
         .overlay(alignment: .topTrailing) {
             HengeGlass {
-                VStack(spacing: 8) {
+                VStack(spacing: Henge.Space.element) {
                     almanacToggle
                     overlayToggle
                     markerToggle
@@ -82,7 +84,7 @@ public struct RootView: View {
                     weatherToggle
                 }
             }
-            .padding(16)
+            .padding(Henge.Space.margin)
         }
         .foregroundStyle(Henge.stone)
         .tint(Henge.bronze)
@@ -132,7 +134,7 @@ public struct RootView: View {
             // becomes what it should always have been: the gesture you already
             // try when a view has drifted.
             .onTapGesture(count: 2) {
-                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.3)) {
+                withAnimation(Henge.settle(reduceMotion)) {
                     model.recentre()
                 }
             }
@@ -159,7 +161,7 @@ public struct RootView: View {
         HStack(spacing: 6) {
             ForEach(SkyModel.Station.allCases) { station in
                 Button {
-                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.25)) {
+                    withAnimation(Henge.settle(reduceMotion)) {
                         model.station = station
                     }
                 } label: {
@@ -179,7 +181,7 @@ public struct RootView: View {
             }
         }
         .padding(.horizontal, 6)
-        .hengePanel(cornerRadius: 22)
+        .hengePanel()
     }
 
     private func symbol(for station: SkyModel.Station) -> String {
@@ -204,7 +206,7 @@ public struct RootView: View {
     ]
 
     private var timeBar: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: Henge.Space.panel) {
             DayBar(model: model)
             timeControls
         }
@@ -320,7 +322,7 @@ public struct RootView: View {
                 } else {
                     Text(event.kind.name).font(Henge.body(.caption2))
                 }
-                Text("\(days) d").font(Henge.figure(.caption2)).opacity(0.7)
+                Text("\(days) d").font(Henge.figure(.caption2)).opacity(Henge.Ink.dim)
             }
             .padding(.horizontal, 9).padding(.vertical, 5)
             .foregroundStyle(isEclipse(event) ? Henge.bronze : Henge.stone)
@@ -339,7 +341,7 @@ public struct RootView: View {
 
     private var almanacToggle: some View {
         Button {
-            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+            withAnimation(Henge.quick(reduceMotion)) {
                 showingAlmanac.toggle()
             }
         } label: {
@@ -385,7 +387,7 @@ public struct RootView: View {
             .font(Henge.body(.caption2))
             .foregroundStyle(Henge.bronze)
             .padding(.horizontal, 10).padding(.vertical, 5)
-            .hengePanel(cornerRadius: 12)
+            .hengePanel()
             .accessibilityHint("The Aubrey holes held cremated human remains; "
                                + "nothing excavated supports moving markers. "
                                + "The lore panel has the sources.")
@@ -458,7 +460,7 @@ public struct RootView: View {
 
     private var almanac: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: Henge.Space.panel) {
                 column {
                     Text(model.formattedDate)
                         .font(Henge.title(.subheadline))
@@ -471,7 +473,7 @@ public struct RootView: View {
                     Text(model.formattedLocalTime == nil
                          ? "local apparent solar time" : model.formattedTime)
                         .font(Henge.figure(.caption2))
-                        .opacity(0.65)
+                        .opacity(Henge.Ink.faint)
                 }
 
                 columnRule
@@ -527,7 +529,7 @@ public struct RootView: View {
                         HStack(spacing: 10) {
                             Text(entry.alignment.name)
                                 .font(Henge.body(.caption))
-                                .opacity(0.75)
+                                .opacity(Henge.Ink.dim)
                             Text(String(format: "%.2f°", entry.deviation.degrees))
                                 .font(Henge.figure(.caption))
                                 .foregroundStyle(entry.isOn ? Henge.mistletoe : Henge.stone)
@@ -561,8 +563,8 @@ public struct RootView: View {
                     .accessibilityHint("Switch between the completed monument and the ruin")
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Henge.Space.panel)
+            .padding(.vertical, Henge.Space.tight)
         }
         // A ScrollView is greedy in *both* axes, and the overlay proposes
         // the whole screen — without this the glass ran the full height of
@@ -571,16 +573,16 @@ public struct RootView: View {
         // column: the five compact rows of the sun.
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .hengePanel(cornerRadius: 12)
+        .hengePanel()
     }
 
     private func column(@ViewBuilder _ content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 2, content: content)
+        VStack(alignment: .leading, spacing: Henge.Space.hair, content: content)
     }
 
     private var columnRule: some View {
         Rectangle()
-            .fill(Henge.stone.opacity(0.22))
+            .fill(Henge.stone.opacity(Henge.Ink.hairline))
             .frame(width: 1)
             .frame(minHeight: 40)
     }
@@ -589,7 +591,7 @@ public struct RootView: View {
         HStack(spacing: 10) {
             Text(label)
                 .font(Henge.body(.caption))
-                .opacity(0.7)
+                .opacity(Henge.Ink.dim)
             Text(value)
                 .font(Henge.figure(.caption))
                 .monospacedDigit()
