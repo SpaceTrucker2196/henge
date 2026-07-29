@@ -51,6 +51,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.river.henge
         INFOPLIST_FILE: iOSApp/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_PREVIEWS: YES
@@ -79,6 +80,7 @@ targets:
         PRODUCT_NAME: Henge
         PRODUCT_BUNDLE_IDENTIFIER: io.river.henge
         INFOPLIST_FILE: macOSApp/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         ENABLE_PREVIEWS: YES
         ENABLE_HARDENED_RUNTIME: YES
