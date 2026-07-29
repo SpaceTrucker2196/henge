@@ -69,9 +69,9 @@ public struct RootView: View {
                 HengeGlass { almanac }
                     .padding(.top, 4)
                     .padding(.leading, Henge.Space.panel)
-                    // The toggle rail's width (36) plus a margin either side
+                    // The toggle rail's width plus a margin either side
                     // — the strip stops where the rail begins.
-                    .padding(.trailing, 36 + Henge.Space.margin * 2)
+                    .padding(.trailing, Henge.Hit.control + Henge.Space.margin * 2)
             }
         }
         .overlay(alignment: .topTrailing) {
@@ -346,7 +346,11 @@ public struct RootView: View {
             }
         } label: {
             Image(systemName: showingAlmanac ? "text.justify" : "text.alignleft")
-                .frame(width: 36, height: 32)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                // The capsule the eye aims at must be the shape the
+                // finger hits — without this the tappable region is
+                // the glyph's own frame, smaller than the glass.
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .hengeControl()
@@ -366,7 +370,11 @@ public struct RootView: View {
             model.showsAlignmentOverlay.toggle()
         } label: {
             Image(systemName: "safari")
-                .frame(width: 36, height: 32)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                // The capsule the eye aims at must be the shape the
+                // finger hits — without this the tappable region is
+                // the glyph's own frame, smaller than the glass.
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .hengeControl(isSelected: model.showsAlignmentOverlay)
@@ -400,7 +408,11 @@ public struct RootView: View {
             model.torchlight.toggle()
         } label: {
             Image(systemName: model.torchlight ? "flame.fill" : "flame")
-                .frame(width: 36, height: 32)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                // The capsule the eye aims at must be the shape the
+                // finger hits — without this the tappable region is
+                // the glyph's own frame, smaller than the glass.
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .hengeControl(isSelected: model.torchlight)
@@ -420,7 +432,11 @@ public struct RootView: View {
             model.weather = all[(index + 1) % all.count]
         } label: {
             Image(systemName: weatherSymbol)
-                .frame(width: 36, height: 32)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                // The capsule the eye aims at must be the shape the
+                // finger hits — without this the tappable region is
+                // the glyph's own frame, smaller than the glass.
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .hengeControl(isSelected: model.weather != .clear)
@@ -446,7 +462,11 @@ public struct RootView: View {
             model.showsLunarMarkers.toggle()
         } label: {
             Image(systemName: "record.circle")
-                .frame(width: 36, height: 32)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                // The capsule the eye aims at must be the shape the
+                // finger hits — without this the tappable region is
+                // the glyph's own frame, smaller than the glass.
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .hengeControl(isSelected: model.showsLunarMarkers)

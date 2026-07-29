@@ -74,6 +74,16 @@ public enum Henge {
         public static let panel: CGFloat = 14
     }
 
+    /// Hit-target minimums. 44 points is the platform floor for anything a
+    /// finger aims at; a control may *look* smaller, but what it accepts
+    /// must not be. The rail buttons shipped at 36×32 and read as glass
+    /// capsules slightly larger than their real hit region — misses on the
+    /// capsule's own edge, which is exactly how "hard to hit" feels.
+    public enum Hit {
+        public static let control: CGFloat = 44
+        public static let controlHeight: CGFloat = 40
+    }
+
     /// Ink emphasis levels over glass. Full ink is the default; `dim` is
     /// supporting text; `faint` is provenance and units; `hairline` is a
     /// rule that should be sensed rather than read.
