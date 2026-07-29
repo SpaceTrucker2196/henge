@@ -22,3 +22,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 9789aa9 | 2026-07-29T03:57:00Z | claude-fable-5 | 18 | 6292 | 6052905 | 8937 | 6.5464 | Session close: progress note |
 | f8ac053 | 2026-07-29T04:04:42Z | claude-fable-5 | 16 | 9580 | 5422476 | 4375 | 5.9891 | Rail hit targets: 44pt floor + capsule content shape |
 | f11c878 | 2026-07-29T04:13:56Z | claude-fable-5 | 60 | 79317 | 20899725 | 65268 | 26.1715 | Star labels + moon label, magnitude/type visual differentiation |
+| 5624251 | 2026-07-29T04:15:38Z | claude-fable-5 | 14 | 15962 | 4984350 | 8445 | 5.9515 | Bottom control stack as a slide-away drawer with handle |
