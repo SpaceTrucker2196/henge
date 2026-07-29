@@ -16,3 +16,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 6279eec | 2026-07-28T18:56:52Z | claude-fable-5 | 10 | 3242 | 2053360 | 6206 | 2.3397 | Session instrumentation: metrics + progress |
 | b44152e | 2026-07-28T20:29:29Z | claude-fable-5 | 59 | 24443 | 13145388 | 83423 | 16.0366 | Sarsen geology research re-run (clean), roadmap update; weathering work ended pe |
 | 8d16b7d | 2026-07-28T20:45:52Z | claude-fable-5 | 100 | 71097 | 23773964 | 111382 | 29.5575 | Torchlit ceremony mode with adversarial review fixes |
+| a924825 | 2026-07-29T03:20:37Z | claude-fable-5 | 180 | 188631 | 43267151 | 3356050 | 119.8215 | Hipparcos star catalogue + almanac strip tightening |
