@@ -1564,10 +1564,17 @@ vertex StarInOut star_vertex(uint vertexID [[vertex_id]],
     // this sky — steadiness is how the eye tells a planet from a star, and
     // one day this sky may earn planets.
     float airmass = 1.0 - clamp(world.y, 0.0, 1.0);
-    float depth = 0.12 + 0.38 * airmass * airmass;
+    float depth = 0.18 + 0.45 * airmass * airmass;
     float phase = fract(float(vertexID) * 0.61803398875) * 6.2831853;
-    float rate = 5.0 + fract(float(vertexID) * 0.7548776662) * 4.0;
-    float twinkle = 1.0 - depth * (0.5 + 0.5 * sin(frame.wind.w * rate + phase));
+    // Two incommensurate rates per star, fast — real scintillation is a
+    // shimmer of several flickers a second, not a slow breath, and the
+    // beat between the two sines is what keeps it from ever settling into
+    // a rhythm the eye could count.
+    float rate1 = 18.0 + fract(float(vertexID) * 0.7548776662) * 14.0;
+    float rate2 = 23.0 + fract(float(vertexID) * 0.9301043027) * 17.0;
+    float flick = 0.5 * sin(frame.wind.w * rate1 + phase)
+                + 0.5 * sin(frame.wind.w * rate2 + phase * 3.7);
+    float twinkle = 1.0 - depth * (0.5 + 0.5 * flick);
     out.intensity *= twinkle;
     return out;
 }
