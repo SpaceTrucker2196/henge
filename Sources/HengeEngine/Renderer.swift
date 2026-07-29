@@ -326,6 +326,21 @@ public struct SceneState: Sendable {
     }
 }
 
+/// A scene with every mesh built and nothing uploaded — the hand-off
+/// between the background preparation and the main-actor buffer upload.
+public struct PreparedScene: Sendable {
+    struct Item: Sendable {
+        let mesh: Mesh
+        let albedo: SIMD4<Float>
+        let label: String
+        let castsShadow: Bool
+        let kind: SurfaceTextures.Kind
+        let seed: UInt64
+    }
+    let items: [Item]
+    public let state: Monument.State
+}
+
 /// A block of geometry the renderer can draw in one call.
 struct DrawItem {
     var vertexBuffer: MTLBuffer
@@ -687,9 +702,33 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
     public func load(scene: MonumentScene, subdivisions: Int = 18,
                      roughness: Double = 0.06, rounding: Double = 0.13) throws {
-        var items: [DrawItem] = []
+        let prepared = Self.prepare(scene: scene, terrain: terrain,
+                                    soilBanks: state.soilBanks,
+                                    subdivisions: subdivisions,
+                                    roughness: roughness, rounding: rounding)
+        try load(prepared: prepared)
+    }
 
-        for stone in scene.stones {
+    /// The CPU half of a scene load: every mesh built and seated, nothing
+    /// uploaded. Pure geometry, callable off the main actor — which is what
+    /// lets the ruin/whole switch show a real progress bar instead of a
+    /// silent freeze: eighty stones of displaced mesh are most of a second,
+    /// and they used to be built mid-frame on the main thread.
+    ///
+    /// `progress` is called after each stone and once for the ground,
+    /// climbing monotonically to 1.
+    nonisolated public static func prepare(scene: MonumentScene,
+                                           terrain: TerrainModel?,
+                                           soilBanks: Bool,
+                                           subdivisions: Int = 18,
+                                           roughness: Double = 0.06,
+                                           rounding: Double = 0.13,
+                                           progress: @Sendable (Double) -> Void = { _ in })
+        -> PreparedScene {
+        var items: [PreparedScene.Item] = []
+        let total = Double(scene.stones.count + 1)
+
+        for (index, stone) in scene.stones.enumerated() {
             // Chalk discs are flat and small; they do not need the tessellation
             // a seven-metre sarsen does.
             let detail = stone.material == .chalk ? 5 : subdivisions
@@ -698,30 +737,25 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             mesh = Self.seat(mesh, of: stone, on: terrain)
             // The soil banked against its foot, as its own small mesh so it
             // can take the ground material rather than the stone's.
-            let skirt = state.soilBanks
-                ? SoilSkirt.build(around: stone, groundHeight: { x, z in
+            if soilBanks {
+                let skirt = SoilSkirt.build(around: stone, groundHeight: { x, z in
                     Float(terrain?.groundHeight(east: Double(x), south: Double(z)) ?? 0)
                 })
-                : Mesh()
-            if !skirt.indices.isEmpty,
-               let soil = try makeDrawItem(mesh: skirt,
-                                           albedo: SurfaceMaterial.soil,
-                                           label: "\(stone.id) soil",
-                                           castsShadow: false,
-                                           kind: .grass,
-                                           seed: stone.seed) {
-                items.append(soil)
+                if !skirt.indices.isEmpty {
+                    items.append(PreparedScene.Item(
+                        mesh: skirt, albedo: SurfaceMaterial.soil,
+                        label: "\(stone.id) soil", castsShadow: false,
+                        kind: .grass, seed: stone.seed))
+                }
             }
-
-            if let item = try makeDrawItem(mesh: mesh,
-                                           albedo: SurfaceMaterial.albedo(for: stone.material),
-                                           label: stone.id,
-                                           // A disc flush in the turf casting a
-                                           // shadow would be a hole, not a stone.
-                                           castsShadow: stone.material != .chalk,
-                                           seed: stone.seed) {
-                items.append(item)
-            }
+            items.append(PreparedScene.Item(
+                mesh: mesh, albedo: SurfaceMaterial.albedo(for: stone.material),
+                label: stone.id,
+                // A disc flush in the turf casting a shadow would be a hole,
+                // not a stone.
+                castsShadow: stone.material != .chalk,
+                kind: .rock, seed: stone.seed))
+            progress(Double(index + 1) / total)
         }
 
         // Salisbury Plain itself, displaced by the surveyed heightfield.
@@ -731,13 +765,27 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         // grid is denser near the monument and coarsens outward, because the
         // ridge four kilometres away needs far fewer triangles per metre than
         // the turf underfoot.
-        let ground = Self.groundMesh(terrain: terrain, divisions: 220)
-        if let item = try makeDrawItem(mesh: ground, albedo: SurfaceMaterial.turf,
-                                       label: "ground", castsShadow: false,
-                                       kind: .grass) {
-            items.append(item)
-        }
+        items.append(PreparedScene.Item(
+            mesh: Self.groundMesh(terrain: terrain, divisions: 220),
+            albedo: SurfaceMaterial.turf, label: "ground",
+            castsShadow: false, kind: .grass, seed: 0))
+        progress(1)
+        return PreparedScene(items: items, state: scene.state)
+    }
 
+    /// The GPU half: buffers made and the scene swapped in. Fast — the
+    /// meshes already exist — so the frame the bar disappears on is the
+    /// frame the new monument stands.
+    public func load(prepared: PreparedScene) throws {
+        var items: [DrawItem] = []
+        for piece in prepared.items {
+            if let item = try makeDrawItem(mesh: piece.mesh, albedo: piece.albedo,
+                                           label: piece.label,
+                                           castsShadow: piece.castsShadow,
+                                           kind: piece.kind, seed: piece.seed) {
+                items.append(item)
+            }
+        }
         drawItems = items
         loadGrass()
     }
@@ -862,7 +910,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// then sink it a little. The sink is not a fudge for cracks: megaliths are
     /// set in sockets, and a stone resting exactly on the surface reads as
     /// dropped there this morning.
-    static func seat(_ mesh: Mesh, of stone: Stone, on terrain: TerrainModel?) -> Mesh {
+    nonisolated static func seat(_ mesh: Mesh, of stone: Stone, on terrain: TerrainModel?) -> Mesh {
         guard let terrain else { return mesh }
         let lift = Float(terrain.groundHeight(east: Double(stone.position.x),
                                               south: Double(stone.position.z)))
@@ -881,7 +929,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// Vertices are placed on a grid warped by a cubic, so spacing is fine near
     /// the monument and stretches toward the horizon. A uniform grid over 30 km
     /// would either be too coarse underfoot or ruinously dense at the edges.
-    static func groundMesh(terrain: TerrainModel?, divisions: Int) -> Mesh {
+    nonisolated static func groundMesh(terrain: TerrainModel?, divisions: Int) -> Mesh {
         var mesh = Mesh()
         let extent = Float(terrain?.extent ?? 15_000)
 

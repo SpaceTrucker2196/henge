@@ -27,6 +27,7 @@ public struct HengeSceneView: PlatformViewRepresentable {
         var loadedState: Monument.State?
         var overlayKey: Int = 0
         var overlayRebuiltAt: Date = .distantPast
+        var rebuild: Task<Void, Never>?
         var failure: String?
     }
 
@@ -66,9 +67,32 @@ public struct HengeSceneView: PlatformViewRepresentable {
     private func update(_ view: MTKView, context: Context) {
         guard let renderer = context.coordinator.renderer else { return }
         renderer.state = model.sceneState
-        if context.coordinator.loadedState != model.monumentState {
-            try? renderer.load(scene: model.scene)
-            context.coordinator.loadedState = model.monumentState
+        if context.coordinator.loadedState != model.monumentState,
+           context.coordinator.rebuild == nil {
+            // The rebuild happens off the main actor so the progress card
+            // can actually move — eighty displaced stone meshes are most of
+            // a second, and building them mid-frame froze the app with no
+            // explanation. The upload at the end is quick; the frame the
+            // bar vanishes on is the frame the new monument stands.
+            let coordinator = context.coordinator
+            let target = model.monumentState
+            let scene = model.scene
+            let terrain = SkyModel.terrain
+            let soilBanks = renderer.state.soilBanks
+            let model = self.model
+            model.rebuildProgress = 0
+            coordinator.rebuild = Task {
+                let prepared = await Task.detached(priority: .userInitiated) {
+                    HengeRenderer.prepare(scene: scene, terrain: terrain,
+                                          soilBanks: soilBanks) { fraction in
+                        Task { @MainActor in model.rebuildProgress = fraction }
+                    }
+                }.value
+                try? renderer.load(prepared: prepared)
+                coordinator.loadedState = target
+                model.rebuildProgress = nil
+                coordinator.rebuild = nil
+            }
         }
         // The overlay rebuilds only when its key moves — a mode switch, a
         // marker changing disc, a bearing drifting past half a degree — and

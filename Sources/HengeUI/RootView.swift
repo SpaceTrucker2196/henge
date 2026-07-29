@@ -114,6 +114,25 @@ public struct RootView: View {
                 .allowsHitTesting(false)
             }
         }
+        .overlay {
+            // The ruin/whole switch rebuilds every stone; this card is the
+            // honest account of that second. Not hit-testable — you can
+            // keep looking around while the masons work.
+            if let progress = model.rebuildProgress {
+                VStack(spacing: Henge.Space.element) {
+                    Text(model.monumentState == .asItWas
+                         ? "Raising the stones" : "Four thousand years pass")
+                        .font(Henge.body(.caption))
+                    ProgressView(value: progress)
+                        .tint(Henge.bronze)
+                        .frame(width: 180)
+                }
+                .padding(Henge.Space.margin)
+                .hengePanel()
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
+        }
         .overlay(alignment: .top) {
             // The almanac runs the width of the view: a reading strip tight
             // against the top edge, columns side by side, scrolling

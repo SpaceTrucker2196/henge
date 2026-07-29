@@ -347,6 +347,11 @@ public final class SkyModel {
     /// The sky's condition — dressing the user chooses, defaulting clear.
     public var weather: Weather = .clear
 
+    /// Fraction of the monument rebuilt during a ruin/whole switch, nil
+    /// when no rebuild is running. Drives the progress card — the rebuild
+    /// happens off the main actor precisely so this can move.
+    public var rebuildProgress: Double?
+
     /// Whether the named stars carry their names on screen.
     public var showsStarLabels = false
 
