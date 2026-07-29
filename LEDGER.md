@@ -38,3 +38,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 9eec9bc | 2026-07-29T14:55:56Z | claude-fable-5 | 17 | 14982 | 8147938 | 8377 | 9.0647 | Dynamic inks for light appearance |
 | 619cc7d | 2026-07-29T14:59:25Z | claude-fable-5 | 18 | 24489 | 8230815 | 29739 | 10.0502 | Async ruin/whole rebuild with progress card |
 | 043d131 | 2026-07-29T15:07:16Z | claude-fable-5 | 33 | 29712 | 16853458 | 32533 | 18.9900 | Date-travel picker + attributions info view |
+| 42c95a7 | 2026-07-29T15:14:11Z | claude-fable-5 | 14 | 9414 | 6652252 | 4778 | 7.2187 | Twilight sky dimming for star visibility |
