@@ -116,11 +116,23 @@ public extension View {
     @ViewBuilder
     func hengePanel(cornerRadius: CGFloat = Henge.Radius.panel) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        // A panel is furniture: a touch that lands on its glass belongs to
+        // the panel, even where no control claims it. Liquid Glass draws
+        // without hit-testable substance, so without the explicit shape and
+        // the no-op drag claim, gestures over a panel's quiet regions fell
+        // through to the monument and the camera lurched under the chrome.
+        // The claim is lowest-priority by construction — every child
+        // control, scroll and scrub wins over it — so it swallows only what
+        // nothing else wanted.
         if #available(iOS 26.0, macOS 26.0, *) {
             self.glassEffect(.regular, in: shape)
+                .contentShape(shape)
+                .gesture(DragGesture(minimumDistance: 0).onChanged { _ in })
         } else {
             self.background(.ultraThinMaterial, in: shape)
                 .overlay(shape.strokeBorder(Henge.stone.opacity(0.18), lineWidth: 1))
+                .contentShape(shape)
+                .gesture(DragGesture(minimumDistance: 0).onChanged { _ in })
         }
     }
 
