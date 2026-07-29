@@ -29,3 +29,4 @@ the whole ledger: `ledger.py --energy-total`.
 | f32b6bd | 2026-07-29T04:42:08Z | claude-fable-5 | 10 | 4495 | 3890285 | 3162 | 4.1784 | Star twinkle: fast irregular shimmer via beating rates |
 | 230e255 | 2026-07-29T04:52:34Z | claude-fable-5 | 64 | 70923 | 25311526 | 68816 | 30.2346 | Planets from VSOP87D + doubled star/moon display size |
 | bb091c8 | 2026-07-29T04:58:16Z | claude-fable-5 | 20 | 8920 | 8067769 | 12548 | 8.7649 | Full IAU star-name register in the label layer |
+| cd2dd3b | 2026-07-29T05:12:11Z | claude-fable-5 | 60 | 23982 | 24875014 | 47018 | 27.0151 | Compact layout fixes, verified via simulator screenshots |
