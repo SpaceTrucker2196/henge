@@ -26,3 +26,4 @@ the whole ledger: `ledger.py --energy-total`.
 | eb65dda | 2026-07-29T04:28:02Z | claude-fable-5 | 76 | 76105 | 27671990 | 66912 | 32.8162 | Night sky: moon photograph + normal fix, Prussian night, twinkle, starlit ground |
 | a3abaf0 | 2026-07-29T04:32:08Z | claude-fable-5 | 26 | 22327 | 9726241 | 19376 | 11.2304 | Play button hit floor + drawers on all three panels |
 | 3d7a089 | 2026-07-29T04:38:57Z | claude-fable-5 | 38 | 36030 | 14521817 | 33117 | 16.9860 | Panels block touch fall-through to the scene |
+| f32b6bd | 2026-07-29T04:42:08Z | claude-fable-5 | 10 | 4495 | 3890285 | 3162 | 4.1784 | Star twinkle: fast irregular shimmer via beating rates |
