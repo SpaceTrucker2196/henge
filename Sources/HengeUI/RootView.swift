@@ -533,6 +533,12 @@ public struct RootView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
         }
+        // A ScrollView is greedy in *both* axes, and the overlay proposes
+        // the whole screen — without this the glass ran the full height of
+        // the display, which is how the strip was found wearing the sky.
+        // Fixed vertically, the strip is exactly as tall as its tallest
+        // column: the five compact rows of the sun.
+        .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
         .hengePanel(cornerRadius: 12)
     }
