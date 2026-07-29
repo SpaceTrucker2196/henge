@@ -185,11 +185,6 @@ public struct RootView: View {
                         monumentToggle
                     }
                     .padding(.vertical, Henge.Space.tight)
-                    // One plate for the whole rail: eight floating capsules
-                    // were eight enclosures saying nothing; the plate says
-                    // "controls live here" once, and bronze marks the
-                    // active ones.
-                    .hengePanel()
                 }
                 .padding(Henge.Space.margin)
                 .overlay(alignment: .leading) {

@@ -170,25 +170,26 @@ public extension View {
         }
     }
 
-    /// A control's dress: nothing until it is selected, a bronze capsule
-    /// when it is.
+    /// A control's dress: a quiet glass pill always, bronze when selected.
     ///
-    /// The unselected case used to wear its own glass capsule, which put a
-    /// box around every chip inside a plate that was already a box —
-    /// enclosure carrying no information, the exact ink Tufte says to
-    /// spend on data or not at all. A control's affordance comes from its
-    /// place in a control row; its *state* is what deserves the ink.
+    /// The Tufte pass stripped unselected controls bare, and the owner
+    /// reversed it within the hour, correctly: in a chrome this dense the
+    /// pill is not decoration, it is the affordance — the one mark that
+    /// says "this responds" among readouts that do not. The de-boxing's
+    /// survivors are the ones that mattered: one rhythm, selection as the
+    /// only *emphasis*, and no plate-within-plate around the rail.
     @ViewBuilder
     func hengeControl(isSelected: Bool = false) -> some View {
         let shape = Capsule(style: .continuous)
-        if isSelected {
-            if #available(iOS 26.0, macOS 26.0, *) {
-                self.glassEffect(.regular.tint(Henge.bronze.opacity(0.45)), in: shape)
-            } else {
-                self.background(Henge.bronze.opacity(0.35), in: shape)
-            }
+        if #available(iOS 26.0, macOS 26.0, *) {
+            self.glassEffect(isSelected ? .regular.tint(Henge.bronze.opacity(0.45))
+                                        : .regular,
+                             in: shape)
         } else {
-            self.contentShape(shape)
+            self.background(isSelected ? AnyShapeStyle(Henge.bronze.opacity(0.35))
+                                       : AnyShapeStyle(.ultraThinMaterial),
+                            in: shape)
+                .overlay(shape.strokeBorder(Henge.stone.opacity(0.14), lineWidth: 1))
         }
     }
 }
