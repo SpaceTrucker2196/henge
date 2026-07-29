@@ -42,3 +42,4 @@ the whole ledger: `ledger.py --energy-total`.
 | f477a25 | 2026-07-29T15:36:25Z | claude-fable-5 | 51 | 37864 | 27013124 | 39254 | 29.6919 | Moon shadows: caster-gated lookup + radiance rebalance |
 | 109fd27 | 2026-07-29T15:39:59Z | claude-fable-5 | 12 | 12905 | 5876405 | 8666 | 6.6951 | Zodiac constellation labels with glyphs |
 | d845807 | 2026-07-29T16:07:42Z | claude-fable-5 | 9 | 13273 | 5923116 | 9106 | 6.7690 | Tufte pass: selection-only enclosures, unified 12pt rhythm, plated rail |
+| b6927c0 | 2026-07-29T16:16:04Z | claude-fable-5 | 20 | 10090 | 4288222 | 134187 | 7.4767 | Restore glass pills on interactive controls; readouts stay bare |
