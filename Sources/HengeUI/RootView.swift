@@ -58,15 +58,17 @@ public struct RootView: View {
             .padding(.bottom, 10)
         }
         .overlay(alignment: .top) {
-            // The almanac runs the width of the view: a reading strip along
-            // the top, columns side by side, scrolling horizontally where the
-            // screen is narrower than the day is interesting. The toggle
-            // keeps its corner, so the strip stops short of it.
+            // The almanac runs the width of the view: a reading strip tight
+            // against the top edge, columns side by side, scrolling
+            // horizontally where the screen is narrower than the day is
+            // interesting. Vertical space is the monument's, not the
+            // chrome's — the strip spends as little of it as legibility
+            // allows. The toggle keeps its corner, so the strip stops short.
             if showingAlmanac {
                 HengeGlass { almanac }
-                    .padding(.top, 16)
-                    .padding(.leading, 16)
-                    .padding(.trailing, 72)
+                    .padding(.top, 4)
+                    .padding(.leading, 10)
+                    .padding(.trailing, 64)
             }
         }
         .overlay(alignment: .topTrailing) {
@@ -425,16 +427,16 @@ public struct RootView: View {
 
     private var almanac: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: .top, spacing: 10) {
                 column {
                     Text(model.formattedDate)
-                        .font(Henge.title(.title3))
+                        .font(Henge.title(.subheadline))
                     // Local time first: it is the time at the monument, which
                     // is what anyone standing there wants. UT stays visible
                     // underneath because it is what the ephemeris is actually
                     // computed in.
                     Text(model.formattedLocalTime ?? model.formattedSolarTime)
-                        .font(Henge.figure(.callout))
+                        .font(Henge.figure(.caption))
                     Text(model.formattedLocalTime == nil
                          ? "local apparent solar time" : model.formattedTime)
                         .font(Henge.figure(.caption2))
@@ -528,21 +530,22 @@ public struct RootView: View {
                     .accessibilityHint("Switch between the completed monument and the ruin")
                 }
             }
-            .padding(12)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .hengePanel()
+        .hengePanel(cornerRadius: 12)
     }
 
     private func column(@ViewBuilder _ content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 4, content: content)
+        VStack(alignment: .leading, spacing: 2, content: content)
     }
 
     private var columnRule: some View {
         Rectangle()
             .fill(Henge.stone.opacity(0.22))
             .frame(width: 1)
-            .frame(minHeight: 56)
+            .frame(minHeight: 40)
     }
 
     private func row(_ label: String, _ value: String) -> some View {
