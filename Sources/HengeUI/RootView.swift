@@ -28,10 +28,12 @@ public struct RootView: View {
     @State private var lastZoom: CGFloat = 1
     @State private var showingLore = false
     @State private var showingAlmanac = true
-    /// Whether the bottom control stack is on screen or slid away to the
-    /// left. The monument is the point of the app; the controls should be
-    /// dismissible to nothing but a handle.
+    /// Whether each panel is on screen or slid away to its edge, leaving a
+    /// handle. The monument is the point of the app; every piece of chrome
+    /// should be dismissible to nothing but a handle.
     @State private var controlsDrawerOpen = true
+    @State private var stripDrawerOpen = true
+    @State private var railDrawerOpen = true
     /// MISSION.md invariant 7. Time-lapse is the app's one continuous motion,
     /// and at 100,000× the whole sky wheels — which is exactly the kind of
     /// thing this setting exists to stop. Honoured by capping the rate rather
@@ -65,15 +67,23 @@ public struct RootView: View {
                 }
                 .padding(.horizontal, Henge.Space.margin)
                 .padding(.bottom, Henge.Space.panel)
-                .overlay(alignment: .leading) { drawerHandle }
+                .overlay(alignment: .leading) {
+                    drawerHandle(isOpen: true, edge: .leading,
+                                 label: "Hide the control panels") {
+                        controlsDrawerOpen = false
+                    }
+                }
                 .transition(.move(edge: .leading).combined(with: .opacity))
             }
         }
         .overlay(alignment: .bottomLeading) {
             if !controlsDrawerOpen {
-                drawerHandle
-                    .padding(.leading, 2)
-                    .padding(.bottom, 72)
+                drawerHandle(isOpen: false, edge: .leading,
+                             label: "Show the control panels") {
+                    controlsDrawerOpen = true
+                }
+                .padding(.leading, 2)
+                .padding(.bottom, 72)
             }
         }
         .overlay {
@@ -105,27 +115,63 @@ public struct RootView: View {
             // interesting. Vertical space is the monument's, not the
             // chrome's — the strip spends as little of it as legibility
             // allows. The toggle keeps its corner, so the strip stops short.
-            if showingAlmanac {
+            if showingAlmanac, stripDrawerOpen {
                 HengeGlass { almanac }
                     .padding(.top, 4)
                     .padding(.leading, Henge.Space.panel)
                     // The toggle rail's width plus a margin either side
                     // — the strip stops where the rail begins.
                     .padding(.trailing, Henge.Hit.control + Henge.Space.margin * 2)
+                    .overlay(alignment: .leading) {
+                        drawerHandle(isOpen: true, edge: .leading,
+                                     label: "Hide the almanac strip") {
+                            stripDrawerOpen = false
+                        }
+                    }
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            if showingAlmanac, !stripDrawerOpen {
+                drawerHandle(isOpen: false, edge: .leading,
+                             label: "Show the almanac strip") {
+                    stripDrawerOpen = true
+                }
+                .padding(.leading, 2)
+                .padding(.top, 8)
             }
         }
         .overlay(alignment: .topTrailing) {
-            HengeGlass {
-                VStack(spacing: Henge.Space.element) {
-                    almanacToggle
-                    overlayToggle
-                    markerToggle
-                    torchToggle
-                    weatherToggle
-                    starLabelToggle
+            // The toggle rail is a drawer too, sliding toward its own edge —
+            // rightward, because a drawer goes the way its wall faces.
+            if railDrawerOpen {
+                HengeGlass {
+                    VStack(spacing: Henge.Space.element) {
+                        almanacToggle
+                        overlayToggle
+                        markerToggle
+                        torchToggle
+                        weatherToggle
+                        starLabelToggle
+                    }
                 }
+                .padding(Henge.Space.margin)
+                .overlay(alignment: .leading) {
+                    drawerHandle(isOpen: true, edge: .trailing,
+                                 label: "Hide the mode toggles") {
+                        railDrawerOpen = false
+                    }
+                    .offset(x: -Henge.Space.tight)
+                }
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+            } else {
+                drawerHandle(isOpen: false, edge: .trailing,
+                             label: "Show the mode toggles") {
+                    railDrawerOpen = true
+                }
+                .padding(.trailing, 2)
+                .padding(.top, 40)
             }
-            .padding(Henge.Space.margin)
         }
         .foregroundStyle(Henge.stone)
         .tint(Henge.bronze)
@@ -140,17 +186,20 @@ public struct RootView: View {
         }
     }
 
-    /// The drawer's handle: a slim capsule the eye reads as an edge-tab,
-    /// with a hit region at the platform's 44-point floor — the visual may
-    /// be fourteen points wide, but what it accepts must not be (the rail
-    /// taught that lesson the same day this shipped).
-    private var drawerHandle: some View {
+    /// A drawer's handle: a slim capsule the eye reads as an edge-tab, with
+    /// a hit region at the platform's 44-point floor — the visual may be
+    /// fourteen points wide, but what it accepts must not be (the rail
+    /// taught that lesson the same day this shipped). One builder for every
+    /// panel, so the chevron grammar cannot drift: it always points the way
+    /// the panel will go.
+    private func drawerHandle(isOpen: Bool, edge: HorizontalEdge,
+                              label: String,
+                              toggle: @escaping () -> Void) -> some View {
         Button {
-            withAnimation(Henge.settle(reduceMotion)) {
-                controlsDrawerOpen.toggle()
-            }
+            withAnimation(Henge.settle(reduceMotion)) { toggle() }
         } label: {
-            Image(systemName: controlsDrawerOpen ? "chevron.left" : "chevron.right")
+            Image(systemName: (edge == .leading) == isOpen
+                  ? "chevron.left" : "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
                 .frame(width: 14, height: 56)
                 .hengeControl()
@@ -159,10 +208,9 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(Henge.stone)
-        .accessibilityLabel(controlsDrawerOpen
-                            ? "Hide the control panels" : "Show the control panels")
-        .accessibilityHint("The time bar, the events and the stations slide "
-                           + "away to the left; the handle stays to bring them back")
+        .accessibilityLabel(label)
+        .accessibilityHint("Slides the panel away to its edge; the handle "
+                           + "stays to bring it back")
     }
 
     // ── the monument ────────────────────────────────────────────────────────
@@ -281,16 +329,21 @@ public struct RootView: View {
     }
 
     private var timeControls: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Henge.Space.element) {
+            // The play button is the row's one verb, and it was the row's
+            // most cramped control. Full hit floor, and a clear gap before
+            // the rates so a thumb aiming at "run" cannot land on "1×".
             Button {
                 model.isPlaying.toggle()
             } label: {
                 Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
-                    .frame(width: 34, height: 30)
+                    .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                    .contentShape(Capsule())
             }
             .buttonStyle(.plain)
             .hengeControl()
             .accessibilityLabel(model.isPlaying ? "Pause time" : "Run time forward")
+            .padding(.trailing, Henge.Space.element)
 
             ForEach(Self.rates, id: \.label) { rate in
                 let allowed = !reduceMotion || rate.value <= 100
