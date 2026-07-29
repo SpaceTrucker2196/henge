@@ -13,3 +13,4 @@ One row per production order run through the converge loop
 | chat | 520872f | 2026-07-28 | 1 | 212 | yes | 14-agent adversarial review; 8 confirmed findings fixed, worst: haze vs unfitted cascades window |
 | chat | b0e7613 | 2026-07-28 | 2 | 218 | yes | Torchlit ceremony mode; review caught sun-Fresnel coupling and the aerial sky-torch |
 | chat | 1f78c7e | 2026-07-28 | 2 | 234 | yes | Hipparcos stars: PM+precession, Thuban pole pinned; review caught the toggle-starless bug |
+| chat | 63e32f7 | 2026-07-28 | 3 | 242 | yes | Weather dressing; review confirmed 7 findings incl. mutation-proven test gap, all fixed |
