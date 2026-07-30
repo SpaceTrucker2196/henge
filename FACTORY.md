@@ -117,10 +117,21 @@ simulator, exactly as the make targets do.
 | `fastlane ios release_build` | Release compile proof (archiving waits on signing) |
 | `fastlane ios sim` | build → install → launch on the booted simulator |
 | `fastlane ios uitest` | the pixel-level `BuildFlowUITests` inspection |
+| `fastlane ios beta` | archive, sign, upload to TestFlight |
 
 `make test` remains the oracle and the gate before any push; fastlane
-does not replace it. Archiving and TestFlight lanes wait on a signing
-conversation with the owner.
+does not replace it.
+
+The beta lane signs automatically with the App Store Connect API key
+(`AuthKey_H3U2MJCD77.p8`, probed from the standard key directories) and
+the river.io llc team (U3Z59RXPUB → `DEVELOPMENT_TEAM` in project.yml);
+no profile lives in the repo. It registered the `io.river.henge` bundle
+id itself. The **app record** is the one artefact Apple will not let an
+API key create — a one-time human step (`fastlane produce` with an
+Apple ID, or App Store Connect → My Apps → ＋); the lane archives
+regardless and stops before upload with instructions until the record
+exists. Build numbers come from TestFlight (`latest + 1`) and are
+injected as a build-setting override because the project is generated.
 
 ## CI
 

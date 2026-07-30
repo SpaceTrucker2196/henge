@@ -13,9 +13,11 @@ configs:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "0.0.1"
+    MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     CODE_SIGN_STYLE: Automatic
+    # river.io llc — the team the distribution certificate belongs to.
+    DEVELOPMENT_TEAM: U3Z59VXPUB
     # Warnings are the only signal that something compiled but is wrong
     # (factory/dark-factory.md §3). Keep the build warning-clean rather than
     # silencing this.
@@ -75,6 +77,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.river.henge.uitests
         TEST_TARGET_NAME: Henge
+        GENERATE_INFOPLIST_FILE: YES
 
   # ── macOS ──────────────────────────────────────────────────────────────
   # Same bundle id as iOS on purpose: one App Store Connect record covering
