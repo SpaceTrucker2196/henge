@@ -48,3 +48,4 @@ the whole ledger: `ledger.py --energy-total`.
 | e8f7237 | 2026-07-30T00:05:21Z | claude-fable-5 | 72 | 38781 | 10234077 | 78379 | 13.7414 | Launch screen + async initial raise: no more blank startup |
 | 0950281 | 2026-07-30T00:08:55Z | claude-fable-5 | 29 | 10493 | 4330303 | 10642 | 5.0681 | fastlane lanes: build/release_build/sim/uitest wrapping factory xcodebuild |
 | 2aceabc | 2026-07-30T00:58:12Z | claude-fable-5 | 118 | 59105 | 20019867 | 69199 | 24.3603 | TestFlight pipeline: beta lane, bundle id registered, signed ipa to the human ga |
+| e48bbc3 | 2026-07-30T20:46:38Z | claude-fable-5 | 150 | 78248 | 27045417 | 1003553 | 51.0304 | macOS starless night: nested-resource lookup fixed, path pinned by test |
