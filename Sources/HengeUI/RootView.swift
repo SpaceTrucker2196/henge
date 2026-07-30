@@ -216,10 +216,17 @@ public struct RootView: View {
             // card open so the orientation inspection can read it at
             // leisure — the real card lives for about a second, long
             // enough to mislead a user and too short to screenshot
-            // reliably. Inert unless the harness asks for it by name.
-            if ProcessInfo.processInfo
-                .environment["HENGE_UITEST_PIN_REBUILD_CARD"] != nil {
+            // reliably. Re-asserted on a short loop because launch now
+            // raises the stones through the same progress channel and
+            // clears it on landing, which would un-pin a one-shot fixture.
+            // Inert unless the harness asks for it by name.
+            guard ProcessInfo.processInfo
+                .environment["HENGE_UITEST_PIN_REBUILD_CARD"] != nil else {
+                return
+            }
+            while !Task.isCancelled {
                 model.rebuildProgress = 0.4
+                try? await Task.sleep(for: .milliseconds(50))
             }
         }
         .sheet(isPresented: $showingInfo) {

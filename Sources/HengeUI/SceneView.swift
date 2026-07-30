@@ -46,13 +46,31 @@ public struct HengeSceneView: PlatformViewRepresentable {
         view.preferredFramesPerSecond = 120     // ProMotion where it exists
         view.isPaused = false
         view.enableSetNeedsDisplay = false
+        // The launch screen's pre-dawn slate, held until the first frame
+        // draws over it — without this the gap between the two is a flash
+        // of bare window white.
+        #if canImport(UIKit)
+        view.backgroundColor = UIColor(red: 0.098, green: 0.153,
+                                       blue: 0.231, alpha: 1)
+        #else
+        view.wantsLayer = true
+        view.layer?.backgroundColor = CGColor(red: 0.098, green: 0.153,
+                                              blue: 0.231, alpha: 1)
+        #endif
 
         do {
             let renderer = try HengeRenderer(state: model.sceneState)
             renderer.terrain = SkyModel.terrain
-            try renderer.load(scene: model.scene)
+            // Launch opens on the plain, not on a blank frame: the terrain
+            // and sky load here (quick), and `loadedState` is left nil so
+            // the first update pass finds the monument missing and raises
+            // the stones through the same asynchronous path the ruin/whole
+            // switch uses — progress card and all. Before this, eighty
+            // stone meshes built synchronously inside the first frame, and
+            // launch was seconds of blank white after the launch screen.
+            try renderer.load(scene: MonumentScene(stones: []))
             context.coordinator.renderer = renderer
-            context.coordinator.loadedState = model.monumentState
+            context.coordinator.loadedState = nil
             view.device = renderer.device
             view.delegate = renderer
         } catch {
