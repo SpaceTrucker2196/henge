@@ -10,6 +10,12 @@
 test:
 	swift test
 
+# iOS builds also answer to fastlane (owner's order): `fastlane ios build`,
+# `fastlane ios sim` (build+install+launch on the booted simulator),
+# `fastlane ios uitest`. The lanes in fastlane/Fastfile wrap the same
+# xcodebuild these targets use — same generated project, same
+# CODE_SIGNING_ALLOWED=NO — so the two doors cannot drift.
+
 # Pixel-level inspection: drives the real iOS app in the simulator and OCRs
 # the screen. Exists because the rebuild card once drew upside down in a
 # landscape window while the accessibility tree swore it was fine — a class

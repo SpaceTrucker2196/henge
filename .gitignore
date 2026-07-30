@@ -13,3 +13,8 @@ xcuserdata/
 # Resolved package versions: the package has no remote dependencies, so this
 # would only ever be noise.
 Package.resolved
+
+# fastlane run artifacts — the lanes are versioned, their output is not.
+fastlane/report.xml
+fastlane/README.md
+fastlane/test_output/

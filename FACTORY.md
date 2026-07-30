@@ -104,6 +104,24 @@ a metallib — not moving the shaders into the app target.
 Run `make generate` after adding a file under `App/`, `iOSApp/` or `macOSApp/`.
 Files under `Sources/` and `Tests/` are picked up by SwiftPM automatically.
 
+## fastlane (iOS)
+
+The iOS side answers to fastlane as well as make — owner's order, kept
+thin so the two doors cannot drift. Every lane regenerates the Xcode
+project first and builds with `CODE_SIGNING_ALLOWED=NO` for the
+simulator, exactly as the make targets do.
+
+| Lane | Does |
+|---|---|
+| `fastlane ios build` | Debug simulator build, warning-filtered |
+| `fastlane ios release_build` | Release compile proof (archiving waits on signing) |
+| `fastlane ios sim` | build → install → launch on the booted simulator |
+| `fastlane ios uitest` | the pixel-level `BuildFlowUITests` inspection |
+
+`make test` remains the oracle and the gate before any push; fastlane
+does not replace it. Archiving and TestFlight lanes wait on a signing
+conversation with the owner.
+
 ## CI
 
 None yet. The merge gate is the **local green suite enforced pre-push**. When CI

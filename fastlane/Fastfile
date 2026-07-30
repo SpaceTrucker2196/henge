@@ -1,0 +1,68 @@
+# henge — fastlane lanes for the iOS side.
+#
+# These are the front door for iOS builds; each lane wraps the same
+# xcodebuild the Makefile uses, with the same two non-negotiables:
+# the Xcode project is GENERATED (xcodegen runs first, always), and
+# simulator builds carry CODE_SIGNING_ALLOWED=NO because SwiftPM
+# resource bundles fail codesign in the simulator.
+#
+# `make test` (the SwiftPM oracle) stays the gate before any push;
+# nothing here replaces it.
+
+default_platform(:ios)
+
+SCHEME = "Henge"
+PROJECT = "Henge.xcodeproj"
+DEVICE = "iPhone 17 Pro"
+BUNDLE_ID = "io.river.henge"
+
+def regenerate
+  sh("cd .. && make generate")
+end
+
+platform :ios do
+  desc "Debug build for the simulator — the factory's warning-clean check"
+  lane :build do
+    regenerate
+    sh("cd .. && set -o pipefail; xcodebuild -project #{PROJECT} " \
+       "-scheme #{SCHEME} -destination 'generic/platform=iOS Simulator' " \
+       "-configuration Debug CODE_SIGNING_ALLOWED=NO build " \
+       "| { grep -E 'error:|warning:|BUILD (SUCCEEDED|FAILED)' || true; }")
+  end
+
+  desc "Release build (compile proof; archiving waits on signing setup)"
+  lane :release_build do
+    regenerate
+    sh("cd .. && set -o pipefail; xcodebuild -project #{PROJECT} " \
+       "-scheme #{SCHEME} -destination 'generic/platform=iOS Simulator' " \
+       "-configuration Release CODE_SIGNING_ALLOWED=NO build " \
+       "| { grep -E 'error:|warning:|BUILD (SUCCEEDED|FAILED)' || true; }")
+  end
+
+  desc "Build, install and launch on the booted simulator — the visual loop"
+  lane :sim do
+    regenerate
+    derived = "/tmp/henge-fastlane-dd"
+    sh("cd .. && set -o pipefail; xcodebuild -project #{PROJECT} " \
+       "-scheme #{SCHEME} -destination 'platform=iOS Simulator,name=#{DEVICE}' " \
+       "-configuration Debug -derivedDataPath #{derived} " \
+       "CODE_SIGNING_ALLOWED=NO build " \
+       "| { grep -E 'error:|BUILD (SUCCEEDED|FAILED)' || true; }")
+    sh("xcrun simctl install booted " \
+       "#{derived}/Build/Products/Debug-iphonesimulator/Henge.app")
+    sh("xcrun simctl terminate booted #{BUNDLE_ID} 2>/dev/null || true")
+    sh("xcrun simctl launch booted #{BUNDLE_ID}")
+  end
+
+  desc "The pixel-level UI inspection (BuildFlowUITests) on the simulator"
+  lane :uitest do
+    regenerate
+    run_tests(
+      project: PROJECT,
+      scheme: SCHEME,
+      devices: [DEVICE],
+      xcargs: "CODE_SIGNING_ALLOWED=NO",
+      output_directory: "test_output"
+    )
+  end
+end
