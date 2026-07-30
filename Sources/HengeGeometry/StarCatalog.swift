@@ -45,9 +45,25 @@ public struct StarCatalog: Sendable {
     /// Load the bundled catalogue. Nil rather than a throw, and the renderer
     /// treats nil as "no stars tonight": the almanac must not die for want
     /// of decoration — same contract as the surface textures.
+    /// Where the bundled catalogue lives. Subdirectory first, flat second —
+    /// the same pair the terrain uses, and for the same reason: this package
+    /// ships its files with `.copy("Resources")`, and the macOS app bundle
+    /// keeps that nesting where the flat lookup cannot see it. The flat
+    /// lookup alone found the file under SwiftPM and on iOS and returned nil
+    /// inside the macOS app — a starless night on exactly one platform,
+    /// silent because nil means "no stars tonight" by contract. Internal so
+    /// the test can hold the subdirectory path specifically.
+    static func bundledCatalogueURL(subdirectoryOnly: Bool = false) -> URL? {
+        let nested = Bundle.module.url(forResource: "hipparcos-bright",
+                                       withExtension: "csv",
+                                       subdirectory: "Resources")
+        if subdirectoryOnly { return nested }
+        return nested ?? Bundle.module.url(forResource: "hipparcos-bright",
+                                           withExtension: "csv")
+    }
+
     public static func load() -> StarCatalog? {
-        guard let url = Bundle.module.url(forResource: "hipparcos-bright",
-                                          withExtension: "csv"),
+        guard let url = bundledCatalogueURL(),
               let text = try? String(contentsOf: url, encoding: .utf8) else {
             return nil
         }

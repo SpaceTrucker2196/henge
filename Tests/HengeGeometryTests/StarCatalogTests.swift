@@ -97,6 +97,22 @@ final class StarCatalogTests: XCTestCase {
         }
     }
 
+    func testTheCatalogueResolvesThroughItsShippedSubdirectory() {
+        // The macOS app taught this one. The package ships its files with
+        // `.copy("Resources")`, so the catalogue lives in a *nested*
+        // Resources folder, and the macOS app bundle preserves that nesting
+        // where a flat `url(forResource:)` cannot see it. The flat lookup
+        // happened to work under SwiftPM and on iOS, so every test was
+        // green while the Mac's nights were silently starless. This pins
+        // the lookup the macOS bundle actually needs; if the resource
+        // declaration ever changes shape, this fails before an app does.
+        XCTAssertNotNil(
+            StarCatalog.bundledCatalogueURL(subdirectoryOnly: true),
+            "the star catalogue must resolve through the Resources "
+            + "subdirectory — the flat fallback is the only lookup the "
+            + "macOS app bundle cannot satisfy")
+    }
+
     func testInstancesCarryTheWholeCatalogueAsUnitVectors() throws {
         let catalog = try XCTUnwrap(Self.catalog)
         let instances = catalog.instances(at: JulianDay(2_451_545.0))
