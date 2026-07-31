@@ -116,9 +116,15 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       started; the app icon needs its store-quality pass on nobody's list
       but ours.
 
-- [ ] **M7 — The Ground Plan (M).** *Owner requests, 2026-07-31. Not started.*
-      Three items, captured verbatim from the owner and parked here because
-      they arrived while another project was in front of us.
+- [x] **M7 — The Ground Plan (M).** *Owner requests, 2026-07-31; landed the
+      same day.* (1) The year bar's moon lights jump to the *moonrise* of
+      their day, on a new sample-and-bisect lunar rise solver with the
+      honest monthly no-rise fallback. (2) The sunrise landing was verified
+      as an assertion over all eight stations rather than a recollection
+      about one. (3) The geometry page was read into the wiki, tiered
+      Speculative, and the overlay gained cardinals, feature labels and
+      surveyed measurements mapped to the ground. Items as originally
+      captured below.
 
       1. **Moon-phase jumps land on moonrise.** "When clicking a moon phase the
          time should go to moon rise." The events ribbon (M4) already jumps to
