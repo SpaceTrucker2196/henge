@@ -50,3 +50,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 2aceabc | 2026-07-30T00:58:12Z | claude-fable-5 | 118 | 59105 | 20019867 | 69199 | 24.3603 | TestFlight pipeline: beta lane, bundle id registered, signed ipa to the human ga |
 | e48bbc3 | 2026-07-30T20:46:38Z | claude-fable-5 | 150 | 78248 | 27045417 | 1003553 | 51.0304 | macOS starless night: nested-resource lookup fixed, path pinned by test |
 | 9fa911f | 2026-07-31T01:43:22Z | claude-fable-5 | 18 | 10547 | 3043156 | 711444 | 17.7996 | Roadmap updated through 30 July: M3/M5 landings, M6 ship track |
+| a766e25 | 2026-07-31T02:33:16Z | claude-fable-5 | 223 | 175444 | 51497452 | 201565 | 64.3032 | Constellation figures: 29 hand-drawn, 188 segments; register regenerated whole;  |
