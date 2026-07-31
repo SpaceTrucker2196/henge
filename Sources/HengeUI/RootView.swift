@@ -195,8 +195,8 @@ public struct RootView: View {
                         torchToggle
                         weatherToggle
                         starLabelToggle
+                        constellationToggle
                         zodiacToggle
-                        monumentToggle
                     }
                     .padding(.vertical, Henge.Space.tight)
                 }
@@ -403,6 +403,15 @@ public struct RootView: View {
                 .accessibilityLabel(station.rawValue)
                 .accessibilityAddTraits(model.station == station ? [.isSelected] : [])
             }
+
+            // *When* you stand there rides beside *where*: whole monument
+            // or today's ruin. It lived on the toggle rail once, but it is
+            // a place-state like the stations, and the rail had grown past
+            // what the sky leaves it room for.
+            Rectangle()
+                .fill(Henge.stone.opacity(Henge.Ink.hairline))
+                .frame(width: 1, height: 34)
+            monumentToggle
         }
         .padding(.horizontal, 6)
         .hengePanel()
@@ -730,6 +739,27 @@ public struct RootView: View {
     /// and their true places is the point: precession has carried them a
     /// full sign from the astrological calendar, which this app is exactly
     /// the instrument to show.
+    /// The hand-drawn constellation figures, joined star to star.
+    private var constellationToggle: some View {
+        Button {
+            model.showsConstellationLines.toggle()
+        } label: {
+            Image(systemName: "point.3.connected.trianglepath.dotted")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.showsConstellationLines)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(model.showsConstellationLines ? Henge.bronze : Henge.stone)
+        .accessibilityLabel(model.showsConstellationLines
+                            ? "Hide the constellation figures"
+                            : "Show the constellation figures")
+        .accessibilityHint("Faint lines joining the stars of twenty-nine "
+                           + "classical constellations — figures drawn for "
+                           + "this app, riding the precessing sky")
+    }
+
     private var zodiacToggle: some View {
         Button {
             model.showsZodiac.toggle()

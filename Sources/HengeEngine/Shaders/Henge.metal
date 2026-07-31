@@ -1623,6 +1623,52 @@ fragment float4 star_fragment(StarInOut in [[stage_in]],
     return float4(acesToneMap(colour * frame.skyParameters.y), 1.0);
 }
 
+// ── constellation figures ───────────────────────────────────────────────────
+//
+// Line segments joining catalogue stars — the app's own hand-drawn figures.
+// Faint on purpose: the figures are a reading aid over the sky, not part of
+// it, so they come out with the middling stars (a magnitude-3 twilight ramp)
+// and sit far below any star's own light. Endpoints fade individually at
+// the horizon rather than clipping, so a half-set figure dips out gently.
+
+struct ConstellationInOut {
+    float4 clipPosition [[position]];
+    float intensity;
+};
+
+vertex ConstellationInOut constellation_vertex(uint vertexID [[vertex_id]],
+                                constant StarVertex *endpoints [[buffer(1)]],
+                                constant FrameUniforms &frame [[buffer(0)]],
+                                constant float4x4 &equatorialToWorld [[buffer(2)]])
+{
+    StarVertex endpoint = endpoints[vertexID];
+    float3 world = (equatorialToWorld * float4(endpoint.direction.xyz, 0.0)).xyz;
+
+    ConstellationInOut out;
+    // The magnitude-3 star's twilight ramp, restated from star_vertex —
+    // the figures arrive with the stars they join.
+    float sunAltitude = asin(clamp(frame.sunDirection.y, -1.0, 1.0))
+                      * (180.0 / M_PI_F);
+    float t = clamp((-6.0 - sunAltitude) / 2.0, 0.0, 1.0);
+    float visibility = t * t * (3.0 - 2.0 * t);
+    visibility *= 1.0 - frame.weatherState.x;
+    float horizon = smoothstep(-0.02, 0.02, world.y);
+
+    out.clipPosition = frame.viewProjection
+        * float4(frame.cameraPosition.xyz + world * 30000.0, 1.0);
+    out.intensity = 0.16 * visibility * horizon;
+    return out;
+}
+
+fragment float4 constellation_fragment(ConstellationInOut in [[stage_in]],
+                                       constant FrameUniforms &frame [[buffer(0)]])
+{
+    // Starlight's own pale blue, far dimmer than any star, added onto the
+    // sky like the rest of the night's light.
+    float3 colour = float3(0.62, 0.68, 0.80) * in.intensity;
+    return float4(acesToneMap(colour * frame.skyParameters.y), 1.0);
+}
+
 // ── individual blades ───────────────────────────────────────────────────────
 //
 // The shading model above is right for the middle distance: a hundred metres

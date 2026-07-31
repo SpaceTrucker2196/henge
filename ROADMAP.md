@@ -34,8 +34,15 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       behind their own toggle. *2026-07-30:* the macOS starless-night escape
       found and closed — the catalogue's flat resource lookup failed in the
       one bundle layout the test suite does not build; the lookup the Mac
-      needs is now pinned by a test. **Remaining:** the Milky Way (licence
-      undecided); constellation lines stay dropped.
+      needs is now pinned by a test. *Landed 2026-07-30:* the constellation
+      figures — the licence problem dissolved by drawing our own: 29
+      figures, 188 segments authored by hand against the vendored
+      catalogue (membership is Ptolemy's, positions are Hipparcos's, the
+      drawings are ours), riding the same instance buffer as the stars so
+      they precess for free. Along the way the authoring caught a shipped
+      register bug: multi-word IAU names truncated at the first space —
+      the sky was labelling three stars "Kaus". **Remaining:** the Milky
+      Way (licence undecided) — now the only thing left of M3.
 
 - [x] **M4 — The Calendar (M–L).** *In progress.* The Wheel of the Year has
       landed: eight stations solved from apparent solar longitude, festival

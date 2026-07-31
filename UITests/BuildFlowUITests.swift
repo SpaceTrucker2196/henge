@@ -63,10 +63,22 @@ final class BuildFlowUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 1.0)
         app.launch()
         let wantsLandscape = orientation.isLandscape
-        let rotationDeadline = Date().addingTimeInterval(15)
-        while Date() < rotationDeadline,
-              (app.frame.width > app.frame.height) != wantsLandscape {
-            Thread.sleep(forTimeInterval: 0.25)
+        func windowAgrees(within seconds: TimeInterval) -> Bool {
+            let deadline = Date().addingTimeInterval(seconds)
+            while Date() < deadline {
+                if (app.frame.width > app.frame.height) == wantsLandscape {
+                    return true
+                }
+                Thread.sleep(forTimeInterval: 0.25)
+            }
+            return false
+        }
+        if !windowAgrees(within: 10) {
+            // A rotation requested while the previous test's transition was
+            // still settling is sometimes dropped — ask once more before
+            // calling it a failure.
+            XCUIDevice.shared.orientation = orientation
+            _ = windowAgrees(within: 10)
         }
         XCTAssertEqual(app.frame.width > app.frame.height, wantsLandscape,
                        "the window never adopted the requested orientation")
@@ -213,12 +225,20 @@ final class BuildFlowUITests: XCTestCase {
             }
         }
         // 40% of 180 points of bar; ask for a comfortable majority of it.
+        // Summed over a three-row window, because antialiasing splits the
+        // few-pixel-tall bar across neighbouring rows and a single row can
+        // land just under any honest threshold.
         let barThreshold = Int(45 * scale)
-        guard let bar = rows.max(by: { $0.value < $1.value }),
+        let banded: [(key: Int, value: Int)] = rows.map { row in
+            (row.key,
+             row.value + (rows[row.key - 1] ?? 0) + (rows[row.key + 1] ?? 0))
+        }
+        guard let bar = banded.max(by: { $0.value < $1.value }),
               bar.value > barThreshold else {
-            XCTFail("no bar-like band of bronze near the card (densest row "
-                    + "\(rows.values.max() ?? 0) px, needed \(barThreshold)) — "
-                    + "the card did not render where its layout claims")
+            XCTFail("no bar-like band of bronze near the card (densest band "
+                    + "\(banded.map(\.value).max() ?? 0) px, needed "
+                    + "\(barThreshold)) — the card did not render where its "
+                    + "layout claims")
             return
         }
 

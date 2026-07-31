@@ -42,9 +42,6 @@ public struct StarCatalog: Sendable {
 
     public let entries: [Entry]
 
-    /// Load the bundled catalogue. Nil rather than a throw, and the renderer
-    /// treats nil as "no stars tonight": the almanac must not die for want
-    /// of decoration — same contract as the surface textures.
     /// Where the bundled catalogue lives. Subdirectory first, flat second —
     /// the same pair the terrain uses, and for the same reason: this package
     /// ships its files with `.copy("Resources")`, and the macOS app bundle
@@ -62,6 +59,9 @@ public struct StarCatalog: Sendable {
                                            withExtension: "csv")
     }
 
+    /// Load the bundled catalogue. Nil rather than a throw, and the renderer
+    /// treats nil as "no stars tonight": the almanac must not die for want
+    /// of decoration — same contract as the surface textures.
     public static func load() -> StarCatalog? {
         guard let url = bundledCatalogueURL(),
               let text = try? String(contentsOf: url, encoding: .utf8) else {
@@ -168,15 +168,15 @@ public struct StarCatalog: Sendable {
         96100: "Alsafi", 41075: "Alsciaukat", 42913: "Alsephina",
         98036: "Alshain", 100310: "Alshat", 97649: "Altair",
         94376: "Altais", 46750: "Alterf", 35904: "Aludra",
-        55219: "Alula", 92946: "Alya", 32362: "Alzirr",
+        55219: "Alula Borealis", 92946: "Alya", 32362: "Alzirr",
         110003: "Ancha", 13288: "Angetenar", 2081: "Ankaa",
         95771: "Anser", 80763: "Antares", 69673: "Arcturus",
-        95294: "Arkab", 95241: "Arkab", 25985: "Arneb",
-        93506: "Ascella", 42911: "Asellus", 42806: "Asellus",
+        95294: "Arkab Posterior", 95241: "Arkab Prior", 25985: "Arneb",
+        93506: "Ascella", 42911: "Asellus Australis", 42806: "Asellus Borealis",
         43109: "Ashlesha", 45556: "Aspidiske", 17579: "Asterope",
         80331: "Athebyne", 17448: "Atik", 17847: "Atlas",
         82273: "Atria", 41037: "Avior", 107136: "Azelfafage",
-        13701: "Azha", 38170: "Azmidi", 8645: "Baten",
+        13701: "Azha", 38170: "Azmidi", 8645: "Baten Kaitos",
         20535: "Beemim", 19587: "Beid", 25336: "Bellatrix",
         27989: "Betelgeuse", 13209: "Bharani", 109427: "Biham",
         14838: "Botein", 73714: "Brachium", 106786: "Bunda",
@@ -185,9 +185,9 @@ public struct StarCatalog: Sendable {
         17489: "Celaeno", 86796: "Cervantes", 53721: "Chalawan",
         20894: "Chamukuy", 61317: "Chara", 99894: "Chechia",
         54879: "Chertan", 33719: "Citala", 43587: "Copernicus",
-        63125: "Cor", 80463: "Cujam", 23875: "Cursa",
+        63125: "Cor Caroli", 80463: "Cujam", 23875: "Cursa",
         100345: "Dabih", 14879: "Dalim", 102098: "Deneb",
-        107556: "Deneb", 57632: "Denebola", 64241: "Diadem",
+        107556: "Deneb Algedi", 57632: "Denebola", 64241: "Diadem",
         3419: "Diphda", 78401: "Dschubba", 54061: "Dubhe",
         86614: "Dziban", 75458: "Edasich", 17499: "Electra",
         70755: "Elgafar", 29034: "Elkurud", 25428: "Elnath",
@@ -203,12 +203,12 @@ public struct StarCatalog: Sendable {
         113357: "Helvetios", 66249: "Heze", 112029: "Homam",
         78104: "Iklil", 59747: "Imai", 46471: "Intercrus",
         72105: "Izar", 79374: "Jabbah", 37265: "Jishui",
-        12706: "Kaffaljidhma", 69427: "Kang", 90185: "Kaus",
-        90496: "Kaus", 89931: "Kaus", 19849: "Keid",
+        12706: "Kaffaljidhma", 69427: "Kang", 90185: "Kaus Australis",
+        90496: "Kaus Borealis", 89931: "Kaus Media", 19849: "Keid",
         69974: "Khambalia", 104987: "Kitalpha", 72607: "Kochab",
         80816: "Kornephoros", 61359: "Kraz", 108917: "Kurhah",
-        62223: "La", 82396: "Larawag", 85696: "Lesath",
-        97938: "Libertas", 13061: "Lilii", 85693: "Maasym",
+        62223: "La Superba", 82396: "Larawag", 85696: "Lesath",
+        97938: "Libertas", 13061: "Lilii Borea", 85693: "Maasym",
         24003: "Mago", 28380: "Mahasim", 17573: "Maia",
         80883: "Marfik", 113963: "Markab", 45941: "Markeb",
         79043: "Marsic", 112158: "Matar", 32246: "Mebsuta",
@@ -228,26 +228,26 @@ public struct StarCatalog: Sendable {
         93747: "Okab", 81266: "Paikauhale", 100751: "Peacock",
         26634: "Phact", 58001: "Phecda", 75097: "Pherkad",
         40881: "Piautos", 82545: "Pipirima", 17851: "Pleione",
-        11767: "Polaris", 104382: "Polaris", 89341: "Polis",
+        11767: "Polaris", 104382: "Polaris Australis", 89341: "Polis",
         37826: "Pollux", 61941: "Porrima", 53229: "Praecipua",
-        20205: "Prima", 37279: "Procyon", 29655: "Propus",
+        20205: "Prima Hyadum", 37279: "Procyon", 29655: "Propus",
         16537: "Ran", 17378: "Rana", 48455: "Rasalas",
         84345: "Rasalgethi", 86032: "Rasalhague", 85670: "Rastaban",
         49669: "Regulus", 5737: "Revati", 24436: "Rigel",
-        71683: "Rigil", 101769: "Rotanev", 6686: "Ruchbah",
+        71683: "Rigil Kentaurus", 101769: "Rotanev", 6686: "Ruchbah",
         95347: "Rukbat", 84012: "Sabik", 23453: "Saclateni",
         110395: "Sadachbia", 112748: "Sadalbari", 109074: "Sadalmelik",
         106278: "Sadalsuud", 100453: "Sadr", 27366: "Saiph",
         115250: "Salm", 86228: "Sargas", 84379: "Sarin",
         21594: "Sceptrum", 113881: "Scheat", 3179: "Schedar",
-        20455: "Secunda", 8886: "Segin", 71075: "Seginus",
+        20455: "Secunda Hyadum", 8886: "Segin", 71075: "Seginus",
         96757: "Sham", 85927: "Shaula", 92420: "Sheliak",
         8903: "Sheratan", 32349: "Sirius", 111710: "Situla",
         113136: "Skat", 65474: "Spica", 101958: "Sualocin",
         47508: "Subra", 44816: "Suhail", 93194: "Sulafat",
         69701: "Syrma", 22449: "Tabit", 57399: "Taiyangshou",
-        63076: "Taiyi", 44127: "Talitha", 50801: "Tania",
-        50372: "Tania", 97278: "Tarazed", 40526: "Tarf",
+        63076: "Taiyi", 44127: "Talitha", 50801: "Tania Australis",
+        50372: "Tania Borealis", 97278: "Tarazed", 40526: "Tarf",
         17531: "Taygeta", 40167: "Tegmine", 30343: "Tejat",
         98066: "Terebellum", 21393: "Theemin", 68756: "Thuban",
         112122: "Tiaki", 26451: "Tianguan", 62423: "Tianyi",
@@ -256,8 +256,8 @@ public struct StarCatalog: Sendable {
         77070: "Unukalhai", 91262: "Vega", 116076: "Veritate",
         63608: "Vindemiatrix", 35550: "Wasat", 27628: "Wazn",
         34444: "Wezen", 5348: "Wurren", 82514: "Xamidimura",
-        91852: "Xihe", 69732: "Xuange", 79882: "Yed",
-        79593: "Yed", 85822: "Yildun", 60129: "Zaniah",
+        91852: "Xihe", 69732: "Xuange", 79882: "Yed Posterior",
+        79593: "Yed Prior", 85822: "Yildun", 60129: "Zaniah",
         18543: "Zaurak", 57757: "Zavijava", 48356: "Zhang",
         15197: "Zibal", 54872: "Zosma", 72622: "Zubenelgenubi",
         76333: "Zubenelhakrabi", 74785: "Zubeneschamali"

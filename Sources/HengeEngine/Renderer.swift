@@ -161,6 +161,11 @@ public struct SceneState: Sendable {
     /// darkness must be able to turn the sky's own lights off.
     public var stars: Bool
 
+    /// The hand-drawn constellation figures, joined star to star. Off by
+    /// default: the bare sky is the honest one, and the figures are a
+    /// reading aid a viewer asks for.
+    public var constellationLines: Bool = false
+
     /// The moment being drawn, as UT. The stars need it twice over: sidereal
     /// time turns the sky, and precession plus proper motion decide *which*
     /// sky — 2500 BC is not tonight with the labels changed.
@@ -424,6 +429,28 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// years from it — a deep-time scrub rebuilds a few times per millennium
     /// crossed, never per frame.
     private var starEpoch = Double.infinity
+    private let constellationPipeline: MTLRenderPipelineState
+    private var constellationBuffer: MTLBuffer?
+    private var constellationVertexCount = 0
+    /// The figures resolved from HIP identifiers to catalogue indices, once:
+    /// the same indices then read from whichever epoch's instances the star
+    /// buffer was built from, so the figures precess with their stars for
+    /// free.
+    private lazy var constellationIndexPairs: [(Int, Int)] = {
+        guard let catalog = starCatalog else { return [] }
+        var indexByHIP: [Int: Int] = [:]
+        indexByHIP.reserveCapacity(catalog.entries.count)
+        for (index, entry) in catalog.entries.enumerated() {
+            indexByHIP[entry.hip] = index
+        }
+        return ConstellationFigure.all.flatMap { figure in
+            figure.segments.compactMap { segment in
+                guard let a = indexByHIP[segment.0],
+                      let b = indexByHIP[segment.1] else { return nil }
+                return (a, b)
+            }
+        }
+    }()
     private let sceneDepthState: MTLDepthStencilState
     private let shadowDepthState: MTLDepthStencilState
     private let skyDepthState: MTLDepthStencilState
@@ -568,6 +595,26 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             self.starPipeline = try device.makeRenderPipelineState(descriptor: starDescriptor)
         } catch {
             throw RendererError.pipelineCreationFailed("stars: \(error)")
+        }
+
+        // The constellation figures: line segments between catalogue stars,
+        // blended the same additive way — they are more of the same light.
+        let constellationDescriptor = MTLRenderPipelineDescriptor()
+        constellationDescriptor.label = "constellations"
+        constellationDescriptor.vertexFunction =
+            library.makeFunction(name: "constellation_vertex")
+        constellationDescriptor.fragmentFunction =
+            library.makeFunction(name: "constellation_fragment")
+        constellationDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        constellationDescriptor.colorAttachments[0].isBlendingEnabled = true
+        constellationDescriptor.colorAttachments[0].sourceRGBBlendFactor = .one
+        constellationDescriptor.colorAttachments[0].destinationRGBBlendFactor = .one
+        constellationDescriptor.depthAttachmentPixelFormat = Self.depthFormat
+        do {
+            self.constellationPipeline = try device.makeRenderPipelineState(
+                descriptor: constellationDescriptor)
+        } catch {
+            throw RendererError.pipelineCreationFailed("constellations: \(error)")
         }
 
         // The camera renders reverse-Z, so nearer means *greater*.
@@ -1289,6 +1336,27 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         starBuffer?.label = "stars"
         starCount = starBuffer == nil ? 0 : vertices.count
         starEpoch = state.epoch.value
+
+        // The figures ride the same instances, so a deep-time scrub that
+        // precesses the stars carries their lines along by construction.
+        let lineVertices = constellationIndexPairs.flatMap { pair in
+            [pair.0, pair.1].map { index in
+                StarVertex(direction: SIMD4(SIMD3<Float>(instances[index].direction), 0),
+                           colour: SIMD4<Float>(0, 0, 0, 0))
+            }
+        }
+        if lineVertices.isEmpty {
+            constellationBuffer = nil
+            constellationVertexCount = 0
+        } else {
+            constellationBuffer = device.makeBuffer(
+                bytes: lineVertices,
+                length: MemoryLayout<StarVertex>.stride * lineVertices.count,
+                options: .storageModeShared)
+            constellationBuffer?.label = "constellations"
+            constellationVertexCount = constellationBuffer == nil
+                ? 0 : lineVertices.count
+        }
     }
 
     private func encodeScenePass(_ encoder: MTLRenderCommandEncoder,
@@ -1327,6 +1395,16 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                    index: 1)
             encoder.drawPrimitives(type: .point, vertexStart: 0,
                                    vertexCount: planets.count)
+
+            // The hand-drawn figures, joined star to star from the same
+            // instance buffer, so they precess with the sky they annotate.
+            if state.constellationLines, constellationVertexCount > 0,
+               let lines = constellationBuffer {
+                encoder.setRenderPipelineState(constellationPipeline)
+                encoder.setVertexBuffer(lines, offset: 0, index: 1)
+                encoder.drawPrimitives(type: .line, vertexStart: 0,
+                                       vertexCount: constellationVertexCount)
+            }
         }
 
         encoder.setRenderPipelineState(scenePipeline)

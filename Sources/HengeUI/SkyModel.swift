@@ -358,6 +358,9 @@ public final class SkyModel {
     /// Whether the zodiac constellations carry their glyphs on the sky.
     public var showsZodiac = false
 
+    /// Whether the hand-drawn constellation figures are joined on the sky.
+    public var showsConstellationLines = false
+
     /// The star catalogue, loaded once beside the terrain.
     private static let starCatalog = StarCatalog.load()
 
@@ -458,6 +461,7 @@ public final class SkyModel {
         // you stand back on the ground.
         state.torchlight = torchlight && station != .aerial
         state.weather = weather
+        state.constellationLines = showsConstellationLines
         return state
     }
 
