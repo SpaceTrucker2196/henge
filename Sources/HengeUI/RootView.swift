@@ -552,64 +552,14 @@ public struct RootView: View {
     /// fortnight and a quiet stretch puts four in as many months, and flattening
     /// that to a fixed count would hide exactly the clustering that makes the
     /// sky legible.
+    /// The year, as an instrument. What was two scrolling rows of chips is
+    /// one bar: seasons as its colour, the wheel's days and the moons as
+    /// lights along it, draggable like the day bar below it.
     private var events: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(WheelStation.allCases) { station in
-                        Button(station.name) { model.jumpToSunrise(of: station) }
-                            .font(Henge.body(.caption2))
-                            .padding(.horizontal, 9).padding(.vertical, 6)
-                            .hengeControl()
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Jump to \(station.name) sunrise")
-                            .accessibilityHint(Lore.note(for: station).tier.rawValue)
-                    }
-                }
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(model.upcoming.prefix(20)) { event in
-                        ribbonButton(for: event)
-                    }
-                }
-            }
-        }
-        .padding(Henge.Space.panel)
-        .hengePanel()
-    }
-
-    private func ribbonButton(for event: AstronomicalEvent) -> some View {
-        let days = Int((event.instant.value - model.time.value).rounded())
-        return Button {
-            model.time = event.instant
-        } label: {
-            VStack(spacing: 1) {
-                // Phases and the moon's business are shapes before they are
-                // words, so they ride as glyphs; the festivals keep their
-                // names. The mapping lives in HengeAstro where a test can
-                // hold it to its meaning.
-                if let symbol = event.kind.symbolName {
-                    Image(systemName: symbol)
-                        .font(.system(size: 15))
-                        .accessibilityHidden(true)
-                } else {
-                    Text(event.kind.name).font(Henge.body(.caption2))
-                }
-                Text("\(days) d").font(Henge.figure(.caption2)).opacity(Henge.Ink.dim)
-            }
-            .padding(.horizontal, 9).padding(.vertical, 5)
-            .foregroundStyle(isEclipse(event) ? Henge.bronze : Henge.stone)
-        }
-        .buttonStyle(.plain)
-        .hengeControl()
-        .accessibilityLabel("\(event.kind.name), in \(days) days")
-    }
-
-    private func isEclipse(_ event: AstronomicalEvent) -> Bool {
-        if case .eclipsePossible = event.kind { return true }
-        return false
+        YearBar(model: model)
+            .padding(.horizontal, Henge.Space.panel)
+            .padding(.vertical, Henge.Space.element)
+            .hengePanel()
     }
 
     // ── the almanac ─────────────────────────────────────────────────────────

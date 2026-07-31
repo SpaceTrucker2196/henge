@@ -361,6 +361,36 @@ public final class SkyModel {
     /// Whether the hand-drawn constellation figures are joined on the sky.
     public var showsConstellationLines = false
 
+    // ── the year bar ────────────────────────────────────────────────────────
+
+    /// The solved civil year, cached until the shown date leaves it — the
+    /// syzygy search is thirty root-finds, which is nothing once and a
+    /// frame-rate tax if recomputed per draw.
+    @ObservationIgnored private var cachedYear: YearAlmanac.Year?
+
+    public var yearAlmanac: YearAlmanac.Year {
+        let shown = calendarDate.year
+        if let cached = cachedYear, cached.year == shown { return cached }
+        let solved = YearAlmanac.solve(year: shown)
+        cachedYear = solved
+        return solved
+    }
+
+    /// Where the shown moment falls along its civil year, 0...1.
+    public var yearFraction: Double {
+        max(0, min(1, yearAlmanac.fraction(of: time)))
+    }
+
+    /// Scrub along the year by whole days, so the hour of day — a sunrise
+    /// being watched — survives the jump.
+    public func scrubYear(toFraction fraction: Double) {
+        let year = yearAlmanac
+        let clamped = max(0, min(1, fraction))
+        let target = year.start.value
+            + clamped * (year.end.value - year.start.value)
+        time = time + (target - time.value).rounded()
+    }
+
     /// The star catalogue, loaded once beside the terrain.
     private static let starCatalog = StarCatalog.load()
 
