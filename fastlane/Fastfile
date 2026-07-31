@@ -172,6 +172,27 @@ platform :ios do
     )
   end
 
+  desc "TEMP probe: retry app-record creation with the account's other key"
+  lane :try_create do
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: "6SXNN2PVAB",
+      issuer_id: ASC_ISSUER_ID,
+      filepath: File.expand_path(
+        "~/.appstoreconnect/private_keys/AuthKey_6SXNN2PVAB.p8"))
+    if Spaceship::ConnectAPI::App.find(BUNDLE_ID)
+      UI.success("app record already exists!")
+    else
+      begin
+        Spaceship::ConnectAPI::App.create(
+          name: "Henge", version_string: "0.1.0", sku: BUNDLE_ID,
+          primary_locale: "en-US", bundle_id: BUNDLE_ID, platforms: ["IOS"])
+        UI.success("CREATED — the API path is open now")
+      rescue => e
+        UI.error("still refused: #{e.message.lines.first}")
+      end
+    end
+  end
+
   desc "The pixel-level UI inspection (BuildFlowUITests) on the simulator"
   lane :uitest do
     regenerate
