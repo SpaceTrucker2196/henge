@@ -116,6 +116,38 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       started; the app icon needs its store-quality pass on nobody's list
       but ours.
 
+- [ ] **M7 — The Ground Plan (M).** *Owner requests, 2026-07-31. Not started.*
+      Three items, captured verbatim from the owner and parked here because
+      they arrived while another project was in front of us.
+
+      1. **Moon-phase jumps land on moonrise.** "When clicking a moon phase the
+         time should go to moon rise." The events ribbon (M4) already jumps to
+         solved events; the festival jumps already land on *sunrise of the day*
+         rather than midnight. Moon-phase events should get the equivalent
+         treatment against moonrise, which means a rise-time solve for the Moon
+         alongside the existing sun one. Note the honest edge case: a phase can
+         fall on a day when the Moon does not rise at all at high latitude, so
+         the fallback needs deciding rather than crashing.
+
+      2. **Solar-holiday jumps land on sunrise.** "For the solar holidays go to
+         the sun rise." M4 records that Wheel-of-the-Year jumps already land on
+         the sunrise of the day — so this is either a regression, or it does not
+         hold for all eight stations. Verify against the ribbon before building
+         anything; if it already works, close this and say so.
+
+      3. **The geometry page, then the ground plan on screen.** "Read
+         https://stonehengeology.com/stonehenge-geometry and add its knowledge
+         to the wiki, then lay out the geometry it references in our view with
+         the cardinal directions. Add labels in that view along with
+         measurements mapped to the ground." The lore system (`LoreTier`,
+         `Citation`, `LoreNote`) is the place for the reading, and every claim
+         from that source needs a tier — it is one author's reconstruction, not
+         survey data, so it is almost certainly *hypothesis* rather than
+         *established*, and MISSION.md's third invariant makes that
+         enforceable. The drawing half extends the existing geometry-overlay
+         mode (M5): cardinal directions, labelled construction lines, and
+         dimensions projected onto the terrain rather than floating.
+
 ## Still open, needing a decision
 
 - **The Milky Way** (M3). Needs a licensed texture. May be worth dropping the
