@@ -28,7 +28,7 @@ public enum Earthwork {
     static let bankCrest = 47.5
     static let bankHalfWidth = 3.6
     /// Ditch: centreline and half-width.
-    static let ditchCentre = 54.2
+    public static let ditchCentre = 54.2
     static let ditchHalfWidth = 3.5
     /// Counterscarp bank, low and outside.
     static let counterscarpCrest = 59.2

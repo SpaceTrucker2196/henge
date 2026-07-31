@@ -123,6 +123,35 @@ public struct RootView: View {
             }
         }
         .overlay {
+            // The ground plan's names and figures, pinned to the turf the
+            // way the star labels pin to the sky. Rides the geometry
+            // overlay: the lines say where, these say what and how large.
+            if model.showsAlignmentOverlay {
+                GeometryReader { proxy in
+                    let aspect = proxy.size.height > 0
+                        ? proxy.size.width / proxy.size.height : 1
+                    ForEach(model.groundLabels(aspect: Double(aspect))) { label in
+                        VStack(spacing: 1) {
+                            Text(label.id)
+                                .font(label.isCardinal
+                                      ? Henge.title(.title3)
+                                      : Henge.body(.caption2))
+                            if let detail = label.detail {
+                                Text(detail)
+                                    .font(Henge.figure(.caption2))
+                                    .opacity(Henge.Ink.dim)
+                            }
+                        }
+                        .foregroundStyle(Henge.starlight)
+                        .shadow(color: .black.opacity(0.65), radius: 2)
+                        .position(x: label.x * proxy.size.width,
+                                  y: label.y * proxy.size.height)
+                    }
+                }
+                .allowsHitTesting(false)
+            }
+        }
+        .overlay {
             // The ruin/whole switch rebuilds every stone; this card is the
             // honest account of that second. Not hit-testable — you can
             // keep looking around while the masons work.

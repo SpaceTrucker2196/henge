@@ -83,28 +83,59 @@ final class SkyModelTests: XCTestCase {
                        "landed at altitude \(model.sun.altitude.degrees)°")
     }
 
-    /// Zoom is bounded at both ends, in both kinds of view. An unbounded zoom
+    /// Zoom is bounded at both ends, at every station. An unbounded zoom
     /// inverts the projection or turns the camera inside out.
-    func testZoomIsBoundedInBothStations() {
+    ///
+    /// The contract changed on the owner's order (2026-07-31): pinch is a
+    /// *lens* everywhere, aerial included — zooming out widens the field
+    /// of view so more sky comes into frame, and the camera's range no
+    /// longer rides the pinch at all.
+    func testZoomIsALensBoundedAtBothStops() {
         let model = SkyModel()
 
-        model.station = .aerial
-        for _ in 0..<200 { model.zoom(by: 1.4) }
-        XCTAssertGreaterThanOrEqual(model.cameraDistance, 14)
-        for _ in 0..<200 { model.zoom(by: 0.7) }
-        XCTAssertLessThanOrEqual(model.cameraDistance, 420)
-
-        model.station = .altarStone
-        for _ in 0..<200 { model.zoom(by: 1.4) }
-        XCTAssertGreaterThanOrEqual(model.fieldOfView, 24)
-        for _ in 0..<200 { model.zoom(by: 0.7) }
-        XCTAssertLessThanOrEqual(model.fieldOfView, 96)
+        for station in [SkyModel.Station.aerial, .altarStone] {
+            model.station = station
+            model.fieldOfView = 62
+            for _ in 0..<200 { model.zoom(by: 1.4) }
+            XCTAssertGreaterThanOrEqual(model.fieldOfView, 22)
+            for _ in 0..<200 { model.zoom(by: 0.7) }
+            XCTAssertLessThanOrEqual(model.fieldOfView, 110)
+            XCTAssertEqual(model.cameraDistance, 92,
+                           "range must not ride the pinch — the lens does")
+        }
 
         // And a nonsense scale must not corrupt the state.
         let before = model.fieldOfView
         model.zoom(by: 0)
         model.zoom(by: -1)
         XCTAssertEqual(model.fieldOfView, before)
+    }
+
+    /// The ground plan's labels: present exactly when the overlay is on,
+    /// carrying the surveyed figures, projected inside the frame.
+    func testGroundLabelsCarryTheSurveyAndRideTheOverlay() {
+        let model = SkyModel()
+        XCTAssertTrue(model.groundLabels(aspect: 1.5).isEmpty,
+                      "no overlay, no labels")
+
+        model.showsAlignmentOverlay = true
+        model.station = .aerial
+        let labels = model.groundLabels(aspect: 1.5)
+        XCTAssertFalse(labels.isEmpty)
+
+        let names = Set(labels.map(\.id))
+        // From the default aerial camera at least two cardinals and the
+        // circle must be in frame; every label that projects must land
+        // near the screen.
+        XCTAssertFalse(names.intersection(["N", "E", "S", "W"]).isEmpty)
+        XCTAssertTrue(names.contains("Sarsen circle"))
+        let sarsen = labels.first { $0.id == "Sarsen circle" }
+        XCTAssertEqual(sarsen?.detail, "33 m across",
+                       "the label must carry the surveyed figure")
+        for label in labels {
+            XCTAssertTrue((-0.2...1.2).contains(label.x))
+            XCTAssertTrue((-0.2...1.2).contains(label.y))
+        }
     }
 
     /// Recentre puts every view parameter back, not merely the bearing.

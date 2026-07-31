@@ -1,4 +1,5 @@
 import Foundation
+import simd
 import SwiftUI
 import HengeAstro
 import HengeGeometry
@@ -306,10 +307,12 @@ public final class SkyModel {
 
         switch station {
         case .aerial:
-            return Camera.orbiting(distance: Float(cameraDistance),
-                                   azimuthDegrees: Float(cameraAzimuth),
-                                   elevationDegrees: Float(cameraElevation),
-                                   target: SIMD3<Float>(0, 3, 0))
+            var orbit = Camera.orbiting(distance: Float(cameraDistance),
+                                        azimuthDegrees: Float(cameraAzimuth),
+                                        elevationDegrees: Float(cameraElevation),
+                                        target: SIMD3<Float>(0, 3, 0))
+            orbit.fieldOfView = Float(fieldOfView) * .pi / 180
+            return orbit
 
         case .altarStone:
             // The view the monument is about: from the Altar Stone, out
@@ -399,6 +402,81 @@ public final class SkyModel {
         public let id: String
         public let x: Double
         public let y: Double
+    }
+
+    /// A label pinned to a point on the turf, with the measurement it names.
+    public struct GroundLabel: Identifiable, Hashable {
+        public let id: String
+        public let detail: String?
+        public let x: Double
+        public let y: Double
+        /// Cardinal letters draw larger than measurements.
+        public let isCardinal: Bool
+    }
+
+    /// The ground plan's own labels: cardinals, the surveyed features, and
+    /// their measurements, projected onto the terrain the way the star
+    /// labels project onto the sky. Shown with the geometry overlay —
+    /// the lines say where, these say what and how large. Figures are the
+    /// surveyed ones from `Monument` and `Earthwork` (Cleal et al. 1995);
+    /// the wiki's geometry page holds the sources and the tiers.
+    public func groundLabels(aspect: Double) -> [GroundLabel] {
+        guard showsAlignmentOverlay else { return [] }
+        let eye = camera
+        let terrain = Self.terrain
+
+        func project(east: Double, south: Double, lift: Double = 0.4)
+            -> (x: Double, y: Double)? {
+            let height = (terrain?.groundHeight(east: east, south: south) ?? 0)
+                + lift
+            let world = SIMD3<Float>(Float(east), Float(height), Float(south))
+            let direction = world - eye.position
+            guard length(direction) > 0.5 else { return nil }
+            return eye.screenFraction(of: normalize(direction),
+                                      aspect: Float(aspect))
+        }
+
+        var labels: [GroundLabel] = []
+        func add(_ name: String, _ detail: String?, east: Double,
+                 south: Double, cardinal: Bool = false) {
+            if let point = project(east: east, south: south) {
+                labels.append(GroundLabel(id: name, detail: detail,
+                                          x: point.x, y: point.y,
+                                          isCardinal: cardinal))
+            }
+        }
+
+        // Cardinals on the turf just beyond the earthwork, from true north.
+        let cardinalRadius = 70.0
+        add("N", nil, east: 0, south: -cardinalRadius, cardinal: true)
+        add("E", nil, east: cardinalRadius, south: 0, cardinal: true)
+        add("S", nil, east: 0, south: cardinalRadius, cardinal: true)
+        add("W", nil, east: -cardinalRadius, south: 0, cardinal: true)
+
+        // The features, each with its surveyed figure.
+        let axis = Monument.axisAzimuth.degrees * Double.pi / 180
+        add("Axis", "az \(Monument.axisAzimuth.degrees)°",
+            east: 30 * sin(axis), south: -30 * cos(axis))
+        add("Sarsen circle",
+            "\(Int(Monument.sarsenCircleDiameter)) m across",
+            east: 0, south: Monument.sarsenCircleDiameter / 2 + 2)
+        add("Aubrey ring",
+            "\(Int(Monument.aubreyCircleDiameter)) m · 56 holes",
+            east: -Monument.aubreyCircleDiameter / 2 * 0.7071,
+            south: Monument.aubreyCircleDiameter / 2 * 0.7071)
+        add("Enclosure",
+            "\(Int(Earthwork.ditchCentre * 2)) m across",
+            east: -Earthwork.ditchCentre * 0.7071,
+            south: -Earthwork.ditchCentre * 0.7071)
+        add("Heel Stone",
+            "\(Int(Monument.heelStoneDistance)) m out",
+            east: Monument.heelStoneDistance * sin(axis),
+            south: -Monument.heelStoneDistance * cos(axis))
+        add("Avenue",
+            "\(Int(Monument.avenueWidth)) m wide",
+            east: 110 * sin(axis), south: -110 * cos(axis))
+
+        return labels
     }
 
     /// The labels currently on screen.
@@ -594,15 +672,14 @@ public final class SkyModel {
         }
     }
 
-    /// Pinch. From the air it changes range; on the ground it changes the field
-    /// of view, which is the honest equivalent — you cannot move the ground.
+    /// Pinch is a lens, everywhere — the owner's order: zooming out widens
+    /// the field of view so more of the sky comes into frame, like backing
+    /// a lens off toward wide-angle, at every station including the air.
+    /// The wide stop at 110° is where a rectilinear projection starts to
+    /// smear the corners; the long stop at 22° is a decent birding lens.
     public func zoom(by scale: Double) {
         guard scale > 0 else { return }
-        if station == .aerial {
-            cameraDistance = min(max(cameraDistance / scale, 14), 420)
-        } else {
-            fieldOfView = min(max(fieldOfView / scale, 24), 96)
-        }
+        fieldOfView = min(max(fieldOfView / scale, 22), 110)
     }
 
     /// Put the view back where the station intends it to point.
