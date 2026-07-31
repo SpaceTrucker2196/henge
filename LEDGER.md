@@ -56,3 +56,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 9f71198 | 2026-07-31T15:29:28Z | claude-fable-5 | 99 | 89302 | 30242553 | 131572 | 37.3401 | Enclosure earthwork: state-aware ditch/bank ring with causeways, tested profile |
 | 58d6daf | 2026-07-31T15:34:05Z | claude-fable-5 | 3646 | 28050 | 14162778 | 59944 | 16.8006 | wiki/: five-page tiered knowledge base with sources |
 | b1c4011 | 2026-07-31T15:43:54Z | claude-fable-5 | 72 | 23197 | 22956163 | 34205 | 24.8008 | Ground-plan labels with surveyed measurements; pinch is FOV everywhere |
+| 2c5e8df | 2026-07-31T15:51:31Z | claude-fable-5 | 64 | 20720 | 21067506 | 34118 | 22.7865 | Moonrise solver + moon-light jumps; sunrise landing pinned for all 8 stations |
