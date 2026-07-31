@@ -74,13 +74,18 @@ final class SkyModelTests: XCTestCase {
     /// Sunrise jumps land at sunrise — near enough that the sun is on the
     /// horizon rather than merely on the right day.
     func testJumpingToASunriseLandsAtSunrise() {
+        // All eight stations, not one: M7's second item asked whether the
+        // sunrise landing held for the whole wheel, and the answer should
+        // be an assertion rather than a recollection.
         let model = SkyModel()
         model.viewpoint = .stonehenge
-        model.time = JulianDay(CalendarDate(year: 2026, month: 6, day: 1))
-        model.jumpToSunrise(of: .juneSolstice)
-
-        XCTAssertEqual(model.sun.altitude.degrees, 0, accuracy: 1.5,
-                       "landed at altitude \(model.sun.altitude.degrees)°")
+        for station in WheelStation.allCases {
+            model.time = JulianDay(CalendarDate(year: 2026, month: 1, day: 2))
+            model.jumpToSunrise(of: station)
+            XCTAssertEqual(model.sun.altitude.degrees, 0, accuracy: 1.5,
+                           "\(station) landed at altitude "
+                           + "\(model.sun.altitude.degrees)°")
+        }
     }
 
     /// Zoom is bounded at both ends, at every station. An unbounded zoom

@@ -359,4 +359,55 @@ public enum Moon {
         // The orbital plane's tilt to the equator varies as the node regresses.
         return Angle(degrees: abs(obliquity.degrees + inclination.degrees * node.cosine))
     }
+
+    // ── moonrise ────────────────────────────────────────────────────────────
+
+    /// The Moon's true semi-diameter at a moment, from its real distance —
+    /// it swings by a tenth of a degree between perigee and apogee, which
+    /// is minutes of rise time.
+    static func semiDiameter(at tt: JulianDay) -> Angle {
+        Angle(radians: asin(1737.4 / position(at: tt).distance))
+    }
+
+    /// The moment the Moon's upper limb clears the skyline on a given day —
+    /// the sun solver's construction (sample, then bisect the crossing),
+    /// aimed at the Moon. Parallax and refraction are already inside
+    /// `horizontal`; the target carries only the true semi-diameter, the
+    /// same double-count the sun solver's comment warns about.
+    ///
+    /// Returns nil on a day the Moon never rises — real everywhere about
+    /// once a month (the Moon rises ~50 minutes later each day, so one
+    /// civil day per cycle has no rise at all), and the caller decides the
+    /// fallback rather than this crashing.
+    public static func riseTime(on date: CalendarDate, site: GeographicSite,
+                         horizonAltitude: Angle = .zero) -> JulianDay? {
+        let midnight = JulianDay(CalendarDate(year: date.year, month: date.month,
+                                              day: floor(date.day)))
+        func clearance(_ fraction: Double) -> Double {
+            let moment = midnight + fraction
+            let target = (horizonAltitude - semiDiameter(at: moment.terrestrialTime))
+                .degrees
+            return horizontal(at: moment, site: site, refracted: true)
+                .altitude.degrees - target
+        }
+        // Five-minute samples: the Moon climbs its own diameter in an hour,
+        // so no crossing can hide between them.
+        let steps = 288
+        var previous = clearance(0)
+        for step in 1...steps {
+            let fraction = Double(step) / Double(steps)
+            let current = clearance(fraction)
+            if previous < 0, current >= 0 {
+                var low = Double(step - 1) / Double(steps)
+                var high = fraction
+                for _ in 0..<24 {
+                    let mid = (low + high) / 2
+                    if clearance(mid) < 0 { low = mid } else { high = mid }
+                }
+                return midnight + (low + high) / 2
+            }
+            previous = current
+        }
+        return nil
+    }
 }

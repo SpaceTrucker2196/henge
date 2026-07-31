@@ -55,11 +55,11 @@ public struct YearBar: View {
                     seasonBand(quarters: quarterFractions, width: width)
 
                     ForEach(Array(year.newMoons.enumerated()), id: \.offset) { _, moon in
-                        newMoonBead
+                        moonJump(to: moon, label: "New moon") { newMoonBead }
                             .position(x: width * year.fraction(of: moon), y: 9)
                     }
                     ForEach(Array(year.fullMoons.enumerated()), id: \.offset) { _, moon in
-                        fullMoonLamp
+                        moonJump(to: moon, label: "Full moon") { fullMoonLamp }
                             .position(x: width * year.fraction(of: moon), y: 9)
                     }
 
@@ -166,6 +166,21 @@ public struct YearBar: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Jump to \(station.name) sunrise")
+    }
+
+    /// A moon light is a jump: tapping it goes to the *moonrise* of that
+    /// day — the owner's order — the way a station light goes to sunrise.
+    private func moonJump(to instant: JulianDay, label: String,
+                          @ViewBuilder mark: () -> some View) -> some View {
+        Button {
+            model.jumpToMoonrise(nearestTo: instant)
+        } label: {
+            mark()
+                .frame(width: 20, height: 20)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Jump to the \(label.lowercased())'s moonrise")
     }
 
     private var fullMoonLamp: some View {

@@ -876,6 +876,15 @@ public final class SkyModel {
     public func jump(toDaysFromNow days: Double) {
         time = time + days
     }
+
+    /// Moonrise on the day of a syzygy — the moment the phase is actually
+    /// seen, the way festival jumps land on sunrise. Falls back to the
+    /// instant itself on the day each month when the Moon does not rise,
+    /// which is real everywhere: the Moon comes up about fifty minutes
+    /// later each day, so one civil day per cycle has no rise at all.
+    public func jumpToMoonrise(nearestTo instant: JulianDay) {
+        time = Moon.riseTime(on: instant.calendarDate, site: site) ?? instant
+    }
 }
 
 public extension JulianDay {
