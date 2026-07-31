@@ -29,8 +29,13 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       five naked-eye planets from truncated VSOP87D, steady among shimmering
       stars; the Moon's photographed face (NASA LRO) at a doubled display
       size; the full IAU name register in a labels layer; Prussian night and
-      starlit ground. **Remaining:** the Milky Way (licence undecided);
-      constellation lines stay dropped.
+      starlit ground. *Landed 2026-07-29:* the zodiac as twelve labelled
+      constellation centroids riding the precessing sky, glyphs and all,
+      behind their own toggle. *2026-07-30:* the macOS starless-night escape
+      found and closed — the catalogue's flat resource lookup failed in the
+      one bundle layout the test suite does not build; the lookup the Mac
+      needs is now pinned by a test. **Remaining:** the Milky Way (licence
+      undecided); constellation lines stay dropped.
 
 - [x] **M4 — The Calendar (M–L).** *In progress.* The Wheel of the Year has
       landed: eight stations solved from apparent solar longitude, festival
@@ -66,17 +71,43 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       wall-clock flicker); weather as chosen dressing — overcast, rain,
       frost — with every decision a tested CPU function; the app icon.
 
+      *Landed 2026-07-29:* the chrome's settling. One twelve-point rhythm
+      throughout; enclosure spent only where it informs — glass pills mark
+      what responds, bronze marks what is true, readouts sit bare (the
+      full Tufte de-boxing was tried and the owner correctly pulled it
+      back to pills-as-affordance within the hour). Drawer handles became
+      part of their drawers: tabs fused into the plates' silhouettes, the
+      rail's handle its own first pill, closed tabs flush to the bezel.
+      Launch gained a face — the mark on pre-dawn slate, then terrain and
+      sky at once while the stones raise asynchronously behind the
+      progress card. Date travel to any date in the model's range, the
+      attributions view, deeper twilight, and dynamic inks for light
+      appearance all shipped around it. The upside-down rebuild card in
+      landscape became the project's first *pixel-level* inspection:
+      `make uitest` screenshots the running app and holds render truth
+      against layout truth, because the accessibility tree swore the text
+      was fine while the screen showed it rotated.
+
       **Not done, and why.** Ambient sound is real work with no blocker but
       time — and a licence conversation for any recorded material.
-      "Mistletoe & Oak" landed as a working language on 2026-07-28: the
-      vocabulary (five spacings, one panel radius, three inks, two motions,
-      a hit-target floor) in Theme.swift, and a sighted pass over the chrome
-      iterated against simulator screenshots. A language is never finished,
-      but it is no longer merely a layout. Hosek–Wilkie still waits on its
-      data licence. MetalFX is unexplored; 120 Hz is set on the view but has not
-      been profiled. (Moon-cast shadows are no longer on this list: the shared
-      cascades are fitted to the moon when it is up and bright enough, and only
-      thin-crescent nights fall back to unshadowed moonlight.)
+      Hosek–Wilkie still waits on its data licence. MetalFX is unexplored;
+      120 Hz is set on the view but has not been profiled. (Moon-cast
+      shadows are no longer on this list: the shared cascades are fitted
+      to the moon when it is up and bright enough, and only thin-crescent
+      nights fall back to unshadowed moonlight.)
+
+- [~] **M6 — The Ship (M).** *Pipeline landed 2026-07-29; standing at the
+      human gate.* fastlane is the iOS front door: build, release proof,
+      the one-command simulator loop, the pixel inspection, and `beta` —
+      archive, automatic signing minted by the App Store Connect API key,
+      build number from TestFlight, upload. The bundle id io.river.henge
+      is registered and a signed App Store .ipa has been produced.
+      **Blocked on one owner action:** Apple will not let an API key
+      create the app *record* — one-time `fastlane produce` with an Apple
+      ID, or App Store Connect → My Apps → ＋; then `fastlane ios beta`
+      puts the first build on TestFlight. macOS distribution is not
+      started; the app icon needs its store-quality pass on nobody's list
+      but ours.
 
 ## Still open, needing a decision
 
