@@ -823,6 +823,17 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             mesh: Self.groundMesh(terrain: terrain, divisions: 220),
             albedo: SurfaceMaterial.turf, label: "ground",
             castsShadow: false, kind: .grass, seed: 0))
+
+        // The enclosure ditch and bank, as their own fine ring over the
+        // carved base grid — ten-metre terrain vertices cannot hold a
+        // six-metre ditch. State-aware: fresh chalk as dug, silted swell
+        // today.
+        items.append(PreparedScene.Item(
+            mesh: Earthwork.build(state: scene.state, groundHeight: { east, south in
+                terrain?.groundHeight(east: east, south: south) ?? 0
+            }),
+            albedo: SurfaceMaterial.turf, label: "earthwork",
+            castsShadow: false, kind: .grass, seed: 0))
         progress(1)
         return PreparedScene(items: items, state: scene.state)
     }
@@ -1002,6 +1013,15 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
         for i in 0..<divisions {
             for j in 0..<divisions {
+                // Cells wholly under the earthwork ring are carved out: the
+                // ring mesh is the surface there, and a dug ditch cannot be
+                // an overlay on an opaque plain — the plain would occlude
+                // its own hollow.
+                let corners = [(i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)]
+                if corners.allSatisfy({
+                    Earthwork.swallows(east: Double(coordinate($0.0)),
+                                       south: Double(coordinate($0.1)))
+                }) { continue }
                 let a = UInt32(i * (divisions + 1) + j)
                 let b = UInt32((i + 1) * (divisions + 1) + j)
                 let c = UInt32((i + 1) * (divisions + 1) + j + 1)
