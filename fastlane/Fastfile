@@ -147,10 +147,28 @@ platform :ios do
         "io.river.henge, SKU io.river.henge). Then rerun: fastlane ios beta")
     end
 
+    # External testing: the group carries a public TestFlight link, so
+    # testers join from a URL rather than by collected email. Created here
+    # if missing — the API key may do this, unlike the app record. The
+    # first externally-distributed build goes through Apple's Beta App
+    # Review before the link goes live; contact details for that review
+    # are whatever App Store Connect has on file.
+    group_name = "Stone Circle"
+    unless record.get_beta_groups.any? { |g| g.name == group_name }
+      record.create_beta_group(group_name: group_name,
+                               public_link_enabled: true,
+                               public_link_limit_enabled: false)
+      UI.success("Created external tester group '#{group_name}' with a public link")
+    end
+
     upload_to_testflight(
       api_key: api_key,
       app_identifier: BUNDLE_ID,
-      skip_waiting_for_build_processing: true
+      distribute_external: true,
+      groups: [group_name],
+      changelog: ENV["HENGE_TESTFLIGHT_NOTES"] ||
+                 "The monument, the sky and the calendar — first external build.",
+      reject_build_waiting_for_review: true
     )
   end
 
