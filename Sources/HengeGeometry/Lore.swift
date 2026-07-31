@@ -224,6 +224,40 @@ public enum Lore {
                         Citation("Thom, Thom & Thom, 'Stonehenge as a possible lunar observatory'", "JHA 6, 1975")]),
 
         LoreNote(
+            id: "monument.altarStone",
+            title: "The Altar Stone",
+            body: """
+                The six-tonne slab lying flat at the monument's heart is not \
+                from Wales, as long assumed alongside the bluestones. Dating \
+                of zircon, apatite and rutile grains within it traces the \
+                stone to the Orcadian Basin of north-east Scotland — at \
+                least 750 km away, likely moved by sea. The finding argues \
+                for a scale of Neolithic long-range contact across Britain \
+                not previously credited for this period.
+                """,
+            tier: .established,
+            citations: [Citation("Clarke et al., 'A Scottish provenance for the Altar Stone of Stonehenge'", "Nature 632, 570–575, 2024"),
+                        Citation("Gaind & Smith, news feature", "Nature 632, 484–485, 2024")]),
+
+        LoreNote(
+            id: "monument.slaughterStone",
+            title: "The Slaughter Stone",
+            body: """
+                The fallen sarsen at the north-east entrance owes its name to \
+                antiquarian imagination, not evidence: early observers read \
+                the rust-red iron staining on its surface as old blood and \
+                named it accordingly. Nothing excavated here supports \
+                sacrifice of any kind — animal or human — at this stone or \
+                anywhere else on site. A popular infographic circulating as \
+                stock imagery labels it the "Stone of the sacrifice"; that \
+                phrasing repeats the same nineteenth-century misreading this \
+                note exists to correct.
+                """,
+            tier: .established,
+            citations: [Citation("Chippindale, Stonehenge Complete"),
+                        Citation("English Heritage, Stonehenge World Heritage Site guidebook")]),
+
+        LoreNote(
             id: "monument.overlay",
             title: "The drawn lines and the gold markers",
             body: """
