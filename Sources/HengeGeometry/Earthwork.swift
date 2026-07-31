@@ -34,8 +34,10 @@ public enum Earthwork {
     static let counterscarpCrest = 59.2
     static let counterscarpHalfWidth = 2.2
 
-    /// Where the ring begins and ends mattering at all — used by the mesh
-    /// to bound its annulus and by the ground grid to carve its hole.
+    /// Where the ring begins and ends mattering at all — bounds the mesh's
+    /// annulus. Set with margin outside where the profile itself reaches
+    /// zero (see `build`), so the ring's own edge is flat and blends into
+    /// the base terrain by simply agreeing with it, not by any seam.
     public static let innerRadius = 40.0
     public static let outerRadius = 64.0
 
@@ -123,20 +125,29 @@ public enum Earthwork {
 
     // ── the mesh ────────────────────────────────────────────────────────────
 
-    /// Does this ground-grid cell sit wholly under the annulus? The base
-    /// terrain carves these out: a dug ditch cannot be an overlay on an
-    /// opaque plain, because the plain would occlude the hollow.
-    public static func swallows(east: Double, south: Double) -> Bool {
-        let radius = (east * east + south * south).squareRoot()
-        return radius > innerRadius + 4 && radius < outerRadius - 4
-    }
+    /// How far the ring floats above the base terrain, everywhere — not
+    /// only at its flat rim. The first version carved a matching hole out
+    /// of the base grid instead, keyed to whole grid cells; the base
+    /// terrain runs several metres a vertex out here, so its carved hole
+    /// was a coarse, jagged quad shape that could not follow the ring's
+    /// smooth circular edge, and the seam between the two showed as a
+    /// visible crack and stray slivers of double-covered turf. A constant
+    /// lift needs no matching hole at all: the ring simply paints over the
+    /// base grid within its own footprint, winning the depth test cleanly
+    /// because it is uniformly proud of it, at every radius, including the
+    /// rim where the earthwork's own relief is already zero. 3.5 cm is
+    /// comfortably above depth-buffer noise at the distances this monument
+    /// is ever viewed from, and far below what an eye can read as a step.
+    static let lift = 0.035
 
     /// The earthwork as its own fine polar mesh, riding the natural grade.
-    /// The base terrain grid runs about ten metres a vertex out here — far
+    /// The base terrain grid runs several metres a vertex out here — far
     /// too coarse for a six-metre ditch — so the ring gets the resolution
-    /// the base cannot afford everywhere. The rim bands (where the profile
-    /// is zero) float a centimetre proud of the base so the two surfaces
-    /// never fight in the depth buffer.
+    /// the base cannot afford everywhere, sampling the same `groundHeight`
+    /// function at a fraction of the base grid's spacing. That fine
+    /// sampling is what keeps the ring integrated with the real terrain
+    /// slope rather than merely stacked on it: every vertex measures the
+    /// actual local grade the base grid can only coarsely approximate.
     public static func build(state: Monument.State,
                              groundHeight: (Double, Double) -> Double) -> Mesh {
         let radialSteps = 44
@@ -148,7 +159,6 @@ public enum Earthwork {
             let a = azimuthDegrees * .pi / 180
             let east = radius * sin(a)
             let south = -radius * cos(a)
-            let lift = 0.012
             let y = groundHeight(east, south)
                 + heightDelta(east: east, south: south, state: state)
                 + lift
