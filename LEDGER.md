@@ -61,3 +61,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 9a16b91 | 2026-08-03T16:11:31Z | claude-fable-5,claude-sonnet-5 | 490 | 223553 | 65982852 | 2001324 | 55.3548 | Soften southern causeway bank ends to chalk's angle of repose; verify earthwork  |
 | e0d5f3d | 2026-08-03T17:20:55Z | claude-fable-5 | 305 | 261749 | 85504784 | 927913 | 117.1535 | Animated state transition: eroding earthwork, staged stone raising, era timelaps |
 | 61f699c | 2026-08-03T17:34:00Z | claude-fable-5 | 120 | 70467 | 39489866 | 141758 | 45.8496 | Pages front door: marketing landing over the research wiki |
+| 3cd3547 | 2026-08-03T20:35:53Z | claude-fable-5 | 209 | 86755 | 73620684 | 1481907 | 107.5987 | Mac dmg build script; download page and register entry on river.io |
