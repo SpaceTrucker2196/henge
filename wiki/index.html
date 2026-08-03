@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Henge — a photoreal Stonehenge that keeps real time</title>
+<meta name="description" content="A photoreal 3D Stonehenge that is a working astronomical calendar. Druidic in spirit, archaeological in fact. iOS and macOS, hand-rolled Metal 3.">
+<meta property="og:title" content="Henge">
+<meta property="og:description" content="A photoreal Stonehenge that keeps real time. The sky is computed, the shadows are the calendar, the stones are surveyed.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='8' width='7' height='20' fill='%23C9A227'/%3E%3Crect x='21' y='8' width='7' height='20' fill='%23C9A227'/%3E%3Crect x='2' y='3' width='28' height='6' fill='%23C9A227'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --night:   #0E1626;
+    --dusk:    #1B2740;
+    --violet:  #3D3A5C;
+    --ember:   #8A4A2F;
+    --gold:    #C9A227;
+    --gold-hi: #E8C55A;
+    --chalk:   #EDE8DA;
+    --parch:   #D8D0BC;
+    --stone:   #8E8B84;
+    --stone-d: #55534E;
+    --turf:    #46523A;
+    --ink:     #14110C;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--serif);
+    background: var(--chalk);
+    color: var(--ink);
+    line-height: 1.6;
+    font-size: 17px;
+  }
+
+  /* ── the sky ─────────────────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+    color: var(--chalk);
+    background:
+      linear-gradient(to bottom,
+        var(--night) 0%,
+        var(--dusk) 38%,
+        var(--violet) 62%,
+        var(--ember) 82%,
+        var(--gold) 94%,
+        var(--gold-hi) 100%);
+  }
+  /* a thin scatter of stars, box-shadow constellation */
+  .stars, .stars::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .stars {
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, rgba(237,232,218,.9) 50%, transparent 51%),
+      radial-gradient(1px 1px at 27% 9%,  rgba(237,232,218,.6) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 41% 22%, rgba(237,232,218,.8) 50%, transparent 51%),
+      radial-gradient(1px 1px at 58% 12%, rgba(237,232,218,.7) 50%, transparent 51%),
+      radial-gradient(1px 1px at 69% 25%, rgba(237,232,218,.5) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 81% 8%,  rgba(237,232,218,.85) 50%, transparent 51%),
+      radial-gradient(1px 1px at 91% 19%, rgba(237,232,218,.6) 50%, transparent 51%),
+      radial-gradient(1px 1px at 7% 34%,  rgba(237,232,218,.45) 50%, transparent 51%),
+      radial-gradient(1px 1px at 48% 33%, rgba(237,232,218,.4) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 88% 38%, rgba(237,232,218,.5) 50%, transparent 51%);
+    animation: twinkle 7s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: .55; } to { opacity: 1; } }
+
+  /* the sun, breaking the skyline beside the Heel Stone */
+  .sun {
+    position: absolute;
+    left: 61.8%;
+    bottom: 9.5vh;
+    width: 8.4vmin;
+    height: 8.4vmin;
+    border-radius: 50%;
+    background: radial-gradient(circle, #FFF3C4 0%, var(--gold-hi) 45%, rgba(232,197,90,0) 72%);
+    box-shadow: 0 0 9vmin 4vmin rgba(201,162,39,.45);
+    animation: sunrise 4s cubic-bezier(.23,.8,.34,1) both;
+  }
+  @keyframes sunrise {
+    from { transform: translateY(9vmin); opacity: .0; }
+    to   { transform: translateY(0);     opacity: 1; }
+  }
+
+  .skyline {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 18vh;
+    min-height: 110px;
+    display: block;
+  }
+
+  .hero-inner { position: relative; z-index: 2; padding: 0 24px; max-width: 780px; }
+  .hero .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .42em;
+    text-transform: uppercase;
+    color: var(--gold-hi);
+    animation: settle 1.2s .2s ease-out both;
+  }
+  .hero h1 {
+    font-size: clamp(64px, 14vw, 150px);
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    line-height: 1.02;
+    margin: 10px 0 18px;
+    text-shadow: 0 2px 40px rgba(14,22,38,.55);
+    animation: settle 1.2s .35s ease-out both;
+  }
+  .hero .tagline {
+    font-size: clamp(19px, 2.6vw, 25px);
+    font-style: italic;
+    color: var(--parch);
+    animation: settle 1.2s .55s ease-out both;
+  }
+  .hero .creed {
+    margin-top: 14px;
+    font-size: 15px;
+    color: rgba(237,232,218,.75);
+    animation: settle 1.2s .7s ease-out both;
+  }
+  .hero .platforms {
+    margin-top: 34px;
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: .18em;
+    color: rgba(237,232,218,.85);
+    animation: settle 1.2s .85s ease-out both;
+  }
+  .hero .platforms span { color: var(--gold-hi); }
+  @keyframes settle {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* ── shared section chrome ───────────────────────────────────────────── */
+  section { padding: 84px 24px; }
+  .measure { max-width: 980px; margin: 0 auto; }
+  .rule-label {
+    display: flex; align-items: center; gap: 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .38em;
+    text-transform: uppercase;
+    color: var(--ember);
+    margin-bottom: 42px;
+  }
+  .rule-label::before, .rule-label::after {
+    content: ""; height: 1px; background: currentColor; opacity: .45;
+  }
+  .rule-label::before { width: 42px; }
+  .rule-label::after { flex: 1; }
+  h2 {
+    font-size: clamp(30px, 4.6vw, 44px);
+    line-height: 1.15;
+    font-weight: 700;
+    max-width: 640px;
+    margin-bottom: 18px;
+  }
+  .lede { font-size: 19px; max-width: 640px; color: #3E382C; }
+
+  /* ── the claims ──────────────────────────────────────────────────────── */
+  /* Four claims in a 2×2 — a fixed pair of columns, because an auto-fit
+     three-across leaves an orphan cell whose gap-colour reads as a stain. */
+  .claims { display: grid; grid-template-columns: 1fr; gap: 1px; background: rgba(20,17,12,.18); border: 1px solid rgba(20,17,12,.18); margin-top: 52px; }
+  @media (min-width: 700px) { .claims { grid-template-columns: 1fr 1fr; } }
+  .claim { background: var(--chalk); padding: 34px 28px 38px; position: relative; }
+  .claim:hover { background: #F4F0E4; }
+  .claim .n {
+    font-family: var(--mono); font-size: 12px; color: var(--ember); letter-spacing: .2em;
+  }
+  .claim h3 { font-size: 22px; margin: 10px 0 10px; }
+  .claim p { font-size: 15.5px; color: #46402F; }
+  .claim p code, .figures code { font-family: var(--mono); font-size: .88em; background: rgba(201,162,39,.14); padding: 1px 5px; border-radius: 3px; }
+
+  /* ── the numbers ─────────────────────────────────────────────────────── */
+  .numbers { background: var(--night); color: var(--parch); }
+  .numbers .rule-label { color: var(--gold); }
+  .numbers h2 { color: var(--chalk); }
+  .numbers .lede { color: rgba(216,208,188,.8); }
+  /* Four figures: pairs, then a single rank of four — fixed counts, so no
+     width ever leaves an orphan cell showing the gap colour. */
+  .figures {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: rgba(237,232,218,.16);
+    border: 1px solid rgba(237,232,218,.16);
+  }
+  @media (min-width: 1020px) { .figures { grid-template-columns: repeat(4, 1fr); } }
+  .figure { background: var(--night); padding: 28px 24px; }
+  .figure .value {
+    font-family: var(--mono);
+    font-size: clamp(26px, 3.4vw, 36px);
+    color: var(--gold-hi);
+    letter-spacing: -.01em;
+  }
+  .figure .what { margin-top: 8px; font-size: 14.5px; color: rgba(216,208,188,.85); }
+  .figure .how { margin-top: 6px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; color: rgba(216,208,188,.5); }
+
+  .bearing-table { margin-top: 56px; overflow-x: auto; }
+  .bearing-table table {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--mono); font-size: 14px;
+  }
+  .bearing-table caption {
+    text-align: left; font-family: var(--serif); font-style: italic;
+    font-size: 15px; color: rgba(216,208,188,.75); margin-bottom: 14px;
+  }
+  .bearing-table th, .bearing-table td {
+    text-align: right; padding: 10px 14px;
+    border-bottom: 1px solid rgba(237,232,218,.14);
+  }
+  .bearing-table th:first-child, .bearing-table td:first-child { text-align: left; }
+  .bearing-table thead th { color: var(--gold); font-weight: 400; letter-spacing: .08em; border-bottom: 1px solid rgba(237,232,218,.4); }
+  .bearing-table .fit { color: var(--gold-hi); }
+  .bearing-note { margin-top: 16px; font-size: 14.5px; font-style: italic; color: rgba(216,208,188,.66); max-width: 620px; }
+
+  /* ── four thousand years ─────────────────────────────────────────────── */
+  .era { background: var(--turf); color: var(--chalk); }
+  .era .rule-label { color: var(--gold-hi); }
+  .era .lede { color: rgba(237,232,218,.82); }
+  .era-strip {
+    margin-top: 44px;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px;
+    font-family: var(--mono); font-size: 13px; letter-spacing: .1em;
+  }
+  .era-strip .state {
+    border: 1px solid rgba(237,232,218,.35); padding: 18px 20px;
+  }
+  .era-strip .state b { display: block; font-size: 15px; color: var(--gold-hi); letter-spacing: .16em; margin-bottom: 6px; }
+  .era-strip .arrow { color: var(--gold-hi); font-size: 22px; }
+
+  /* ── research ────────────────────────────────────────────────────────── */
+  .research-list { margin-top: 48px; display: grid; gap: 14px; }
+  .research-list a {
+    display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 18px;
+    text-decoration: none; color: inherit;
+    padding: 22px 6px 22px 0;
+    border-bottom: 1px solid rgba(20,17,12,.25);
+  }
+  .research-list a:first-child { border-top: 1px solid rgba(20,17,12,.25); }
+  .research-list .t { font-size: 21px; font-weight: 700; }
+  .research-list .d { font-size: 15px; color: #55503F; margin-top: 3px; }
+  .research-list .go { font-family: var(--mono); font-size: 13px; color: var(--ember); letter-spacing: .1em; white-space: nowrap; }
+  .research-list a:hover .t { color: var(--ember); }
+  .research-list a:hover .go { transform: translateX(4px); }
+  .research-list .go { transition: transform .18s ease; }
+  .tiers {
+    margin-top: 40px; display: flex; flex-wrap: wrap; gap: 10px 14px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: .08em;
+  }
+  .tier { border: 1px solid; border-radius: 2px; padding: 5px 10px; }
+  .tier.est { color: #3C5A2E; border-color: #3C5A2E; }
+  .tier.deb { color: var(--ember); border-color: var(--ember); }
+  .tier.spec { color: #6B5A8E; border-color: #6B5A8E; }
+  .tier-note { margin-top: 14px; font-size: 14.5px; font-style: italic; color: #55503F; max-width: 640px; }
+
+  /* ── footer ──────────────────────────────────────────────────────────── */
+  footer {
+    background: var(--ink); color: var(--parch);
+    padding: 64px 24px 72px; text-align: center;
+  }
+  footer .silent {
+    font-style: italic; font-size: 17px; color: var(--parch); max-width: 520px; margin: 0 auto 28px;
+  }
+  footer a {
+    color: var(--gold-hi); text-decoration: none;
+    font-family: var(--mono); font-size: 14px; letter-spacing: .12em;
+    border: 1px solid rgba(201,162,39,.5); padding: 12px 22px; display: inline-block;
+  }
+  footer a:hover { background: rgba(201,162,39,.12); }
+  footer .fine { margin-top: 34px; font-size: 13px; color: rgba(216,208,188,.55); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stars, .sun, .hero .kicker, .hero h1, .hero .tagline, .hero .creed, .hero .platforms {
+      animation: none;
+    }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="stars" aria-hidden="true"></div>
+  <div class="sun" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <p class="kicker">iOS &amp; macOS &middot; in the making</p>
+    <h1>Henge</h1>
+    <p class="tagline">A photoreal Stonehenge that keeps real time.</p>
+    <p class="creed">Druidic in spirit, ceremony and season&thinsp;&mdash;&thinsp;archaeological in fact, stone by cited stone.</p>
+    <p class="platforms">HAND-ROLLED <span>METAL&nbsp;3</span> &middot; NO ENGINE &middot; NO NETWORK</p>
+  </div>
+  <svg class="skyline" viewBox="0 0 1200 140" preserveAspectRatio="xMidYMax slice" aria-label="The monument on the horizon at sunrise">
+    <!-- the plain -->
+    <rect x="0" y="118" width="1200" height="22" fill="#14110C"/>
+    <path d="M0,122 Q300,112 600,118 T1200,120 L1200,140 L0,140 Z" fill="#14110C"/>
+    <!-- outer circle, west run -->
+    <g fill="#14110C">
+      <rect x="285" y="70" width="20" height="52"/>
+      <rect x="318" y="68" width="20" height="54"/>
+      <rect x="282" y="58" width="60" height="14"/>
+      <rect x="368" y="72" width="20" height="50"/>
+      <rect x="401" y="70" width="19" height="52"/>
+      <rect x="365" y="60" width="59" height="14"/>
+      <rect x="447" y="74" width="19" height="48"/>
+      <!-- the great trilithon, tallest, mid-left -->
+      <rect x="500" y="34" width="26" height="88"/>
+      <rect x="542" y="34" width="26" height="88"/>
+      <rect x="494" y="20" width="80" height="17"/>
+      <!-- east run -->
+      <rect x="620" y="70" width="20" height="52"/>
+      <rect x="653" y="68" width="20" height="54"/>
+      <rect x="617" y="58" width="60" height="14"/>
+      <rect x="700" y="76" width="18" height="46"/>
+      <!-- a fallen slab -->
+      <rect x="742" y="108" width="46" height="14" rx="3"/>
+      <!-- the heel stone, leaning, where the sun breaks -->
+      <path d="M872,122 L886,52 Q890,44 898,48 L908,122 Z" transform="rotate(6 890 90)"/>
+      <!-- station stone far east -->
+      <rect x="1050" y="96" width="14" height="26"/>
+    </g>
+  </svg>
+</header>
+
+<main>
+  <section>
+    <div class="measure">
+      <p class="rule-label">The instrument</p>
+      <h2>The monument is the calendar, and every claim in it can be checked.</h2>
+      <p class="lede">Henge is a real-time 3D simulation of Stonehenge for iPhone and Mac,
+      built on a hand-rolled Metal&nbsp;3 renderer&thinsp;&mdash;&thinsp;no game engine, no
+      third-party code. Choose any date, from the monument's own era to tonight, and stand
+      inside a sky that is computed rather than painted.</p>
+
+      <div class="claims">
+        <article class="claim">
+          <span class="n">I</span>
+          <h3>The sky is computed, never faked</h3>
+          <p>Sun, moon, planets and nine thousand Hipparcos stars from the published
+          ephemerides&thinsp;&mdash;&thinsp;Meeus, VSOP87, Laskar's obliquity&thinsp;&mdash;&thinsp;with
+          &Delta;T and atmospheric refraction carried honestly back to 3000&nbsp;BC.
+          No hardcoded azimuths. The solstice bearing is <em>derived</em>, and the fact
+          that it misses the built axis by a fraction of a degree is a finding, not a bug.</p>
+        </article>
+        <article class="claim">
+          <span class="n">II</span>
+          <h3>The shadows are the calendar</h3>
+          <p>The renderer's shadows are measured against an analytic solution that lives
+          outside the renderer, and the suite fails if they disagree by more than
+          <code>0.28&nbsp;m</code> on the ground&thinsp;&mdash;&thinsp;a tolerance set by the
+          shadow map's texel, not by taste. Visual plausibility is never accepted as
+          agreement.</p>
+        </article>
+        <article class="claim">
+          <span class="n">III</span>
+          <h3>The stones are surveyed</h3>
+          <p>Every dimension traces to cited survey data&thinsp;&mdash;&thinsp;Cleal, Walker
+          &amp; Montague's <em>Stonehenge in its Landscape</em>, Petrie's numbering, the
+          measured station rectangle. Every statement the app makes about the monument
+          carries a tier and a citation, enforced by the type system.</p>
+        </article>
+        <article class="claim">
+          <span class="n">IV</span>
+          <h3>True scale, on real ground</h3>
+          <p>One unit is one metre, everywhere&thinsp;&mdash;&thinsp;the stones, the grass,
+          the sun's angular diameter, and Salisbury Plain itself from SRTM survey data.
+          The sun rises over the actual skyline ridge, which delays it, which moves its
+          bearing. That is the kind of detail the whole app is made of.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="numbers">
+    <div class="measure">
+      <p class="rule-label">The numbers</p>
+      <h2>Accuracy is measured by the test suite, not asserted by the marketing.</h2>
+      <p class="lede">These tolerances are pinned by tests against published worked
+      examples&thinsp;&mdash;&thinsp;loosening any of them requires the owner's sign-off,
+      by charter.</p>
+
+      <div class="figures">
+        <div class="figure">
+          <div class="value">0.001&deg;</div>
+          <div class="what">Solar apparent longitude</div>
+          <div class="how">vs. Meeus's worked examples</div>
+        </div>
+        <div class="figure">
+          <div class="value">0.002&deg;</div>
+          <div class="what">Right ascension &amp; declination</div>
+          <div class="how">vs. published ephemeris values</div>
+        </div>
+        <div class="figure">
+          <div class="value">0.0001&deg;</div>
+          <div class="what">Obliquity of the ecliptic</div>
+          <div class="how">Laskar &mdash; what keeps 2500 BC honest</div>
+        </div>
+        <div class="figure">
+          <div class="value">0.28&nbsp;m</div>
+          <div class="what">Rendered shadow vs. analytic solution</div>
+          <div class="how">measured on the ground, every run</div>
+        </div>
+      </div>
+
+      <div class="bearing-table">
+        <table>
+          <caption>What the engine establishes, computed rather than assumed &mdash;
+          sunrise and sunset bearings against the monument's built axis of 49.9&deg;.</caption>
+          <thead>
+            <tr><th>Bearing</th><th>2500&nbsp;BC</th><th>2026</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Midsummer sunrise, flat horizon</td><td>47.71&deg;</td><td>48.77&deg;</td></tr>
+            <tr><td>Midsummer sunrise, 0.6&deg; skyline</td><td>49.08&deg;</td><td>50.11&deg;</td></tr>
+            <tr><td>Midwinter sunset, 0.6&deg; skyline</td><td class="fit">230.10&deg;</td><td>231.12&deg;</td></tr>
+          </tbody>
+        </table>
+        <p class="bearing-note">Against the built axis, midwinter sunset is the tighter
+        fit&thinsp;&mdash;&thinsp;two tenths of a degree in the builders' own era. The
+        monument may face the dying year, not the growing one. The app shows you both
+        and lets the sky argue.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="era">
+    <div class="measure">
+      <p class="rule-label">Four thousand years</p>
+      <h2>Watch the monument rise&thinsp;&mdash;&thinsp;or fall&thinsp;&mdash;&thinsp;while the calendar walks between the eras.</h2>
+      <p class="lede">Two surveyed states, never blended: the completed Stage-2 monument of
+      about 2200&nbsp;BC, and the ruin as it stands. Switching between them plays the
+      passage&thinsp;&mdash;&thinsp;the ditch silts, the bank settles, stones arrive one at a
+      time in construction order and leave in gravity's own&thinsp;&mdash;&thinsp;while the
+      sun arcs overhead in timelapse and the year counter spins through four millennia.
+      Every frame of that sky is a real computation for a real date.</p>
+      <div class="era-strip">
+        <div class="state"><b>AS IT WAS</b>c. 2200 BC &middot; the whole monument &middot; fresh chalk banks</div>
+        <div class="arrow" aria-hidden="true">&harr;</div>
+        <div class="state"><b>AS IT STANDS</b>today &middot; the ruin as surveyed &middot; the silted ring</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="measure">
+      <p class="rule-label">The research</p>
+      <h2>Everything the app claims, with its sources, in the open.</h2>
+      <p class="lede">The knowledge base behind the build&thinsp;&mdash;&thinsp;assembled so
+      a reader can check what we made against where it came from. The code carries the
+      same citations at the point of use.</p>
+
+      <div class="research-list">
+        <a href="earthwork-and-ground.html">
+          <span><span class="t">The earthwork and the ground</span><br>
+          <span class="d">The enclosure ditch and bank &mdash; which Stonehenge wears backwards &mdash; the turf, and the reference imagery.</span></span>
+          <span class="go">READ &rarr;</span>
+        </a>
+        <a href="stones-and-construction.html">
+          <span><span class="t">The stones and their journeys</span><br>
+          <span class="d">Sarsens from the Marlborough Downs, bluestones from Wales, and the Altar Stone's seven-hundred-kilometre Scottish provenance.</span></span>
+          <span class="go">READ &rarr;</span>
+        </a>
+        <a href="geometry-and-alignments.html">
+          <span><span class="t">Geometry and alignments</span><br>
+          <span class="d">Surveyed dimensions, the axis, the station rectangle that is only a rectangle at this latitude &mdash; and the speculative constructions, labelled as such.</span></span>
+          <span class="go">READ &rarr;</span>
+        </a>
+        <a href="sky-and-calendar.html">
+          <span><span class="t">The sky and the calendar</span><br>
+          <span class="d">The ephemeris stack, the eightfold wheel of the year, and the lunar hypotheses from Hawkins and Hoyle.</span></span>
+          <span class="go">READ &rarr;</span>
+        </a>
+        <a href="data-provenance.html">
+          <span><span class="t">Data provenance</span><br>
+          <span class="d">Every vendored dataset &mdash; SRTM terrain, Hipparcos, the lunar photograph &mdash; its licence and its file.</span></span>
+          <span class="go">READ &rarr;</span>
+        </a>
+      </div>
+
+      <div class="tiers" aria-label="Claim tiers">
+        <span class="tier est">ESTABLISHED</span>
+        <span class="tier deb">DEBATED</span>
+        <span class="tier spec">SPECULATIVE</span>
+      </div>
+      <p class="tier-note">Every claim carries one of three tiers, the same register the
+      app enforces on screen. Druidry is presented as living inheritance, never as the
+      builders' religion&thinsp;&mdash;&thinsp;the stones are two millennia older than the
+      druids, and the app says so plainly.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p class="silent">No network, no telemetry, no account.<br>
+  The almanac works in a field with no signal.</p>
+  <a href="https://github.com/SpaceTrucker2196/henge">FOLLOW THE BUILD ON GITHUB</a>
+  <p class="fine">&copy; 2026 River.io LLC &middot; Astronomy from published ephemerides &middot;
+  Archaeology from cited survey &middot; Built by hand, measured by tests</p>
+</footer>
+
+</body>
+</html>
