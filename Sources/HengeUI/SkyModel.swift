@@ -44,6 +44,53 @@ public final class SkyModel {
     public var rate: Double
     public var isPlaying: Bool
 
+    // ── the era transition ──────────────────────────────────────────────────
+
+    /// The animated switch between the monument's states, while one plays.
+    ///
+    /// Progress runs on the wall clock; the calendar runs on the timeline —
+    /// the year walks between the eras while the sun arcs through
+    /// `MonumentTransition.dayCycles` days, every frame a real computation
+    /// (invariant 1 holds throughout). Nil whenever the monument is at
+    /// rest, which is almost always.
+    public struct EraRun {
+        public let target: Monument.State
+        public let timeline: MonumentTransition.EraTimeline
+        public var elapsed: Double = 0
+        public var progress: Double {
+            min(1, max(0, elapsed / MonumentTransition.duration))
+        }
+    }
+    public private(set) var eraRun: EraRun?
+
+    /// Set when the state switch should animate once the scene is prepared;
+    /// the scene bridge consumes it. Nil means the next load is the instant
+    /// switch — reduced motion, or the first load of the app.
+    public var pendingEraAnimation: Monument.State?
+
+    /// Switch monument states — animated unless the caller (or reduced
+    /// motion) says otherwise. The geometry rebuild starts immediately
+    /// either way; the animation begins when the bridge has the new scene
+    /// prepared.
+    public func requestState(_ target: Monument.State, animated: Bool) {
+        guard target != monumentState else { return }
+        pendingEraAnimation = animated ? target : nil
+        eraRun = nil
+        monumentState = target
+    }
+
+    /// Called by the scene bridge the moment the renderer starts drawing
+    /// the transition: from here `advance` drives the clock along the
+    /// timeline until the animation lands on the target era.
+    public func startEraRun(toward target: Monument.State) {
+        let presentYear = JulianDay(Date()).calendarDate.year
+        let year = MonumentTransition.eraYear(of: target, presentYear: presentYear)
+        eraRun = EraRun(target: target,
+                        timeline: MonumentTransition.EraTimeline(from: time,
+                                                                 toYear: year))
+        pendingEraAnimation = nil
+    }
+
     public var cameraAzimuth: Double
     public var cameraElevation: Double
     public var cameraDistance: Double
@@ -563,6 +610,12 @@ public final class SkyModel {
         var state = SceneState.at(time, site: site, camera: camera)
         state.windTime = windTime
         state.windSpeed = Float(windSpeed)
+        if let run = eraRun {
+            state.transition = TransitionFrame(
+                progress: run.progress,
+                erosion: MonumentTransition.erosion(atProgress: run.progress,
+                                                    toward: run.target))
+        }
         // A torch is carried, and nobody carries one four hundred metres up:
         // from the aerial station the same light would hang sourceless in
         // the night sky and wash the monument warm. It relights the moment
@@ -700,6 +753,20 @@ public final class SkyModel {
     /// astronomical clock is paused.
     public func advance(byRealSeconds seconds: Double) {
         windTime += seconds
+        // The era transition owns the clock while it plays: the calendar
+        // follows the timeline's path between the eras, and the ordinary
+        // time-lapse waits its turn.
+        if var run = eraRun {
+            run.elapsed += seconds
+            if run.progress >= 1 {
+                time = run.timeline.end
+                eraRun = nil
+            } else {
+                time = run.timeline.julianDay(at: run.progress)
+                eraRun = run
+            }
+            return
+        }
         guard isPlaying else { return }
         time = time + (seconds * rate) / 86400.0
     }

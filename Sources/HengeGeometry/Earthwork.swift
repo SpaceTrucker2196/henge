@@ -47,10 +47,34 @@ public enum Earthwork {
     /// photographs show.
     static func amplitudes(for state: Monument.State)
         -> (bank: Double, ditch: Double, counterscarp: Double) {
+        amplitudes(erosion: erosion(for: state))
+    }
+
+    /// Where a labelled state sits on the erosion axis: 0 is the earthwork
+    /// as dug, 1 is the earthwork as it stands. The two states are the only
+    /// values the app ever *rests* on — intermediate fractions exist solely
+    /// for the transition animation (MISSION.md invariant 8, carve-out).
+    public static func erosion(for state: Monument.State) -> Double {
         switch state {
-        case .asItWas: (1.9, -1.9, 0.55)
-        case .asItStands: (0.42, -0.5, 0.16)
+        case .asItWas: 0
+        case .asItStands: 1
         }
+    }
+
+    /// Heights on the continuous erosion axis, linear between the two
+    /// surveyed endpoints. Linear deliberately: it makes every intermediate
+    /// mesh an exact vertex-wise interpolation of the endpoint meshes, which
+    /// is what lets the renderer morph between two buffers instead of
+    /// rebuilding geometry per frame — and lets a test pin that equivalence.
+    /// The *pace* of erosion over the animation (fast early, slowing) lives
+    /// in `MonumentTransition.silting`, not here.
+    static func amplitudes(erosion: Double)
+        -> (bank: Double, ditch: Double, counterscarp: Double) {
+        let e = min(max(erosion, 0), 1)
+        func lerp(_ fresh: Double, _ now: Double) -> Double { fresh + (now - fresh) * e }
+        return (bank: lerp(1.9, 0.42),
+                ditch: lerp(-1.9, -0.5),
+                counterscarp: lerp(0.55, 0.16))
     }
 
     /// The two causeways, as azimuth windows (degrees from north, half-width
@@ -96,9 +120,16 @@ public enum Earthwork {
     /// Height of the earthwork above (or below) the natural grade.
     public static func heightDelta(east: Double, south: Double,
                                    state: Monument.State) -> Double {
+        heightDelta(east: east, south: south, erosion: erosion(for: state))
+    }
+
+    /// Height on the continuous erosion axis — the transition animation's
+    /// form of the same profile.
+    public static func heightDelta(east: Double, south: Double,
+                                   erosion: Double) -> Double {
         let radius = (east * east + south * south).squareRoot()
         guard radius > innerRadius, radius < outerRadius else { return 0 }
-        let a = amplitudes(for: state)
+        let a = amplitudes(erosion: erosion)
         let profile = a.bank * bump(radius, centre: bankCrest,
                                     halfWidth: bankHalfWidth)
             + a.ditch * bump(radius, centre: ditchCentre,
@@ -113,14 +144,19 @@ public enum Earthwork {
     /// aerial photographs show.
     public static func wear(east: Double, south: Double,
                             state: Monument.State) -> Double {
+        wear(east: east, south: south, erosion: erosion(for: state))
+    }
+
+    /// Wear on the continuous erosion axis, linear between the two states
+    /// for the same buffer-morph reason as `amplitudes(erosion:)`.
+    public static func wear(east: Double, south: Double,
+                            erosion: Double) -> Double {
         let radius = (east * east + south * south).squareRoot()
         guard radius > innerRadius, radius < outerRadius else { return 0 }
         let band = bump(radius, centre: bankCrest, halfWidth: bankHalfWidth)
             + bump(radius, centre: ditchCentre, halfWidth: ditchHalfWidth)
-        let strength = switch state {
-        case .asItWas: 0.95
-        case .asItStands: 0.38
-        }
+        let e = min(max(erosion, 0), 1)
+        let strength = 0.95 + (0.38 - 0.95) * e
         return min(1, band * strength)
             * circuit(atAzimuth: azimuth(east: east, south: south))
     }
@@ -157,6 +193,15 @@ public enum Earthwork {
     /// actual local grade the base grid can only coarsely approximate.
     public static func build(state: Monument.State,
                              groundHeight: (Double, Double) -> Double) -> Mesh {
+        build(erosion: erosion(for: state), groundHeight: groundHeight)
+    }
+
+    /// The ring at any point on the erosion axis. The grid is identical for
+    /// every fraction — same vertex count, same order, same indices — which
+    /// is the property the transition's buffer morph depends on and a test
+    /// asserts.
+    public static func build(erosion: Double,
+                             groundHeight: (Double, Double) -> Double) -> Mesh {
         let radialSteps = 44
         let azimuthSteps = 320
         var mesh = Mesh()
@@ -167,10 +212,10 @@ public enum Earthwork {
             let east = radius * sin(a)
             let south = -radius * cos(a)
             let y = groundHeight(east, south)
-                + heightDelta(east: east, south: south, state: state)
+                + heightDelta(east: east, south: south, erosion: erosion)
                 + lift
             return (SIMD3(Float(east), Float(y), Float(south)),
-                    wear(east: east, south: south, state: state))
+                    wear(east: east, south: south, erosion: erosion))
         }
 
         for r in 0...radialSteps {

@@ -69,6 +69,16 @@ hold even when crossing them would help.
    never blended. Hypothetical restorations — the Heel Stone's lost companion,
    the Slaughter Stone's portal pair — are toggles badged as hypothesis.
 
+   *Carve-out (owner-authorised, 2026-08-03):* the animated transition played
+   while switching between the two states is presentation, not a third state.
+   It may pass through intermediate geometry — eroding banks, stones arriving
+   in construction order — for the seconds the switch takes, because erosion
+   and construction are themselves the archaeology. What remains forbidden is
+   a *stable* blended view: no slider that parks the monument at "60% ruined",
+   no intermediate state that can be inspected, labelled or cited. The
+   animation always lands on one of the two labelled states, and reduced
+   motion skips it entirely.
+
 9. **Everything is modelled at true physical scale, in metres.** Not the stones
    only — the grass, the soil banked at their feet, the terrain, the buildings
    in the landscape, the sun's angular diameter, the moon's. One unit is one

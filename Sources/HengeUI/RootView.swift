@@ -760,13 +760,15 @@ public struct RootView: View {
 
     /// As built, or as it stands: the completed Stage-2 monument of
     /// c. 2200 BC against today's ruin. Two labelled states, never blended
-    /// — invariant 8. Promoted from the strip's buried tail to the rail
-    /// after the switch quietly cost the owner half the circle: a control
-    /// that can remove thirty stones should not be an easter egg.
+    /// — invariant 8; the animated passage between them is the carve-out.
+    /// Promoted from the strip's buried tail to the rail after the switch
+    /// quietly cost the owner half the circle: a control that can remove
+    /// thirty stones should not be an easter egg.
     private var monumentToggle: some View {
         Button {
-            model.monumentState = model.monumentState == .asItWas
-                ? .asItStands : .asItWas
+            model.requestState(model.monumentState == .asItWas
+                               ? .asItStands : .asItWas,
+                               animated: !reduceMotion)
         } label: {
             Image(systemName: model.monumentState == .asItWas
                   ? "building.columns.fill" : "building.columns")

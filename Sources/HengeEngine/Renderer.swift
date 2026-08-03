@@ -166,6 +166,13 @@ public struct SceneState: Sendable {
     /// reading aid a viewer asks for.
     public var constellationLines: Bool = false
 
+    /// The animated switch between the monument's two states, when one is
+    /// playing — nil in every resting frame, which is what keeps every
+    /// oracle render exactly what it was. The numbers are computed by the
+    /// model layer from `MonumentTransition`; the renderer only applies
+    /// them (MISSION.md invariant 8, carve-out).
+    public var transition: TransitionFrame? = nil
+
     /// The moment being drawn, as UT. The stars need it twice over: sidereal
     /// time turns the sky, and precession plus proper motion decide *which*
     /// sky — 2500 BC is not tonight with the labels changed.
@@ -361,6 +368,9 @@ struct DrawItem {
     var uniforms: DrawUniforms
     var castsShadow: Bool
     var surfaceKind: SurfaceTextures.Kind = .rock
+    /// The stone id (or "ground", "earthwork", "<id> soil") this item was
+    /// built from — how the transition matches an item to its cue.
+    var label: String = ""
 }
 
 extension Array {
@@ -482,6 +492,31 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// switch can swap them without rebuilding eighty stones.
     private var overlayItems: [DrawItem] = []
     private var aspectRatio: Float = 16.0 / 9.0
+
+    /// Everything held while the animated state switch plays: the scene
+    /// being left, the scene being entered, the cue for every stone that
+    /// moves, and the earthwork's two endpoint vertex sets for the morph.
+    private struct TransitionRun {
+        var outgoing: [DrawItem]
+        var incoming: [DrawItem]
+        /// The complete target scene, swapped in whole when the run ends.
+        var target: [DrawItem]
+        var cues: [String: MonumentTransition.StoneCue]
+        var morphFresh: [MeshVertex]
+        var morphEroded: [MeshVertex]
+        /// One vertex buffer per frame in flight: the morph writes the slot
+        /// the semaphore has just guaranteed the GPU is no longer reading —
+        /// the same discipline as `frameUniformBuffers`.
+        var morphBuffers: [MTLBuffer]
+        var morphIndexBuffer: MTLBuffer
+        var morphIndexCount: Int
+        var morphUniforms: DrawUniforms
+    }
+    private var transitionRun: TransitionRun?
+    /// The items this frame actually draws — `drawItems` at rest, the
+    /// transition's composite while one is playing. Refreshed once per
+    /// frame so the shadow and scene passes agree about what exists.
+    private var frameItems: [DrawItem] = []
 
     public init(device: MTLDevice? = nil,
                 state: SceneState,
@@ -854,6 +889,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             }
         }
         drawItems = items
+        transitionRun = nil
         loadGrass()
     }
 
@@ -959,7 +995,214 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                 ? SurfaceMaterial.turfReflectance
                                 : SurfaceMaterial.stoneReflectance),
                         castsShadow: castsShadow,
-                        surfaceKind: kind)
+                        surfaceKind: kind,
+                        label: label)
+    }
+
+    // ── the state transition ────────────────────────────────────────────────
+
+    /// The earthwork's two endpoint meshes, built off the main actor with
+    /// the rest of a scene's geometry. Same grid either end, which is what
+    /// the vertex-wise morph depends on.
+    nonisolated public static func prepareTransitionMorph(terrain: TerrainModel?)
+        -> (fresh: Mesh, eroded: Mesh) {
+        let ground: (Double, Double) -> Double = { east, south in
+            terrain?.groundHeight(east: east, south: south) ?? 0
+        }
+        return (Earthwork.build(erosion: 0, groundHeight: ground),
+                Earthwork.build(erosion: 1, groundHeight: ground))
+    }
+
+    /// Start the animated switch to a prepared scene.
+    ///
+    /// The previous scene keeps drawing; per frame, stones with cues sink
+    /// away or rise into place at their scheduled windows while the
+    /// earthwork morphs along the erosion axis. When the model layer drives
+    /// `state.transition.progress` to 1 the target scene is swapped in
+    /// whole, so the resting frame is exactly what `load(prepared:)` would
+    /// have produced — the animation cannot leave residue.
+    public func beginTransition(to prepared: PreparedScene,
+                                cues: [String: MonumentTransition.StoneCue],
+                                freshEarthwork: Mesh,
+                                erodedEarthwork: Mesh) throws {
+        if transitionRun != nil { finishTransition() }
+
+        var target: [DrawItem] = []
+        for piece in prepared.items {
+            if let item = try makeDrawItem(mesh: piece.mesh, albedo: piece.albedo,
+                                           label: piece.label,
+                                           castsShadow: piece.castsShadow,
+                                           kind: piece.kind, seed: piece.seed) {
+                target.append(item)
+            }
+        }
+
+        // The morph needs the two endpoint meshes vertex-for-vertex
+        // compatible; if they ever are not, fall back to the instant switch
+        // rather than draw garbage.
+        let fresh = Self.meshVertices(of: freshEarthwork)
+        let eroded = Self.meshVertices(of: erodedEarthwork)
+        guard fresh.count == eroded.count, !fresh.isEmpty,
+              let indexBuffer = device.makeBuffer(
+                bytes: freshEarthwork.indices,
+                length: MemoryLayout<UInt32>.stride * freshEarthwork.indices.count,
+                options: .storageModeShared) else {
+            drawItems = target
+            loadGrass()
+            return
+        }
+        indexBuffer.label = "earthwork morph indices"
+
+        var morphBuffers: [MTLBuffer] = []
+        for slot in 0..<Self.framesInFlight {
+            guard let buffer = device.makeBuffer(
+                    bytes: fresh,
+                    length: MemoryLayout<MeshVertex>.stride * fresh.count,
+                    options: .storageModeShared) else {
+                drawItems = target
+                loadGrass()
+                return
+            }
+            buffer.label = "earthwork morph \(slot)"
+            morphBuffers.append(buffer)
+        }
+
+        // The morph wears the target scene's earthwork material, so the
+        // hand-off frame is invisible.
+        let morphUniforms = target.first { $0.label == "earthwork" }?.uniforms
+            ?? DrawUniforms(albedo: SurfaceMaterial.turf,
+                            surface: SIMD4(1, SurfaceTextures.Kind.grass.metresPerTile,
+                                           SurfaceTextures.Kind.grass.normalStrength, 1),
+                            reflectance: SurfaceMaterial.turfReflectance)
+
+        transitionRun = TransitionRun(
+            outgoing: drawItems.filter { $0.label != "earthwork" },
+            incoming: target.filter {
+                $0.label != "earthwork" && Self.cue(for: $0.label, in: cues) != nil
+            },
+            target: target,
+            cues: cues,
+            morphFresh: fresh,
+            morphEroded: eroded,
+            morphBuffers: morphBuffers,
+            morphIndexBuffer: indexBuffer,
+            morphIndexCount: freshEarthwork.indices.count,
+            morphUniforms: morphUniforms)
+    }
+
+    /// Swap the finished target scene in and drop the run.
+    private func finishTransition() {
+        guard let run = transitionRun else { return }
+        drawItems = run.target
+        transitionRun = nil
+        loadGrass()
+    }
+
+    /// A stone item's cue, letting the soil skirt banked at a stone's foot
+    /// travel with its stone.
+    private static func cue(for label: String,
+                            in cues: [String: MonumentTransition.StoneCue])
+        -> MonumentTransition.StoneCue? {
+        if let cue = cues[label] { return cue }
+        if label.hasSuffix(" soil") {
+            return cues[String(label.dropLast(5))]
+        }
+        return nil
+    }
+
+    private nonisolated static func meshVertices(of mesh: Mesh) -> [MeshVertex] {
+        guard mesh.positions.count == mesh.normals.count else { return [] }
+        var vertices: [MeshVertex] = []
+        vertices.reserveCapacity(mesh.positions.count)
+        for i in mesh.positions.indices {
+            vertices.append(MeshVertex(position: mesh.positions[i],
+                                       normal: mesh.normals[i],
+                                       blend: mesh.blends.isEmpty ? 1 : mesh.blends[i]))
+        }
+        return vertices
+    }
+
+    /// Decide what this frame draws. At rest that is simply `drawItems`;
+    /// mid-transition it is the composite: persistent items untouched, cued
+    /// stones displaced along their rise or sink, and the earthwork morph
+    /// written into this frame's buffer slot. Runs after the in-flight
+    /// semaphore is taken, which is what makes the slot write safe.
+    private func refreshFrameItems() {
+        guard let frame = state.transition, let run = transitionRun else {
+            // A run whose driver has stopped (the model finished, or was
+            // never animated) resolves to the target scene.
+            if transitionRun != nil { finishTransition() }
+            frameItems = drawItems
+            return
+        }
+        if frame.progress >= 1 {
+            finishTransition()
+            frameItems = drawItems
+            return
+        }
+
+        var items: [DrawItem] = []
+        items.reserveCapacity(run.outgoing.count + run.incoming.count + 1)
+        for item in run.outgoing {
+            guard let cue = Self.cue(for: item.label, in: run.cues) else {
+                items.append(item)
+                continue
+            }
+            let place = MonumentTransition.placement(cue: cue,
+                                                     progress: frame.progress,
+                                                     role: .outgoing)
+            guard place.visible else { continue }
+            items.append(Self.displaced(item, by: place.sink))
+        }
+        for item in run.incoming {
+            guard let cue = Self.cue(for: item.label, in: run.cues) else { continue }
+            let place = MonumentTransition.placement(cue: cue,
+                                                     progress: frame.progress,
+                                                     role: .incoming)
+            guard place.visible else { continue }
+            items.append(Self.displaced(item, by: place.sink))
+        }
+        items.append(morphItem(erosion: frame.erosion, run: run))
+        frameItems = items
+    }
+
+    /// A copy of the item sunk `sink` metres below its resting place. The
+    /// lichen/damp datum rides along so the weathering bands do not slide
+    /// up the stone as it moves.
+    private static func displaced(_ item: DrawItem, by sink: Double) -> DrawItem {
+        guard sink != 0 else { return item }
+        var copy = item
+        copy.uniforms.model = MetalMath.translation(SIMD3(0, Float(-sink), 0))
+        copy.uniforms.weather.x -= Float(sink)
+        return copy
+    }
+
+    /// Write the earthwork at this frame's erosion fraction into the slot
+    /// the semaphore just freed, and hand back an item drawing it. The two
+    /// endpoint meshes share a grid and the profile is linear in the
+    /// fraction, so the write is a vertex-wise mix — no geometry is rebuilt.
+    private func morphItem(erosion: Double, run: TransitionRun) -> DrawItem {
+        let buffer = run.morphBuffers[frameIndex]
+        let count = run.morphFresh.count
+        let e = Float(min(max(erosion, 0), 1))
+        let destination = buffer.contents().bindMemory(to: MeshVertex.self,
+                                                       capacity: count)
+        for i in 0..<count {
+            var vertex = run.morphFresh[i]
+            let other = run.morphEroded[i]
+            vertex.position += (other.position - vertex.position) * e
+            let normal = simd_mix(vertex.normal, other.normal, SIMD4(repeating: e))
+            let length = simd_length(normal)
+            vertex.normal = length > 1e-6 ? normal / length : SIMD4(0, 1, 0, 0)
+            destination[i] = vertex
+        }
+        return DrawItem(vertexBuffer: buffer,
+                        indexBuffer: run.morphIndexBuffer,
+                        indexCount: run.morphIndexCount,
+                        uniforms: run.morphUniforms,
+                        castsShadow: false,
+                        surfaceKind: .grass,
+                        label: "earthwork")
     }
 
     /// Put a stone on the ground it is actually standing on.
@@ -1310,7 +1553,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             var matrix = matrices[cascade]
             encoder.setVertexBytes(&matrix, length: MemoryLayout<float4x4>.stride, index: 2)
 
-            for item in drawItems where item.castsShadow {
+            for item in frameItems where item.castsShadow {
                 var draw = item.uniforms
                 encoder.setVertexBuffer(item.vertexBuffer, offset: 0, index: 30)
                 encoder.setVertexBytes(&draw, length: MemoryLayout<DrawUniforms>.stride, index: 1)
@@ -1335,7 +1578,13 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             starEpoch = .infinity
             return
         }
-        guard abs(state.epoch.value - starEpoch) > 730 else { return }
+        // Two simulated years of drift at rest. During the era sweep the
+        // epoch crosses four millennia in seconds; rebuilding nine thousand
+        // precessed stars every frame would stutter exactly when the sky is
+        // the show, so the sweep tolerates eighty years — well under what an
+        // eye can catch at that speed.
+        let staleness = state.transition == nil ? 730.0 : 29_220.0
+        guard abs(state.epoch.value - starEpoch) > staleness else { return }
         let instances = catalog.instances(at: state.epoch.terrestrialTime)
         let vertices = instances.map { star in
             StarVertex(direction: SIMD4(SIMD3<Float>(star.direction),
@@ -1437,7 +1686,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         encoder.setFragmentSamplerState(shadowSampler, index: 0)
         encoder.setFragmentSamplerState(surfaceSampler, index: 1)
 
-        for item in drawItems + overlayItems {
+        for item in frameItems + overlayItems {
             var draw = item.uniforms
 
             // Bind whichever material set this item wants. When the textures
@@ -1535,6 +1784,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         frameIndex = (frameIndex + 1) % Self.framesInFlight
         let uniformBuffer = frameUniformBuffers[frameIndex]
+        refreshFrameItems()
         refreshStarsIfNeeded()
         var uniforms = buildFrameUniforms(aspect: aspectRatio)
         uniformBuffer.contents().copyMemory(from: &uniforms,
@@ -1628,6 +1878,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
 
         let aspect = Float(width) / Float(height)
+        // The offscreen path never passes through `draw(in:)`, so it must
+        // resolve the frame's item list itself — the oracle renders with an
+        // empty list otherwise, and every shadow test goes blind.
+        refreshFrameItems()
         refreshStarsIfNeeded()
         var uniforms = buildFrameUniforms(aspect: aspect)
         let uniformBuffer = frameUniformBuffers[0]

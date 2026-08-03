@@ -98,15 +98,43 @@ public struct HengeSceneView: PlatformViewRepresentable {
             let terrain = SkyModel.terrain
             let soilBanks = renderer.state.soilBanks
             let model = self.model
+            // The switch animates only when the model asked for it and
+            // there is a loaded scene to leave — the first load of the app
+            // raises the stones behind the progress card, as ever.
+            let animateFrom = model.pendingEraAnimation == target
+                ? coordinator.loadedState : nil
             model.rebuildProgress = 0
             coordinator.rebuild = Task {
-                let prepared = await Task.detached(priority: .userInitiated) {
-                    HengeRenderer.prepare(scene: scene, terrain: terrain,
-                                          soilBanks: soilBanks) { fraction in
+                let (prepared, cues, morph) = await Task.detached(priority: .userInitiated) {
+                    () -> (PreparedScene,
+                           [String: MonumentTransition.StoneCue]?,
+                           (fresh: Mesh, eroded: Mesh)?) in
+                    let prepared = HengeRenderer.prepare(scene: scene, terrain: terrain,
+                                                         soilBanks: soilBanks) { fraction in
                         Task { @MainActor in model.rebuildProgress = fraction }
                     }
+                    guard let from = animateFrom else { return (prepared, nil, nil) }
+                    // The schedule and the earthwork's endpoint meshes ride
+                    // along with the geometry build, off the main actor.
+                    let cues = MonumentTransition.cues(
+                        from: MonumentScene.complete(state: from),
+                        to: scene)
+                    let morph = HengeRenderer.prepareTransitionMorph(terrain: terrain)
+                    return (prepared, cues, morph)
                 }.value
-                try? renderer.load(prepared: prepared)
+                if let cues, let morph {
+                    do {
+                        try renderer.beginTransition(to: prepared, cues: cues,
+                                                     freshEarthwork: morph.fresh,
+                                                     erodedEarthwork: morph.eroded)
+                        model.startEraRun(toward: target)
+                    } catch {
+                        try? renderer.load(prepared: prepared)
+                    }
+                } else {
+                    try? renderer.load(prepared: prepared)
+                }
+                model.pendingEraAnimation = nil
                 coordinator.loadedState = target
                 model.rebuildProgress = nil
                 coordinator.rebuild = nil
