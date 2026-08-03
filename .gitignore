@@ -7,6 +7,10 @@
 .build/
 .swiftpm/
 DerivedData/
+# scripts/build_dmg.sh working tree and installers — artifacts live on the
+# GitHub release, never in the repo.
+build/
+dist/
 *.xcuserstate
 xcuserdata/
 

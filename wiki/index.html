@@ -145,6 +145,16 @@
     animation: settle 1.2s .85s ease-out both;
   }
   .hero .platforms span { color: var(--gold-hi); }
+  .hero .get {
+    display: inline-block; margin-top: 26px;
+    font-family: var(--mono); font-size: 13.5px; letter-spacing: .16em;
+    color: var(--ink); background: var(--gold);
+    text-decoration: none; padding: 14px 26px;
+    border: 1px solid var(--gold-hi);
+    box-shadow: 0 6px 30px rgba(201,162,39,.35);
+    animation: settle 1.2s 1s ease-out both;
+  }
+  .hero .get:hover { background: var(--gold-hi); }
   @keyframes settle {
     from { opacity: 0; transform: translateY(18px); }
     to   { opacity: 1; transform: none; }
@@ -309,6 +319,7 @@
     <p class="tagline">A photoreal Stonehenge that keeps real time.</p>
     <p class="creed">Druidic in spirit, ceremony and season&thinsp;&mdash;&thinsp;archaeological in fact, stone by cited stone.</p>
     <p class="platforms">HAND-ROLLED <span>METAL&nbsp;3</span> &middot; NO ENGINE &middot; NO NETWORK</p>
+    <a class="get" href="https://www.river.io/henge/">DOWNLOAD FOR MAC &mdash; EARLY BUILD</a>
   </div>
   <svg class="skyline" viewBox="0 0 1200 140" preserveAspectRatio="xMidYMax slice" aria-label="The monument on the horizon at sunrise">
     <!-- the plain -->
@@ -513,7 +524,8 @@
 <footer>
   <p class="silent">No network, no telemetry, no account.<br>
   The almanac works in a field with no signal.</p>
-  <a href="https://github.com/SpaceTrucker2196/henge">FOLLOW THE BUILD ON GITHUB</a>
+  <a href="https://www.river.io/henge/">DOWNLOAD FOR MAC</a>
+  <a href="https://github.com/SpaceTrucker2196/henge" style="margin-left:12px">FOLLOW THE BUILD ON GITHUB</a>
   <p class="fine">&copy; 2026 River.io LLC &middot; Astronomy from published ephemerides &middot;
   Archaeology from cited survey &middot; Built by hand, measured by tests</p>
 </footer>

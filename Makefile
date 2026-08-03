@@ -2,7 +2,7 @@
 # `make test` is the oracle (factory/converge.md step 4): green plus a
 # warning-clean `make build` means the factory is operational.
 
-.PHONY: test uitest build build-ios build-mac generate clean run-mac
+.PHONY: test uitest build build-ios build-mac generate clean run-mac dmg
 
 # The oracle. Runs against the shared engine through SwiftPM, so it needs no
 # simulator and no Xcode project — which is what keeps it fast enough to run
@@ -70,6 +70,12 @@ clean:
 	rm -rf .build Henge.xcodeproj
 
 # Build and launch the macOS app — the fourth step of the cold-start loop.
+# The Mac installer the download page serves. `scripts/build_dmg.sh
+# --release` additionally publishes it to the GitHub release the page's
+# /releases/latest link points at.
+dmg: generate
+	scripts/build_dmg.sh
+
 run-mac: build-mac
 	@open "$$(xcodebuild -project Henge.xcodeproj -scheme Henge-macOS \
 		-configuration Debug -showBuildSettings 2>/dev/null \
