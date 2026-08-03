@@ -58,3 +58,4 @@ the whole ledger: `ledger.py --energy-total`.
 | b1c4011 | 2026-07-31T15:43:54Z | claude-fable-5 | 72 | 23197 | 22956163 | 34205 | 24.8008 | Ground-plan labels with surveyed measurements; pinch is FOV everywhere |
 | 2c5e8df | 2026-07-31T15:51:31Z | claude-fable-5 | 64 | 20720 | 21067506 | 34118 | 22.7865 | Moonrise solver + moon-light jumps; sunrise landing pinned for all 8 stations |
 | ffa9000 | 2026-07-31T15:54:40Z | claude-fable-5 | 30 | 13175 | 10107625 | 15708 | 11.0808 | M7 closed; DF_Template gains wiki + Pages (cross-repo) |
+| 9a16b91 | 2026-08-03T16:11:31Z | claude-fable-5,claude-sonnet-5 | 490 | 223553 | 65982852 | 2001324 | 55.3548 | Soften southern causeway bank ends to chalk's angle of repose; verify earthwork  |
