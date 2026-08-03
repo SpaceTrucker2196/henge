@@ -56,9 +56,16 @@ public enum Earthwork {
     /// The two causeways, as azimuth windows (degrees from north, half-width
     /// and feather). The main entrance sits on the monument's axis; the
     /// southern gap is narrower.
+    ///
+    /// The feathers are bounded below by the material: heaped chalk rubble
+    /// rests at 35–40°, so a bank end cannot ramp its full as-dug height
+    /// over less arc than that slope allows. At the bank crest one degree of
+    /// arc is about 0.83 m; the southern gap's original 2.5° feather dropped
+    /// 1.9 m across ~2 m — a 43° cut face that rendered as quarried, not
+    /// slumped. 5° keeps the gap the survey's width and lets the ends rest.
     static var causeways: [(centre: Double, half: Double, feather: Double)] {
         [(Monument.axisAzimuth.degrees, 8.0, 4.0),
-         (165.0, 3.0, 2.5)]
+         (165.0, 3.0, 5.0)]
     }
 
     // ── the profile ─────────────────────────────────────────────────────────

@@ -82,6 +82,34 @@ final class EarthworkTests: XCTestCase {
                        0, accuracy: 0.01)
     }
 
+    func testCausewayEndsRestAtChalksAngleOfRepose() {
+        // A bank is heaped chalk rubble, and loose chalk rests at 35–40°.
+        // The bank can therefore end at a causeway no more steeply than
+        // tan 40° ≈ 0.84 rise over run, however convenient a sharper cut
+        // would be to model. Walk the as-dug crest around the full circuit
+        // and difference the height along the arc: at the bank crest one
+        // degree is bankCrest·π/180 ≈ 0.83 m of run, so the reader can
+        // check any figure here with a pocket calculator.
+        let repose = tan(40.0 * Double.pi / 180)
+        let stepDegrees = 0.05
+        let run = Earthwork.bankCrest * stepDegrees * Double.pi / 180
+        var previous: Double?
+        for azimuth in stride(from: 0.0, through: 360.0, by: stepDegrees) {
+            let a = azimuth * Double.pi / 180
+            let east = Earthwork.bankCrest * sin(a)
+            let south = -Earthwork.bankCrest * cos(a)
+            let height = Earthwork.heightDelta(east: east, south: south,
+                                               state: .asItWas)
+            if let previous {
+                let slope = abs(height - previous) / run
+                XCTAssertLessThanOrEqual(slope, repose,
+                    "bank end near azimuth \(azimuth)° stands at "
+                    + "atan(\(slope)) — steeper than heaped chalk can rest")
+            }
+            previous = height
+        }
+    }
+
     // ── the surface ─────────────────────────────────────────────────────────
 
     func testWearStaysNormalisedAndFollowsTheState() {
