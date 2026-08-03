@@ -84,11 +84,12 @@ echo "built $DMG ($(du -h "$DMG" | cut -f1 | tr -d ' '))"
 
 if [[ "${1:-}" == "--release" ]]; then
     TAG="v$VERSION"
-    # The GitHub release is the archive; the *public* copy is served from
-    # www.river.io/henge/ out of the river-io-site repo, the same way the
-    # other apps distribute. (This repo is private, and release assets on
-    # a private repo return 404 to the world — they cannot be the public
-    # download.)
+    # Two channels, one artifact: the GitHub release is the versioned
+    # archive (public, since 2026-08-03 when the repo went public), and
+    # www.river.io/henge/ is the download front door, the same directory-
+    # per-app arrangement every River.io app uses. The site copy is what
+    # the marketing pages link, so it is staged here rather than trusted
+    # to someone remembering.
     cp "$DMG" "$DIST/Henge.dmg"
     if ! gh release view "$TAG" >/dev/null 2>&1; then
         gh release create "$TAG" --prerelease \

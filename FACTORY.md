@@ -98,11 +98,27 @@ a metallib — not moving the shaders into the app target.
 | `make build` | both platforms, warning-clean check |
 | `make build-ios` / `make build-mac` | one platform |
 | `make run-mac` | build and launch the macOS app |
+| `make dmg` | Release build of the Mac app, wrapped in a verified installer image |
 | `make generate` | regenerate `Henge.xcodeproj` after adding or moving files |
 | `make clean` | drop `.build/` and the generated project |
 
 Run `make generate` after adding a file under `App/`, `iOSApp/` or `macOSApp/`.
 Files under `Sources/` and `Tests/` are picked up by SwiftPM automatically.
+
+## Shipping the Mac build
+
+`scripts/build_dmg.sh --release` is the whole release path: Release
+build, universal-binary check, signing (Developer ID when the keychain
+has one; ad hoc until then, which the download page admits to), a
+verified UDZO image, a GitHub release tagged `v<MARKETING_VERSION>`,
+and the public copy staged into the `river-io-site` checkout
+(`RIVER_IO_SITE` overrides the default `../river-io-site`) with the
+page's version and size stamped from the artifact. Committing and
+pushing river-io-site is deliberately left manual — that repo deploys
+www.river.io on push, and publishing the company site should be a
+decision, not a side effect. The version lives in `project.yml`
+(`MARKETING_VERSION`); bump it there and everything downstream
+follows.
 
 ## fastlane (iOS)
 

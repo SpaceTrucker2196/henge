@@ -6,6 +6,9 @@ use (invariant 3) and `SECURITY.md` holds the machine-data provenance
 registry; this wiki is the *reading* — assembled so a person can check what
 we built against where it came from.
 
+The site's front door is [the landing page](index.html); the Mac build
+downloads from [river.io/henge](https://www.river.io/henge/).
+
 Every claim carries a tier, the same register the app's lore system
 enforces:
 
