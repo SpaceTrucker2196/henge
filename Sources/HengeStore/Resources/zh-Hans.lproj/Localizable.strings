@@ -1,0 +1,5 @@
+/* Henge — generated. Edit the source table, not this. */
+
+"store.error.nothingToRestore" = "未找到与此 Apple 账户关联的购买记录。";
+"store.error.pending" = "此次购买需要获得批准才能完成。批准后将在此处解锁。";
+"store.error.unavailable" = "App Store 未响应。请检查网络连接后重试。";

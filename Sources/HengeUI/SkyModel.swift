@@ -495,31 +495,31 @@ public final class SkyModel {
 
         // Cardinals on the turf just beyond the earthwork, from true north.
         let cardinalRadius = 70.0
-        add("N", nil, east: 0, south: -cardinalRadius, cardinal: true)
-        add("E", nil, east: cardinalRadius, south: 0, cardinal: true)
-        add("S", nil, east: 0, south: cardinalRadius, cardinal: true)
-        add("W", nil, east: -cardinalRadius, south: 0, cardinal: true)
+        add(L10n.string("ground.north"), nil, east: 0, south: -cardinalRadius, cardinal: true)
+        add(L10n.string("ground.east"), nil, east: cardinalRadius, south: 0, cardinal: true)
+        add(L10n.string("ground.south"), nil, east: 0, south: cardinalRadius, cardinal: true)
+        add(L10n.string("ground.west"), nil, east: -cardinalRadius, south: 0, cardinal: true)
 
         // The features, each with its surveyed figure.
         let axis = Monument.axisAzimuth.degrees * Double.pi / 180
-        add("Axis", "az \(Monument.axisAzimuth.degrees)°",
+        add(L10n.string("ground.axis"), "az \(Monument.axisAzimuth.degrees)°",
             east: 30 * sin(axis), south: -30 * cos(axis))
-        add("Sarsen circle",
+        add(L10n.string("ground.sarsenCircle"),
             "\(Int(Monument.sarsenCircleDiameter)) m across",
             east: 0, south: Monument.sarsenCircleDiameter / 2 + 2)
-        add("Aubrey ring",
+        add(L10n.string("ground.aubreyRing"),
             "\(Int(Monument.aubreyCircleDiameter)) m · 56 holes",
             east: -Monument.aubreyCircleDiameter / 2 * 0.7071,
             south: Monument.aubreyCircleDiameter / 2 * 0.7071)
-        add("Enclosure",
+        add(L10n.string("ground.enclosure"),
             "\(Int(Earthwork.ditchCentre * 2)) m across",
             east: -Earthwork.ditchCentre * 0.7071,
             south: -Earthwork.ditchCentre * 0.7071)
-        add("Heel Stone",
+        add(L10n.string("place.heelStone"),
             "\(Int(Monument.heelStoneDistance)) m out",
             east: Monument.heelStoneDistance * sin(axis),
             south: -Monument.heelStoneDistance * cos(axis))
-        add("Avenue",
+        add(L10n.string("place.avenue"),
             "\(Int(Monument.avenueWidth)) m wide",
             east: 110 * sin(axis), south: -110 * cos(axis))
 
@@ -541,7 +541,7 @@ public final class SkyModel {
             let v = moon.unitVector
             if let point = eye.screenFraction(of: SIMD3(Float(v.x), Float(v.y), Float(v.z)),
                                               aspect: Float(aspect)) {
-                labels.append(StarLabel(id: "Moon", x: point.x, y: point.y))
+                labels.append(StarLabel(id: L10n.string("ground.moon"), x: point.x, y: point.y))
             }
         }
 
@@ -565,7 +565,7 @@ public final class SkyModel {
                 guard world.y > 0.05 else { return nil }
                 guard let point = eye.screenFraction(of: SIMD3<Float>(world),
                                                      aspect: Float(aspect)) else { return nil }
-                return StarLabel(id: "\(sign.symbol) \(sign.name)",
+                return StarLabel(id: "\(sign.symbol) \(sign.localizedName)",
                                  x: point.x, y: point.y)
             }
         }
@@ -586,7 +586,8 @@ public final class SkyModel {
                 guard world.y > 0.03 else { return nil }
                 guard let point = eye.screenFraction(of: SIMD3<Float>(world),
                                                      aspect: Float(aspect)) else { return nil }
-                return StarLabel(id: entry.planet.name, x: point.x, y: point.y)
+                return StarLabel(id: entry.planet.localizedName,
+                                 x: point.x, y: point.y)
             }
 
             labels += catalog.namedStars(at: time.terrestrialTime).compactMap { star in
@@ -899,10 +900,14 @@ public final class SkyModel {
     public var formattedNextStation: String {
         let next = nextStation
         let days = next.instant.value - time.value
+        // Positional specifiers in the catalogue, so a language that puts the
+        // interval before the festival can reorder them without touching this.
         if days < 1 {
-            return String(format: "%@ in %.0f h", next.station.name, days * 24)
+            return String(format: L10n.string("almanac.nextStation.hours"),
+                          next.station.localizedName, days * 24)
         }
-        return String(format: "%@ in %.0f d", next.station.name, days)
+        return String(format: L10n.string("almanac.nextStation.days"),
+                      next.station.localizedName, days)
     }
 
     /// What the app is prepared to say about the coming station, tier and all.

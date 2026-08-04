@@ -1,0 +1,5 @@
+/* Henge — generated. Edit the source table, not this. */
+
+"store.error.nothingToRestore" = "이 Apple 계정으로 구매한 내역을 찾을 수 없습니다.";
+"store.error.pending" = "구매를 완료하려면 승인이 필요합니다. 승인되는 즉시 여기에서 잠금이 해제됩니다.";
+"store.error.unavailable" = "스토어가 응답하지 않습니다. 연결을 확인한 후 다시 시도해 주세요.";

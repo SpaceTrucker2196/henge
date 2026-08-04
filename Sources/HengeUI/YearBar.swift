@@ -32,7 +32,12 @@ public struct YearBar: View {
         Color(red: 0.86, green: 0.77, blue: 0.48),
         Color(red: 0.76, green: 0.58, blue: 0.36)
     ]
-    static let seasonNames = ["Winter", "Spring", "Summer", "Autumn"]
+    /// Computed, not stored: a `static let` freezes whichever language
+    /// was current when it was first touched.
+    static var seasonNames: [String] {
+        [L10n.string("season.name.winter"), L10n.string("season.name.spring"),
+         L10n.string("season.name.summer"), L10n.string("season.name.autumn")]
+    }
 
     public var body: some View {
         let year = model.yearAlmanac
@@ -55,11 +60,13 @@ public struct YearBar: View {
                     seasonBand(quarters: quarterFractions, width: width)
 
                     ForEach(Array(year.newMoons.enumerated()), id: \.offset) { _, moon in
-                        moonJump(to: moon, label: "New moon") { newMoonBead }
+                        moonJump(to: moon,
+                                 label: EventKind.newMoon.localizedName) { newMoonBead }
                             .position(x: width * year.fraction(of: moon), y: 9)
                     }
                     ForEach(Array(year.fullMoons.enumerated()), id: \.offset) { _, moon in
-                        moonJump(to: moon, label: "Full moon") { fullMoonLamp }
+                        moonJump(to: moon,
+                                 label: EventKind.fullMoon.localizedName) { fullMoonLamp }
                             .position(x: width * year.fraction(of: moon), y: 9)
                     }
 
@@ -86,10 +93,9 @@ public struct YearBar: View {
             labelRow(for: stations, parity: 1)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Day of the year")
+        .accessibilityLabel(Text("yearbar.label", bundle: .module))
         .accessibilityValue(model.formattedDate)
-        .accessibilityHint("Drag to change the date; the marked lights are "
-                           + "the festivals of the wheel and the moons")
+        .accessibilityHint(Text("yearbar.hint", bundle: .module))
         .accessibilityAdjustableAction { direction in
             switch direction {
             case .increment: model.scrubYear(toFraction: model.yearFraction + 1.0 / 366)
@@ -165,7 +171,8 @@ public struct YearBar: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Jump to \(station.name) sunrise")
+        .accessibilityLabel(Text("yearbar.jumpToSunrise \(station.localizedName)",
+                                 bundle: .module))
     }
 
     /// A moon light is a jump: tapping it goes to the *moonrise* of that
@@ -180,7 +187,12 @@ public struct YearBar: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Jump to the \(label.lowercased())'s moonrise")
+        // Phrased so the name drops in whole. The English original lowercased
+        // it to read naturally mid-sentence, which is a transformation with no
+        // meaning in Japanese or Korean and the wrong one in German, where
+        // the noun is capitalised on purpose.
+        .accessibilityLabel(Text("yearbar.jumpToMoonrise \(label)",
+                                 bundle: .module))
     }
 
     private var fullMoonLamp: some View {
@@ -230,7 +242,7 @@ public struct YearBar: View {
                 .map { (station: $0.element.station, fraction: $0.element.fraction) }
             let xs = resolvedLabelCentres(for: row, width: width)
             ForEach(Array(row.enumerated()), id: \.element.station) { index, entry in
-                Text(entry.station.name)
+                Text(entry.station.localizedName)
                     .font(Henge.body(.caption2))
                     .opacity(Henge.Ink.faint)
                     .fixedSize()
@@ -242,7 +254,11 @@ public struct YearBar: View {
 
     /// A serif caption's width, estimated well enough to keep names apart.
     private func labelHalfWidth(_ station: WheelStation) -> CGFloat {
-        CGFloat(station.name.count) * 3.1 + 4
+        // Measured off the *translated* name: "Frühlingstagundnachtgleiche"
+        // needs more of the bar than "Spring equinox" does, and reserving
+        // the English width would overlap its neighbours in half the
+        // languages the app now ships in.
+        CGFloat(station.localizedName.count) * 3.1 + 4
     }
 
     /// Centres for a row of labels: pinned inside the edges, then swept

@@ -1,0 +1,5 @@
+/* Henge — generated. Edit the source table, not this. */
+
+"store.error.nothingToRestore" = "この Apple アカウントでの過去の購入は見つかりませんでした。";
+"store.error.pending" = "購入を完了するには承認が必要です。承認され次第、ここでロックが解除されます。";
+"store.error.unavailable" = "ストアが応答しません。接続を確認してもう一度お試しください。";

@@ -1,0 +1,5 @@
+/* Henge — generated. Edit the source table, not this. */
+
+"store.error.nothingToRestore" = "Nenhuma compra anterior encontrada para esta Conta Apple.";
+"store.error.pending" = "A compra precisa de aprovação para ser concluída. Ela será desbloqueada aqui assim que isso acontecer.";
+"store.error.unavailable" = "A loja não está respondendo. Verifique a conexão e tente novamente.";

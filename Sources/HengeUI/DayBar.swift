@@ -107,9 +107,9 @@ public struct DayBar: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Time of day")
+        .accessibilityLabel(Text("daybar.label", bundle: .module))
         .accessibilityValue(model.formattedLocalTime ?? model.formattedSolarTime)
-        .accessibilityHint("Drag to change the hour")
+        .accessibilityHint(Text("daybar.hint", bundle: .module))
         .accessibilityAdjustableAction { direction in
             // A tenth of an hour a step: fine enough to walk a sunrise through,
             // coarse enough to cross a night without a hundred gestures.

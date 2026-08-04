@@ -1,0 +1,5 @@
+/* Henge — generated. Edit the source table, not this. */
+
+"store.error.nothingToRestore" = "Für diesen Apple-Account wurde kein früherer Kauf gefunden.";
+"store.error.pending" = "Der Kauf muss noch genehmigt werden. Sobald das geschehen ist, wird er hier freigeschaltet.";
+"store.error.unavailable" = "Der Store antwortet nicht. Prüfe die Verbindung und versuche es erneut.";

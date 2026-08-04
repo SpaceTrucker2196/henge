@@ -1,0 +1,41 @@
+{
+  "identifier" : "A1F0E2C4",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : true,
+      "internalID" : "6F2B90D1",
+      "localizations" : [
+        {
+          "description" : "Lifts the fifteen-minute session clock and opens the time machine: any date from 3000 BC to AD 3000. One purchase, owned for good.",
+          "displayName" : "Henge — the full version",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "io.river.henge.full",
+      "referenceName" : "Full version",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "0",
+    "_developerTeamID" : "U3Z59VXPUB",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

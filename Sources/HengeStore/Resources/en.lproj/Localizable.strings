@@ -1,0 +1,5 @@
+/* Henge — generated. Edit the source table, not this. */
+
+"store.error.nothingToRestore" = "No previous purchase found for this Apple Account.";
+"store.error.pending" = "The purchase needs approval before it can finish. It will unlock here as soon as it does.";
+"store.error.unavailable" = "The store is not answering. Check the connection and try again.";

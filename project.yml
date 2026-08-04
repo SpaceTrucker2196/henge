@@ -48,6 +48,8 @@ targets:
       - package: HengeLocal
         product: HengeEngine
       - package: HengeLocal
+        product: HengeStore
+      - package: HengeLocal
         product: HengeUI
     settings:
       base:
@@ -97,6 +99,8 @@ targets:
       - package: HengeLocal
         product: HengeEngine
       - package: HengeLocal
+        product: HengeStore
+      - package: HengeLocal
         product: HengeUI
     settings:
       base:
@@ -116,6 +120,10 @@ schemes:
         HengeUITests: test
     run:
       config: Debug
+      # The local storefront. Without it StoreKit has no product to sell in
+      # the simulator, the paywall shows its fallback price and no purchase
+      # can be rehearsed — the flow would first run for real in review.
+      storeKitConfiguration: Henge.storekit
     test:
       config: Debug
       targets:

@@ -1,5 +1,6 @@
 import SwiftUI
 import HengeAstro
+import HengeStore
 
 /// Set the sky to any date the model can honestly draw.
 ///
@@ -15,6 +16,7 @@ import HengeAstro
 struct DateTravelView: View {
 
     let initial: CalendarDate
+    let store: PurchaseController
     let onGo: (CalendarDate) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -22,6 +24,16 @@ struct DateTravelView: View {
         case bc = "BC"
         case ad = "AD"
         var id: String { rawValue }
+
+        /// "v. Chr." and "n. Chr.", 紀元前 and 西暦 — the era marks are words,
+        /// and a picker showing "BC" to a German reader is showing them an
+        /// abbreviation of an English phrase.
+        var localizedName: String {
+            switch self {
+            case .bc: L10n.string("era.bc")
+            case .ad: L10n.string("era.ad")
+            }
+        }
     }
 
     @State private var era: Era
@@ -31,8 +43,11 @@ struct DateTravelView: View {
     @State private var day: Int
     @State private var hour: Int
 
-    init(initial: CalendarDate, onGo: @escaping (CalendarDate) -> Void) {
+    init(initial: CalendarDate,
+         store: PurchaseController,
+         onGo: @escaping (CalendarDate) -> Void) {
         self.initial = initial
+        self.store = store
         self.onGo = onGo
         let astronomical = initial.year
         _era = State(initialValue: astronomical > 0 ? .ad : .bc)
@@ -42,10 +57,19 @@ struct DateTravelView: View {
         _hour = State(initialValue: Int((initial.day - floor(initial.day)) * 24))
     }
 
-    private static let monthNames = ["January", "February", "March", "April",
-                                     "May", "June", "July", "August",
-                                     "September", "October", "November",
-                                     "December"]
+    /// The months, in the reader's language — from the system rather than
+    /// from our catalogue.
+    ///
+    /// Foundation already knows the month names in every locale the device
+    /// supports, and knows them better than nine hand-written lists would:
+    /// it has the standalone forms that some languages need for a picker,
+    /// where the name stands alone rather than inside a date. Translating
+    /// these ourselves would be re-deriving something the platform ships.
+    private static var monthNames: [String] {
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        return formatter.standaloneMonthSymbols ?? formatter.monthSymbols
+    }
 
     /// Astronomical year for the chosen era and displayed year.
     private var astronomicalYear: Int {
@@ -69,34 +93,36 @@ struct DateTravelView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Henge.Space.margin) {
-            Text("Travel")
+            Text("travel.title", bundle: .module)
                 .font(Henge.title(.title3))
-            Text("Anywhen from 3000 BC to AD 3000 — the span the arithmetic "
-                 + "is provisioned for. Dates before October 1582 are "
-                 + "Julian-calendar dates, as they were for the people who "
-                 + "lived them.")
+            Text("travel.blurb", bundle: .module)
                 .font(Henge.body(.caption))
                 .opacity(Henge.Ink.dim)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: Henge.Space.element) {
-                Picker("Era", selection: $era) {
-                    ForEach(Era.allCases) { Text($0.rawValue).tag($0) }
+                Picker(String(localized: "travel.picker.era", bundle: .module),
+                       selection: $era) {
+                    ForEach(Era.allCases) { Text($0.localizedName).tag($0) }
                 }
                 .frame(maxWidth: 80)
-                Picker("Year", selection: $year) {
+                Picker(String(localized: "travel.picker.year", bundle: .module),
+                       selection: $year) {
                     ForEach(1...3000, id: \.self) { Text(String($0)).tag($0) }
                 }
-                Picker("Month", selection: $month) {
+                Picker(String(localized: "travel.picker.month", bundle: .module),
+                       selection: $month) {
                     ForEach(1...12, id: \.self) {
                         Text(Self.monthNames[$0 - 1]).tag($0)
                     }
                 }
-                Picker("Day", selection: $day) {
+                Picker(String(localized: "travel.picker.day", bundle: .module),
+                       selection: $day) {
                     ForEach(1...daysInMonth, id: \.self) { Text(String($0)).tag($0) }
                 }
                 .frame(maxWidth: 80)
-                Picker("Hour", selection: $hour) {
+                Picker(String(localized: "travel.picker.hour", bundle: .module),
+                       selection: $hour) {
                     ForEach(0..<24, id: \.self) {
                         Text(String(format: "%02d:00", $0)).tag($0)
                     }
@@ -110,7 +136,7 @@ struct DateTravelView: View {
 
             // The two dates everyone actually wants.
             HStack(spacing: Henge.Space.tight) {
-                Button("The sarsens rise — 2500 BC") {
+                Button(String(localized: "travel.preset.sarsens", bundle: .module)) {
                     era = .bc; year = 2500; month = 7; day = 1; hour = 4
                 }
                 .font(Henge.body(.caption2))
@@ -118,7 +144,7 @@ struct DateTravelView: View {
                 .hengeControl()
                 .buttonStyle(.plain)
 
-                Button("Today") {
+                Button(String(localized: "travel.preset.today", bundle: .module)) {
                     let now = JulianDay(Date()).calendarDate
                     era = now.year > 0 ? .ad : .bc
                     year = now.year > 0 ? now.year : 1 - now.year
@@ -132,19 +158,31 @@ struct DateTravelView: View {
                 .buttonStyle(.plain)
             }
 
-            Button {
-                onGo(CalendarDate(year: astronomicalYear, month: month,
-                                  day: min(day, daysInMonth), hour: hour))
-                dismiss()
-            } label: {
-                Text("Go there")
-                    .font(Henge.body(.callout))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .contentShape(Capsule())
+            // The pickers stay live either way. Someone deciding whether the
+            // calendar is worth five dollars should be able to dial the
+            // morning they are curious about and see the price with it in
+            // front of them — a paywall that disabled the dials would be
+            // asking them to buy a thing they had not been allowed to hold.
+            if store.access.allows(.timeTravel) {
+                Button {
+                    onGo(CalendarDate(year: astronomicalYear, month: month,
+                                      day: min(day, daysInMonth), hour: hour))
+                    dismiss()
+                } label: {
+                    Text("travel.go", bundle: .module)
+                        .font(Henge.body(.callout))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .hengeControl(isSelected: true)
+            } else {
+                PurchaseOffer(store: store,
+                              headline: "travel.locked.title",
+                              blurb: "travel.locked.blurb",
+                              showsBenefits: false)
             }
-            .buttonStyle(.plain)
-            .hengeControl(isSelected: true)
         }
         .padding(Henge.Space.margin + 6)
         .foregroundStyle(Henge.stone)
@@ -162,9 +200,11 @@ struct DateTravelView: View {
             }
             .buttonStyle(.plain)
             .padding(Henge.Space.tight)
-            .accessibilityLabel("Close without travelling")
+            .accessibilityLabel(Text("travel.close", bundle: .module))
         }
         .presentationDragIndicator(.visible)
-        .presentationDetents([.medium, .large])
+        // The offer needs the taller detent; the bare pickers do not.
+        .presentationDetents(store.access.allows(.timeTravel)
+                             ? [.medium, .large] : [.large])
     }
 }

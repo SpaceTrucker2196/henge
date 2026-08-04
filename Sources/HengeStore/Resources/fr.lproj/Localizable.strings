@@ -1,0 +1,5 @@
+/* Henge — generated. Edit the source table, not this. */
+
+"store.error.nothingToRestore" = "Aucun achat antérieur trouvé pour ce compte Apple.";
+"store.error.pending" = "L’achat doit être approuvé avant d’être finalisé. Il sera débloqué ici dès que ce sera fait.";
+"store.error.unavailable" = "La boutique ne répond pas. Vérifiez la connexion et réessayez.";

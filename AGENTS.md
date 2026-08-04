@@ -20,6 +20,7 @@ preference:
 | `HengeAstro` | time (JD, ΔT, UTC↔TT), sun, seasons, refraction, alt-az | Foundation only |
 | `HengeGeometry` | site constants, stone meshes, **analytic shadow solution** | Foundation, simd, `HengeAstro` |
 | `HengeEngine` | Metal 3 renderer, cascades, MSL shaders | Metal, MetalKit, `HengeAstro`, `HengeGeometry` |
+| `HengeStore` | trial clock, entitlement, the one StoreKit conversation | Foundation, StoreKit |
 | `HengeUI` | SwiftUI chrome, time controls, the MTKView bridge | SwiftUI + all of the above |
 
 `App/` holds one `@main`, compiled into both app targets.
@@ -35,6 +36,13 @@ Four rules, stated as rules because they are what keep the product testable:
 4. **Logic in a view or a shader is logic the oracle cannot reach.** If a
    decision is being made, it belongs in `HengeAstro` or `HengeGeometry` where
    a test can pin it.
+5. **`HengeStore` decides nothing at the storefront.** Every rule about what is
+   allowed is in `Access`, a value type a test builds by hand; only the part
+   that needs Apple on the other end talks to Apple. The paid/free split is a
+   `StorePolicy` value rather than a `#if os(...)`, so both branches are
+   reachable from `swift test` — iOS sells through the App Store, macOS ships
+   as a Developer ID disk image where StoreKit cannot validate anything and the
+   app is simply whole.
 
 Both app targets link the identical package products, so iOS and macOS cannot
 diverge in behaviour. Divergence in *presentation* goes behind `#if os(...)`
@@ -106,6 +114,17 @@ The package builds in Swift 6 language mode with strict concurrency.
 - **Prose in the app is archaeological.** Any user-facing claim about the
   monument carries its tier and citation (invariant 3). If the tier is not
   obvious, it is Debated.
+- **Strings live in a catalogue, names live in `HengeUI`.** The app ships in
+  nine languages. Display names are mapped in `Sources/HengeUI/Localized.swift`
+  keyed by enum case, so `HengeAstro` keeps canonical English names that tests
+  assert against by literal and nothing keyed on a name (`ZodiacConstellation.id`,
+  `LoreNote.id`) moves when a translation does. Two things are deliberately
+  never translated: **Gaelic and Welsh festival names** (Imbolc, Beltane,
+  Lughnasadh, Samhain, the Alban names — they are what the festivals are
+  called) and **citation source titles** (a translated book title points
+  nowhere). Translations are classic `<lang>.lproj/Localizable.strings`, not a
+  String Catalog: `swift build` copies a `.xcstrings` into the bundle without
+  compiling it, so the oracle could not see the strings at all.
 
 ## Token / cost ledger
 

@@ -12,6 +12,22 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<!-- The languages the app claims. Without this the strings live only in
+	     the package resource bundles, the app bundle looks monolingual to
+	     macOS, and every reader is resolved to English no matter what their
+	     system asks for — the translations ship and are never chosen. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>de</string>
+		<string>es</string>
+		<string>fr</string>
+		<string>it</string>
+		<string>ja</string>
+		<string>ko</string>
+		<string>pt-BR</string>
+		<string>zh-Hans</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>

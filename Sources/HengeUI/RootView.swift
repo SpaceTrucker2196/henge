@@ -2,6 +2,7 @@ import SwiftUI
 import HengeAstro
 import HengeEngine
 import HengeGeometry
+import HengeStore
 
 /// The screen: the light on the stones, and the numbers that prove it.
 ///
@@ -21,7 +22,22 @@ import HengeGeometry
 public struct RootView: View {
 
     @State private var model = SkyModel()
+    @State private var store = PurchaseController(policy: Self.policy)
     @State private var lastTick = Date()
+
+    /// Which build this is, in the store's terms.
+    ///
+    /// iOS is sold through the App Store, where StoreKit can validate a
+    /// purchase. macOS ships as a Developer ID disk image from river.io, where
+    /// it cannot — so the Mac build carries no paywall at all rather than one
+    /// with no key in existence. The whole platform difference is this
+    /// constant; every gate downstream reads `store.access` and asks nothing
+    /// about which OS it is on.
+    #if os(iOS)
+    private static let policy = StorePolicy.appStore
+    #else
+    private static let policy = StorePolicy.directDownload
+    #endif
     /// Gestures report a running total, so the previous value is kept to turn
     /// that into a per-frame delta. Without it a slow drag accelerates.
     @State private var lastDrag: CGSize = .zero
@@ -29,6 +45,9 @@ public struct RootView: View {
     @State private var showingLore = false
     @State private var showingTravel = false
     @State private var showingInfo = false
+    /// The offer, reached from the unlock pill. Distinct from `isLocked`,
+    /// which is the wall that stands on its own when the session ends.
+    @State private var showingPaywall = false
     @State private var showingAlmanac = true
     /// Whether each panel is on screen or slid away to its edge, leaving a
     /// handle. The monument is the point of the app; every piece of chrome
@@ -72,7 +91,7 @@ public struct RootView: View {
                             // centred over a stack of plates lands on a seam.
                             .overlay(alignment: .leading) {
                                 drawerHandle(isOpen: true, edge: .leading,
-                                             label: "Hide the control panels") {
+                                             label: "chrome.drawer.hide") {
                                     controlsDrawerOpen = false
                                 }
                                 .offset(x: drawerTabOverhang)
@@ -88,7 +107,7 @@ public struct RootView: View {
         .overlay(alignment: .bottomLeading) {
             if !controlsDrawerOpen {
                 drawerHandle(isOpen: false, edge: .leading,
-                             label: "Show the control panels") {
+                             label: "chrome.drawer.show") {
                     controlsDrawerOpen = true
                 }
                 // Flush with the screen edge, the way a closed drawer's tab
@@ -187,7 +206,7 @@ public struct RootView: View {
                         // the container, on the plate's edge, one material.
                         .overlay(alignment: .leading) {
                             drawerHandle(isOpen: true, edge: .leading,
-                                         label: "Hide the almanac strip") {
+                                         label: "chrome.strip.hide") {
                                 stripDrawerOpen = false
                             }
                             .offset(x: drawerTabOverhang)
@@ -204,7 +223,7 @@ public struct RootView: View {
         .overlay(alignment: .topLeading) {
             if showingAlmanac, !stripDrawerOpen {
                 drawerHandle(isOpen: false, edge: .leading,
-                             label: "Show the almanac strip") {
+                             label: "chrome.strip.show") {
                     stripDrawerOpen = true
                 }
                 .offset(x: drawerTabTuck)
@@ -212,34 +231,53 @@ public struct RootView: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            // The toggle rail is a drawer too, sliding toward its own edge —
-            // rightward, because a drawer goes the way its wall faces.
-            if railDrawerOpen {
-                HengeGlass {
-                    VStack(spacing: Henge.Space.tight) {
-                        railHandle(isOpen: true)
-                        almanacToggle
-                        overlayToggle
-                        markerToggle
-                        torchToggle
-                        weatherToggle
-                        starLabelToggle
-                        constellationToggle
-                        zodiacToggle
-                    }
-                    .padding(.vertical, Henge.Space.tight)
+            VStack(alignment: .trailing, spacing: Henge.Space.tight) {
+                // The clock, and the way to stop it. Above the rail, in the
+                // lane the almanac strip already keeps clear down the trailing
+                // edge — the one column of the screen that is reserved chrome
+                // on every device, so the pill cannot land on a reading here
+                // and float in clear air there.
+                if store.access.showsCountdown {
+                    UnlockPill(store: store) { showingPaywall = true }
                 }
-                .padding(Henge.Space.margin)
-                .transition(.move(edge: .trailing).combined(with: .opacity))
-            } else {
-                railHandle(isOpen: false)
-                    .padding(Henge.Space.margin)
-                    .padding(.top, Henge.Space.tight)
+
+                // The toggle rail is a drawer too, sliding toward its own edge —
+                // rightward, because a drawer goes the way its wall faces.
+                if railDrawerOpen {
+                    HengeGlass {
+                        VStack(spacing: Henge.Space.tight) {
+                            railHandle(isOpen: true)
+                            almanacToggle
+                            overlayToggle
+                            markerToggle
+                            torchToggle
+                            weatherToggle
+                            starLabelToggle
+                            constellationToggle
+                            zodiacToggle
+                        }
+                        .padding(.vertical, Henge.Space.tight)
+                    }
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                } else {
+                    railHandle(isOpen: false)
+                        .padding(.top, Henge.Space.tight)
+                }
+            }
+            .padding(Henge.Space.margin)
+        }
+        // Last overlay in the chain, so it is topmost: when the session is
+        // over, nothing reaches the scene underneath it.
+        .overlay {
+            if store.access.isLocked {
+                PaywallView(store: store)
             }
         }
+        .animation(Henge.settle(reduceMotion), value: store.access.isLocked)
         .foregroundStyle(Henge.stone)
         .tint(Henge.bronze)
         .task { await runClock() }
+        .task { await store.start() }
         .task {
             // The UI test's fixture (`BuildFlowUITests`): pin the rebuild
             // card open so the orientation inspection can read it at
@@ -263,10 +301,24 @@ public struct RootView: View {
                 .presentationBackground(.ultraThinMaterial)
         }
         .sheet(isPresented: $showingTravel) {
-            DateTravelView(initial: model.calendarDate) { date in
+            DateTravelView(initial: model.calendarDate, store: store) { date in
                 model.time = JulianDay(date)
             }
             .presentationBackground(.ultraThinMaterial)
+        }
+        .sheet(isPresented: $showingPaywall) {
+            PurchaseOffer(store: store,
+                          headline: "paywall.offer.title",
+                          blurb: "paywall.offer.blurb")
+                .padding(Henge.Space.margin + 8)
+                .presentationBackground(.ultraThinMaterial)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        // Bought from the sheet: close it rather than leave the reader
+        // looking at an offer for something they now own.
+        .onChange(of: store.access.isUnlocked) { _, unlocked in
+            if unlocked { showingPaywall = false }
         }
         .sheet(isPresented: $showingLore) {
             // The coming station first, then the monument itself — so the panel
@@ -305,7 +357,7 @@ public struct RootView: View {
     /// the panel will go. Compact chevrons, because that is the system's own
     /// grabber glyph and the eye already knows what it means.
     private func drawerHandle(isOpen: Bool, edge: HorizontalEdge,
-                              label: String,
+                              label: LocalizedStringKey,
                               toggle: @escaping () -> Void) -> some View {
         Button {
             withAnimation(Henge.settle(reduceMotion)) { toggle() }
@@ -321,9 +373,8 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(Henge.stone)
-        .accessibilityLabel(label)
-        .accessibilityHint("Slides the panel away to its edge; the handle "
-                           + "stays to bring it back")
+        .accessibilityLabel(Text(label, bundle: .module))
+        .accessibilityHint(Text("chrome.drawer.hint", bundle: .module))
     }
 
     /// The rail's handle is one of its own pills — the first in the column,
@@ -346,9 +397,9 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(Henge.stone)
-        .accessibilityLabel(isOpen ? "Hide the mode toggles" : "Show the mode toggles")
-        .accessibilityHint("Slides the toggle rail away to the right edge; "
-                           + "the handle stays to bring it back")
+        .accessibilityLabel(Text(isOpen ? "chrome.rail.hide" : "chrome.rail.show",
+                                 bundle: .module))
+        .accessibilityHint(Text("chrome.rail.hint", bundle: .module))
     }
 
     // ── the monument ────────────────────────────────────────────────────────
@@ -390,10 +441,10 @@ public struct RootView: View {
                     model.recentre()
                 }
             }
-            .accessibilityLabel("The monument")
-            .accessibilityHint("Drag to look around, pinch or scroll to zoom, "
-                               + "double tap to recentre")
-            .accessibilityAction(named: "Recentre") { model.recentre() }
+            .accessibilityLabel(Text("scene.label", bundle: .module))
+            .accessibilityHint(Text("scene.hint", bundle: .module))
+            .accessibilityAction(named: Text("scene.action.recentre",
+                                             bundle: .module)) { model.recentre() }
             // VoiceOver cannot pinch. Zoom has to be reachable as an action or
             // it does not exist for anyone using it — invariant 7.
             .accessibilityAction(named: "Zoom in") { model.zoom(by: 1.25) }
@@ -420,7 +471,7 @@ public struct RootView: View {
                     VStack(spacing: 3) {
                         Image(systemName: symbol(for: station))
                             .font(.system(size: 17))
-                        Text(station.rawValue)
+                        Text(station.localizedName)
                             .font(Henge.body(.caption2))
                     }
                     .frame(maxWidth: .infinity)
@@ -429,7 +480,7 @@ public struct RootView: View {
                     .hengeControl(isSelected: model.station == station)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(station.rawValue)
+                .accessibilityLabel(station.localizedName)
                 .accessibilityAddTraits(model.station == station ? [.isSelected] : [])
             }
 
@@ -463,9 +514,15 @@ public struct RootView: View {
     /// legible. These are the four that mean something: real time, a minute a
     /// second (a day in twenty-four), an hour a second (a year in a day), and a
     /// day a second (the wheel turning).
-    private static let rates: [(label: String, value: Double)] = [
-        ("1×", 1), ("min", 60), ("hour", 3600), ("day", 86_400)
-    ]
+    // Computed rather than stored: a `static let` is resolved once, at first
+    // use, and would freeze whichever language was current then. These are
+    // read every time the row is built, so they follow the app's language.
+    private static var rates: [(label: String, value: Double)] {
+        [("1×", 1),
+         (L10n.string("rate.min"), 60),
+         (L10n.string("rate.hour"), 3600),
+         (L10n.string("rate.day"), 86_400)]
+    }
 
     private var timeBar: some View {
         VStack(spacing: Henge.Space.panel) {
@@ -530,8 +587,10 @@ public struct RootView: View {
                     .buttonStyle(.plain)
                     .disabled(!allowed)
                     .opacity(allowed ? 1 : 0.35)
-                    .accessibilityLabel("\(rate.label) per second")
-                    .accessibilityHint(allowed ? "" : "Unavailable while Reduce Motion is on")
+                    .accessibilityLabel(Text("rate.perSecond \(rate.label)",
+                                             bundle: .module))
+                    .accessibilityHint(allowed ? Text("")
+                                               : Text("rate.unavailable", bundle: .module))
             }
     }
 
@@ -541,9 +600,11 @@ public struct RootView: View {
                 Image(systemName: "chevron.left").frame(width: 28, height: 30)
             }
             .buttonStyle(.plain).hengeControl()
-            .accessibilityLabel("Back one day")
+            .accessibilityLabel(Text("control.backOneDay", bundle: .module))
 
-            Button("Now") { model.time = JulianDay(Date()) }
+            Button { model.time = JulianDay(Date()) } label: {
+                Text("control.now", bundle: .module)
+            }
                 .font(Henge.body(.caption))
                 .fixedSize()
                 .padding(.horizontal, 10).padding(.vertical, 7)
@@ -554,23 +615,21 @@ public struct RootView: View {
                 Image(systemName: "chevron.right").frame(width: 28, height: 30)
             }
             .buttonStyle(.plain).hengeControl()
-            .accessibilityLabel("Forward one day")
+            .accessibilityLabel(Text("control.forwardOneDay", bundle: .module))
 
             Button { showingLore = true } label: {
                 Image(systemName: "book.closed").frame(width: 34, height: 30)
             }
             .buttonStyle(.plain).hengeControl()
-            .accessibilityLabel("Lore")
-            .accessibilityHint("What is known, what is argued, and what is modern "
-                               + "tradition — each with its sources")
+            .accessibilityLabel(Text("control.lore", bundle: .module))
+            .accessibilityHint(Text("control.lore.hint", bundle: .module))
 
             Button { showingInfo = true } label: {
                 Image(systemName: "info.circle").frame(width: 34, height: 30)
             }
             .buttonStyle(.plain).hengeControl()
-            .accessibilityLabel("About and attributions")
-            .accessibilityHint("What this app is, and the catalogues, "
-                               + "surveys and algorithms it stands on")
+            .accessibilityLabel(Text("control.about", bundle: .module))
+            .accessibilityHint(Text("control.about.hint", bundle: .module))
     }
 
     // ── what is coming ──────────────────────────────────────────────────────
@@ -637,24 +696,20 @@ public struct RootView: View {
         .foregroundStyle(model.showsAlignmentOverlay ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.showsAlignmentOverlay
                             ? "Hide the alignment lines" : "Show the alignment lines")
-        .accessibilityHint("Cardinal directions, the solstice axis, the Avenue, "
-                           + "and the Station Stone rectangle — the lore panel "
-                           + "says which lines are established and which argued")
+        .accessibilityHint(Text("toggle.overlay.hint", bundle: .module))
     }
 
     /// The badge that rides with the gold markers. Tier and source at the
     /// point of use — invariant 3, applied to a whole mode rather than a
     /// sentence.
     private var hypothesisBadge: some View {
-        Label("Gold markers act out a modern hypothesis — Hoyle, 1966. Debated; see Lore.",
-              systemImage: "record.circle")
+        Label { Text("badge.hypothesis", bundle: .module) }
+        icon: { Image(systemName: "record.circle") }
             .font(Henge.body(.caption2))
             .foregroundStyle(Henge.bronze)
             .padding(.horizontal, 10).padding(.vertical, 5)
             .hengePanel()
-            .accessibilityHint("The Aubrey holes held cremated human remains; "
-                               + "nothing excavated supports moving markers. "
-                               + "The lore panel has the sources.")
+            .accessibilityHint(Text("badge.hypothesis.hint", bundle: .module))
     }
 
     /// The ceremony torch. Gated to the night by the engine, so lighting it
@@ -675,9 +730,7 @@ public struct RootView: View {
         .buttonStyle(.plain)
         .foregroundStyle(model.torchlight ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.torchlight ? "Put out the torch" : "Light the torch")
-        .accessibilityHint("A carried flame that lights the stones at night "
-                           + "from the ground stations; it fades out in "
-                           + "daylight and stays unlit from the air")
+        .accessibilityHint(Text("toggle.torch.hint", bundle: .module))
     }
 
     /// The sky's condition, cycled: clear, overcast, rain, frost. Dressing,
@@ -699,10 +752,9 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.weather != .clear ? Henge.bronze : Henge.stone)
-        .accessibilityLabel("Weather")
+        .accessibilityLabel(Text("toggle.weather.label", bundle: .module))
         .accessibilityValue(model.weather.rawValue)
-        .accessibilityHint("Cycles the sky: clear, overcast, rain, frost. "
-                           + "Dressing only — the sun keeps the almanac's truth")
+        .accessibilityHint(Text("toggle.weather.hint", bundle: .module))
     }
 
     private var weatherSymbol: String {
@@ -734,9 +786,7 @@ public struct RootView: View {
         .accessibilityLabel(model.showsConstellationLines
                             ? "Hide the constellation figures"
                             : "Show the constellation figures")
-        .accessibilityHint("Faint lines joining the stars of twenty-nine "
-                           + "classical constellations — figures drawn for "
-                           + "this app, riding the precessing sky")
+        .accessibilityHint(Text("toggle.constellations.hint", bundle: .module))
     }
 
     private var zodiacToggle: some View {
@@ -753,9 +803,7 @@ public struct RootView: View {
         .foregroundStyle(model.showsZodiac ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.showsZodiac
                             ? "Hide the zodiac" : "Show the zodiac")
-        .accessibilityHint("The twelve constellations at their true places "
-                           + "on the night sky — the star patterns, not the "
-                           + "astrological signs they have drifted from")
+        .accessibilityHint(Text("toggle.zodiac.hint", bundle: .module))
     }
 
     /// As built, or as it stands: the completed Stage-2 monument of
@@ -782,9 +830,7 @@ public struct RootView: View {
         .accessibilityLabel(model.monumentState == .asItWas
                             ? "Showing the monument as built"
                             : "Showing the ruin as it stands")
-        .accessibilityHint("Switches between the completed monument of about "
-                           + "2200 BC and today's ruin — two surveyed states, "
-                           + "never a blend")
+        .accessibilityHint(Text("toggle.monument.hint", bundle: .module))
     }
 
     /// Names on the named stars, from the IAU register.
@@ -802,8 +848,7 @@ public struct RootView: View {
         .foregroundStyle(model.showsStarLabels ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.showsStarLabels
                             ? "Hide the star names" : "Show the star names")
-        .accessibilityHint("Names the brightest stars on the night sky — "
-                           + "IAU proper names, only while their stars are up")
+        .accessibilityHint(Text("toggle.starLabels.hint", bundle: .module))
     }
 
     /// Hoyle's markers, standing gold in the Aubrey holes.
@@ -824,9 +869,7 @@ public struct RootView: View {
         .foregroundStyle(model.showsLunarMarkers ? Henge.bronze : Henge.stone)
         .accessibilityLabel(model.showsLunarMarkers
                             ? "Hide the eclipse markers" : "Show the eclipse markers")
-        .accessibilityHint("Gold markers on the Aubrey ring at the real positions "
-                           + "of the sun, moon and nodes — a modern hypothesis, "
-                           + "shown as one")
+        .accessibilityHint(Text("toggle.markers.hint", bundle: .module))
     }
 
     private var almanac: some View {
@@ -850,7 +893,15 @@ public struct RootView: View {
                     Button {
                         showingTravel = true
                     } label: {
-                        Label("Travel", systemImage: "calendar")
+                        // The lock is on the door rather than behind it: a
+                        // reader should know the calendar is paid for before
+                        // they have dialled a date they cannot travel to.
+                        Label {
+                            Text("almanac.travel", bundle: .module)
+                        } icon: {
+                            Image(systemName: store.access.allows(.timeTravel)
+                                  ? "calendar" : "lock")
+                        }
                             .font(Henge.body(.caption2))
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .contentShape(Capsule())
@@ -858,20 +909,20 @@ public struct RootView: View {
                     .buttonStyle(.plain)
                     .hengeControl()
                     .padding(.top, 2)
-                    .accessibilityHint("Set the sky to any date from 3000 BC "
-                                       + "to AD 3000")
+                    .accessibilityHint(Text("almanac.travel.hint", bundle: .module))
                 }
 
                 columnRule
 
                 column {
-                    row("Sundial", model.formattedSolarTime)
-                    row("Sun over", model.viewpoint == .here
-                        ? SkyModel.deviceSite.name : "Stonehenge")
-                    row("Altitude", String(format: "%.3f°", model.sun.altitude.degrees))
-                    row("Azimuth", String(format: "%.3f°", model.sun.azimuth.degrees))
+                    row("almanac.row.sundial", model.formattedSolarTime)
+                    row("almanac.row.sunOver", model.viewpoint == .here
+                        ? SkyModel.deviceSite.name
+                        : L10n.string("almanac.stonehenge"))
+                    row("almanac.row.altitude", String(format: "%.3f°", model.sun.altitude.degrees))
+                    row("almanac.row.azimuth", String(format: "%.3f°", model.sun.azimuth.degrees))
                     if let sunrise = model.sunriseAzimuth {
-                        row("Sunrise", String(format: "%.2f°", sunrise.degrees))
+                        row("almanac.row.sunrise", String(format: "%.2f°", sunrise.degrees))
                     }
                 }
 
@@ -882,27 +933,30 @@ public struct RootView: View {
                         Image(systemName: model.moonPhase.symbolName)
                             .font(.system(size: 14))
                             .accessibilityHidden(true)
-                        Text(model.moonPhase.name)
+                        Text(model.moonPhase.localizedName)
                             .font(Henge.body(.caption))
                     }
                     .accessibilityElement(children: .combine)
-                    .accessibilityLabel("Moon, \(model.moonPhase.name)")
-                    row("Lit", String(format: "%.0f%%",
+                    .accessibilityLabel(Text("almanac.moon.accessibility \(model.moonPhase.localizedName)",
+                                             bundle: .module))
+                    row("almanac.row.lit", String(format: "%.0f%%",
                                       model.moonPhase.illuminatedFraction * 100))
-                    row("Altitude", String(format: "%.2f°", model.moon.altitude.degrees))
-                    row("Swing", model.standstill)
+                    row("almanac.row.altitude", String(format: "%.2f°", model.moon.altitude.degrees))
+                    row("almanac.row.swing", model.standstill)
                 }
 
                 columnRule
 
                 column {
-                    row("Pole star", model.poleStar)
-                    row("Wind", model.windSpeed > 0
-                        ? String(format: "%.1f m/s SW", model.windSpeed) : "still")
-                    row("Aubrey", String(format: "%.1f holes to node",
-                                         model.aubrey.sunToNode))
+                    row("almanac.row.poleStar", model.poleStar)
+                    row("almanac.row.wind", model.windSpeed > 0
+                        ? String(format: "%.1f m/s SW", model.windSpeed)
+                        : L10n.string("almanac.wind.still"))
+                    row("almanac.row.aubrey",
+                        String(format: L10n.string("almanac.aubrey.holesToNode"),
+                               model.aubrey.sunToNode))
                     if model.isAubreyEclipseSeason {
-                        row("", "eclipse season — hypothesis")
+                        row("", L10n.string("almanac.eclipseSeason"))
                     }
                 }
 
@@ -913,7 +967,7 @@ public struct RootView: View {
                 column {
                     ForEach(model.alignments, id: \.alignment) { entry in
                         HStack(spacing: 10) {
-                            Text(entry.alignment.name)
+                            Text(entry.alignment.localizedName)
                                 .font(Henge.body(.caption))
                                 .opacity(Henge.Ink.dim)
                             Text(String(format: "%.2f°", entry.deviation.degrees))
@@ -931,7 +985,9 @@ public struct RootView: View {
                 column {
                     HStack(spacing: 6) {
                         ForEach(SkyModel.Viewpoint.allCases) { viewpoint in
-                            Button(viewpoint.rawValue) { model.viewpoint = viewpoint }
+                            Button(viewpoint.localizedName) {
+                                model.viewpoint = viewpoint
+                            }
                                 .font(Henge.body(.caption2))
                                 .padding(.horizontal, 8).padding(.vertical, 5)
                                 .hengeControl(isSelected: model.viewpoint == viewpoint)
@@ -974,9 +1030,9 @@ public struct RootView: View {
             .frame(minHeight: 40)
     }
 
-    private func row(_ label: String, _ value: String) -> some View {
+    private func row(_ label: LocalizedStringKey, _ value: String) -> some View {
         HStack(spacing: 10) {
-            Text(label)
+            Text(label, bundle: .module)
                 .font(Henge.body(.caption))
                 .opacity(Henge.Ink.dim)
             Text(value)
@@ -999,6 +1055,10 @@ public struct RootView: View {
             // session cannot outrun the setting.
             if reduceMotion { model.rate = min(model.rate, 100) }
             model.advance(byRealSeconds: elapsed)
+            // The session clock runs off the same measurement as the sky, so
+            // the countdown and the sunlight can never disagree about how
+            // long someone has been sitting here.
+            store.advance(byRealSeconds: elapsed)
         }
     }
 }

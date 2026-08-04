@@ -62,16 +62,11 @@ struct InfoView: View {
             VStack(alignment: .leading, spacing: Henge.Space.margin) {
                 Text("Henge")
                     .font(Henge.title(.title2))
-                Text("A photoreal Stonehenge that is also a working "
-                     + "astronomical calendar. Everything the picture claims "
-                     + "— where the sun rises, what the moon is doing, which "
-                     + "star holds the pole — is computed, tested against "
-                     + "published values, and drawn from the same arithmetic "
-                     + "the readout prints.")
+                Text("info.blurb", bundle: .module)
                     .font(Henge.body(.callout))
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text("Standing on")
+                Text("info.standingOn", bundle: .module)
                     .font(Henge.title(.headline))
                     .padding(.top, Henge.Space.tight)
 
@@ -86,8 +81,7 @@ struct InfoView: View {
                     }
                 }
 
-                Text("River.io — data stays on the device; this app makes "
-                     + "no network calls at all.")
+                Text("info.privacy", bundle: .module)
                     .font(Henge.body(.caption))
                     .opacity(Henge.Ink.faint)
                     .padding(.top, Henge.Space.tight)
@@ -108,7 +102,7 @@ struct InfoView: View {
             }
             .buttonStyle(.plain)
             .padding(Henge.Space.tight)
-            .accessibilityLabel("Close")
+            .accessibilityLabel(Text("info.close", bundle: .module))
         }
         .presentationDragIndicator(.visible)
     }

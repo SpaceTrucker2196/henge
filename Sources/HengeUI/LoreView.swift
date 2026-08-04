@@ -52,7 +52,7 @@ public struct LoreView: View {
             .buttonStyle(.plain)
             .foregroundStyle(Henge.stone)
             .padding(Henge.Space.tight)
-            .accessibilityLabel("Close the lore")
+            .accessibilityLabel(Text("lore.close", bundle: .module))
         }
         .presentationDragIndicator(.visible)
     }
@@ -60,13 +60,13 @@ public struct LoreView: View {
     private func panel(_ note: LoreNote) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(note.title)
+                Text(note.localizedTitle)
                     .font(Henge.title(.headline))
                 Spacer(minLength: 8)
                 badge(note.tier)
             }
 
-            Text(note.body)
+            Text(note.localizedBody)
                 .font(Henge.body(.callout))
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -92,25 +92,32 @@ public struct LoreView: View {
                 }
                 .padding(.top, 4)
             } label: {
-                Text(note.citations.count == 1 ? "1 source" : "\(note.citations.count) sources")
+                // One key per grammatical number rather than a suffixed "s":
+                // the plural is a different word in half these languages, and
+                // in Japanese, Korean and Chinese there is no plural at all.
+                Text(note.citations.count == 1
+                     ? L10n.string("lore.sources.one")
+                     : String(format: L10n.string("lore.sources.many"),
+                              note.citations.count))
                     .font(Henge.body(.caption))
             }
-            .accessibilityHint("Show the sources for this note")
+            .accessibilityHint(Text("lore.sources.hint", bundle: .module))
         }
         .padding(16)
         .hengePanel(cornerRadius: 14)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(note.title). \(note.tier.rawValue).")
+        .accessibilityLabel("\(note.localizedTitle). \(note.tier.localizedLabel).")
     }
 
     private func badge(_ tier: LoreTier) -> some View {
-        Text(tier.rawValue)
+        Text(tier.localizedLabel)
             .font(.system(.caption2, design: .serif).weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(colour(tier).opacity(0.22), in: Capsule())
             .overlay(Capsule().strokeBorder(colour(tier).opacity(0.5), lineWidth: 1))
-            .accessibilityLabel("Tier: \(tier.rawValue)")
+            .accessibilityLabel(Text("lore.tier.accessibility \(tier.localizedLabel)",
+                                     bundle: .module))
     }
 
     /// Tier colours drawn from the palette rather than from the system's
