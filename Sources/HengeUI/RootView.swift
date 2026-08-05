@@ -753,7 +753,7 @@ public struct RootView: View {
         .buttonStyle(.plain)
         .foregroundStyle(model.weather != .clear ? Henge.bronze : Henge.stone)
         .accessibilityLabel(Text("toggle.weather.label", bundle: .module))
-        .accessibilityValue(model.weather.rawValue)
+        .accessibilityValue(model.weather.localizedName)
         .accessibilityHint(Text("toggle.weather.hint", bundle: .module))
     }
 

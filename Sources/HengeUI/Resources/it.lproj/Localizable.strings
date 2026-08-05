@@ -64,6 +64,15 @@
 "ground.west" = "O";
 "info.blurb" = "Una Stonehenge fotorealistica che è anche un calendario astronomico funzionante. Tutto ciò che l’immagine afferma — dove sorge il sole, che cosa fa la luna, quale stella tiene il polo — è calcolato, verificato contro valori pubblicati e tratto dalla stessa aritmetica che stampa la lettura.";
 "info.close" = "Chiudi";
+"info.credit.algorithms" = "L’aritmetica di sole, luna e calendario";
+"info.credit.hipparcos" = "Le stelle — 8.870 posizioni a occhio nudo, magnitudini, colori e moti propri";
+"info.credit.moon" = "Il volto della Luna";
+"info.credit.names" = "I nomi delle stelle";
+"info.credit.sky" = "Il cielo diurno";
+"info.credit.survey" = "Le dimensioni del monumento e l’archeologia";
+"info.credit.terrain" = "La piana di Salisbury — il terreno su cui cadono le ombre";
+"info.credit.textures" = "Dettaglio di pietra ed erba";
+"info.credit.vsop" = "I pianeti — da Mercurio a Saturno";
 "info.privacy" = "River.io — i dati restano sul dispositivo; questa app non effettua alcuna chiamata di rete.";
 "info.standingOn" = "Si basa su";
 "lore.close" = "Chiudi il sapere";
@@ -176,6 +185,10 @@
 "travel.title" = "Viaggia";
 "viewpoint.here" = "Qui";
 "viewpoint.wiltshire" = "Wiltshire";
+"weather.clear" = "sereno";
+"weather.frost" = "gelo";
+"weather.overcast" = "coperto";
+"weather.rain" = "pioggia";
 "yearbar.hint" = "Trascina per cambiare la data; le luci contrassegnate sono le feste della ruota e le lune";
 "yearbar.jumpToMoonrise %@" = "Vai al sorgere della luna di %@";
 "yearbar.jumpToSunrise %@" = "Vai all’alba di %@";

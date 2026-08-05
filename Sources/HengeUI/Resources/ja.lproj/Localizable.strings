@@ -64,6 +64,15 @@
 "ground.west" = "西";
 "info.blurb" = "写実的なストーンヘンジであり、同時に実際に機能する天文暦です。この絵が主張することはすべて — 太陽がどこから昇るか、月が何をしているか、どの星が極を占めるか — 計算され、公表値と照合され、読み値を印字するのと同じ算術から描かれています。";
 "info.close" = "閉じる";
+"info.credit.algorithms" = "太陽・月・暦の計算";
+"info.credit.hipparcos" = "星々 — 肉眼で見える8,870個の位置、等級、色、固有運動";
+"info.credit.moon" = "月の表面";
+"info.credit.names" = "星の名前";
+"info.credit.sky" = "昼の空";
+"info.credit.survey" = "記念物の寸法と考古学";
+"info.credit.terrain" = "ソールズベリー平原 — 影が落ちる大地";
+"info.credit.textures" = "石と芝の質感";
+"info.credit.vsop" = "惑星 — 水星から土星まで";
 "info.privacy" = "River.io — データは端末内にとどまります。このアプリはネットワーク通信を一切行いません。";
 "info.standingOn" = "依拠しているもの";
 "lore.close" = "解説を閉じる";
@@ -176,6 +185,10 @@
 "travel.title" = "旅する";
 "viewpoint.here" = "現在地";
 "viewpoint.wiltshire" = "Wiltshire";
+"weather.clear" = "快晴";
+"weather.frost" = "霜";
+"weather.overcast" = "曇天";
+"weather.rain" = "雨";
 "yearbar.hint" = "ドラッグして日付を変えます。印のついた灯は年輪の祭りと月です";
 "yearbar.jumpToMoonrise %@" = "%@ の月の出へ移動";
 "yearbar.jumpToSunrise %@" = "%@ の日の出へ移動";

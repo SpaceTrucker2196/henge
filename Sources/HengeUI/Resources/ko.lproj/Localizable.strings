@@ -64,6 +64,15 @@
 "ground.west" = "서";
 "info.blurb" = "사실적인 스톤헨지이자 실제로 작동하는 천문 달력입니다. 이 그림이 주장하는 모든 것 — 태양이 어디서 뜨는지, 달이 무엇을 하고 있는지, 어떤 별이 극을 차지하는지 — 은 계산되고, 공표된 값과 대조되며, 판독값을 찍어 내는 바로 그 산술에서 그려집니다.";
 "info.close" = "닫기";
+"info.credit.algorithms" = "태양과 달과 달력의 산술";
+"info.credit.hipparcos" = "별들 — 육안으로 보이는 8,870개의 위치, 등급, 색, 고유운동";
+"info.credit.moon" = "달의 표면";
+"info.credit.names" = "별들의 이름";
+"info.credit.sky" = "낮의 하늘";
+"info.credit.survey" = "기념물의 치수와 고고학";
+"info.credit.terrain" = "솔즈베리 평원 — 그림자가 드리우는 땅";
+"info.credit.textures" = "돌과 잔디의 질감";
+"info.credit.vsop" = "행성 — 수성부터 토성까지";
 "info.privacy" = "River.io — 데이터는 기기 안에 머무릅니다. 이 앱은 네트워크 통신을 전혀 하지 않습니다.";
 "info.standingOn" = "기대고 있는 것";
 "lore.close" = "지식 패널 닫기";
@@ -176,6 +185,10 @@
 "travel.title" = "여행";
 "viewpoint.here" = "현재 위치";
 "viewpoint.wiltshire" = "Wiltshire";
+"weather.clear" = "맑음";
+"weather.frost" = "서리";
+"weather.overcast" = "흐림";
+"weather.rain" = "비";
 "yearbar.hint" = "드래그해 날짜를 바꿉니다. 표시된 불빛은 해 바퀴의 축제와 달입니다";
 "yearbar.jumpToMoonrise %@" = "%@ 월출로 이동";
 "yearbar.jumpToSunrise %@" = "%@ 일출로 이동";

@@ -64,6 +64,15 @@
 "ground.west" = "W";
 "info.blurb" = "Ein fotorealistisches Stonehenge, das zugleich ein funktionierender astronomischer Kalender ist. Alles, was das Bild behauptet – wo die Sonne aufgeht, was der Mond tut, welcher Stern den Pol hält –, ist berechnet, gegen veröffentlichte Werte geprüft und aus derselben Rechnung gezogen, die auch die Anzeige druckt.";
 "info.close" = "Schließen";
+"info.credit.algorithms" = "Die Rechnung für Sonne, Mond und Kalender";
+"info.credit.hipparcos" = "Die Sterne – 8.870 mit bloßem Auge sichtbare Positionen, Helligkeiten, Farben und Eigenbewegungen";
+"info.credit.moon" = "Das Gesicht des Mondes";
+"info.credit.names" = "Die Namen der Sterne";
+"info.credit.sky" = "Der Taghimmel";
+"info.credit.survey" = "Die Maße des Monuments und die Archäologie";
+"info.credit.terrain" = "Salisbury Plain – der Boden, auf den die Schatten fallen";
+"info.credit.textures" = "Detail von Stein und Grasnarbe";
+"info.credit.vsop" = "Die Planeten – Merkur bis Saturn";
 "info.privacy" = "River.io – die Daten bleiben auf dem Gerät; diese App führt überhaupt keine Netzwerkaufrufe durch.";
 "info.standingOn" = "Es stützt sich auf";
 "lore.close" = "Wissen schließen";
@@ -176,6 +185,10 @@
 "travel.title" = "Reisen";
 "viewpoint.here" = "Hier";
 "viewpoint.wiltshire" = "Wiltshire";
+"weather.clear" = "klar";
+"weather.frost" = "Frost";
+"weather.overcast" = "bedeckt";
+"weather.rain" = "Regen";
 "yearbar.hint" = "Ziehen, um das Datum zu ändern; die markierten Lichter sind die Feste des Jahresrads und die Monde";
 "yearbar.jumpToMoonrise %@" = "Zum Mondaufgang von %@ springen";
 "yearbar.jumpToSunrise %@" = "Zum Sonnenaufgang von %@ springen";

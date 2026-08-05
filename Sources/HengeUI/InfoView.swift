@@ -11,48 +11,54 @@ struct InfoView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    /// One line of the provenance registry.
+    ///
+    /// `what` is a catalogue key and `source` is not, which is the whole
+    /// translation policy in one struct: the description of a thing is prose
+    /// and travels, while the citation beside it is a pointer into the
+    /// literature and stays exactly as published. A reader chasing "ESA
+    /// SP-1200, via CDS I/239" has to be able to search for that string.
     private struct Credit: Identifiable {
         let id: String
-        let what: String
+        let what: LocalizedStringKey
         let source: String
     }
 
     private static let data: [Credit] = [
         Credit(id: "hipparcos",
-               what: "The stars — 8,870 naked-eye positions, magnitudes, "
-                   + "colours and proper motions",
+               what: "info.credit.hipparcos",
                source: "ESA, 1997: The Hipparcos and Tycho Catalogues "
                    + "(ESA SP-1200), via CDS I/239. Free with attribution."),
         Credit(id: "names",
-               what: "The stars' names",
+               what: "info.credit.names",
                source: "IAU Working Group on Star Names, Catalog of Star "
                    + "Names (IAU-CSN)."),
         Credit(id: "vsop",
-               what: "The planets — Mercury to Saturn",
+               what: "info.credit.vsop",
                source: "Bretagnon & Francou, VSOP87 (A&A 202, 309, 1988), "
                    + "via CDS VI/81."),
         Credit(id: "moon",
-               what: "The Moon's face",
+               what: "info.credit.moon",
                source: "NASA Goddard Scientific Visualization Studio, CGI "
                    + "Moon Kit — Lunar Reconnaissance Orbiter data. Public "
                    + "domain."),
         Credit(id: "terrain",
-               what: "Salisbury Plain — the ground the shadows fall on",
+               what: "info.credit.terrain",
                source: "NASA/USGS SRTM 1 arc-second elevation. Public domain."),
         Credit(id: "algorithms",
-               what: "The sun, moon and calendar arithmetic",
+               what: "info.credit.algorithms",
                source: "Jean Meeus, Astronomical Algorithms (2nd ed.); "
                    + "ΔT from Espenak & Meeus, NASA/TP-2006-214141."),
         Credit(id: "sky",
-               what: "The daylight sky",
+               what: "info.credit.sky",
                source: "Preetham, Shirley & Smits, \"A Practical Analytic "
                    + "Model for Daylight\" (1999)."),
         Credit(id: "textures",
-               what: "Stone and turf detail",
+               what: "info.credit.textures",
                source: "ambientCG (Rock030, Grass004), CC0 — no attribution "
                    + "required, credited anyway."),
         Credit(id: "survey",
-               what: "The monument's dimensions and the archaeology",
+               what: "info.credit.survey",
                source: "Surveyed figures after Petrie's numbering; tiers and "
                    + "citations appear beside every claim in the Lore panel.")
     ]
@@ -72,7 +78,7 @@ struct InfoView: View {
 
                 ForEach(Self.data) { credit in
                     VStack(alignment: .leading, spacing: Henge.Space.hair) {
-                        Text(credit.what)
+                        Text(credit.what, bundle: .module)
                             .font(Henge.body(.callout))
                         Text(credit.source)
                             .font(Henge.body(.caption))

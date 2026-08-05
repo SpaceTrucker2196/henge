@@ -1,6 +1,8 @@
 import Foundation
 import HengeAstro
 import HengeGeometry
+// For `Weather`, whose four states VoiceOver reads aloud as the toggle's value.
+import HengeEngine
 
 /// Display names, in the reader's language.
 ///
@@ -182,6 +184,22 @@ extension ZodiacConstellation {
         case "Aquarius": L10n.string("zodiac.aquarius")
         case "Pisces": L10n.string("zodiac.pisces")
         default: name
+        }
+    }
+}
+
+// ── the sky's condition ─────────────────────────────────────────────────────
+
+extension Weather {
+
+    /// Read aloud by VoiceOver as the toggle's value, so it needs to be a
+    /// word in the reader's language rather than an enum's raw value.
+    var localizedName: String {
+        switch self {
+        case .clear: L10n.string("weather.clear")
+        case .overcast: L10n.string("weather.overcast")
+        case .rain: L10n.string("weather.rain")
+        case .frost: L10n.string("weather.frost")
         }
     }
 }

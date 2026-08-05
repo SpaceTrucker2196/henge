@@ -64,6 +64,15 @@
 "ground.west" = "O";
 "info.blurb" = "Un Stonehenge fotorrealista que es además un calendario astronómico en funcionamiento. Todo lo que la imagen afirma —dónde sale el sol, qué hace la luna, qué estrella ocupa el polo— está calculado, contrastado con valores publicados y extraído de la misma aritmética que imprime la lectura.";
 "info.close" = "Cerrar";
+"info.credit.algorithms" = "La aritmética del sol, la luna y el calendario";
+"info.credit.hipparcos" = "Las estrellas: 8870 posiciones a simple vista, magnitudes, colores y movimientos propios";
+"info.credit.moon" = "La faz de la Luna";
+"info.credit.names" = "Los nombres de las estrellas";
+"info.credit.sky" = "El cielo diurno";
+"info.credit.survey" = "Las dimensiones del monumento y la arqueología";
+"info.credit.terrain" = "La llanura de Salisbury: el suelo sobre el que caen las sombras";
+"info.credit.textures" = "Detalle de piedra y césped";
+"info.credit.vsop" = "Los planetas: de Mercurio a Saturno";
 "info.privacy" = "River.io: los datos permanecen en el dispositivo; esta app no hace ninguna llamada de red.";
 "info.standingOn" = "Se apoya en";
 "lore.close" = "Cerrar el saber";
@@ -176,6 +185,10 @@
 "travel.title" = "Viajar";
 "viewpoint.here" = "Aquí";
 "viewpoint.wiltshire" = "Wiltshire";
+"weather.clear" = "despejado";
+"weather.frost" = "escarcha";
+"weather.overcast" = "cubierto";
+"weather.rain" = "lluvia";
 "yearbar.hint" = "Arrastra para cambiar la fecha; las luces marcadas son las fiestas de la rueda y las lunas";
 "yearbar.jumpToMoonrise %@" = "Ir a la salida de la luna de %@";
 "yearbar.jumpToSunrise %@" = "Ir al amanecer de %@";

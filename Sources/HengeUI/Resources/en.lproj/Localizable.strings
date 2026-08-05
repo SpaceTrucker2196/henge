@@ -64,6 +64,15 @@
 "ground.west" = "W";
 "info.blurb" = "A photoreal Stonehenge that is also a working astronomical calendar. Everything the picture claims — where the sun rises, what the moon is doing, which star holds the pole — is computed, tested against published values, and drawn from the same arithmetic the readout prints.";
 "info.close" = "Close";
+"info.credit.algorithms" = "The sun, moon and calendar arithmetic";
+"info.credit.hipparcos" = "The stars — 8,870 naked-eye positions, magnitudes, colours and proper motions";
+"info.credit.moon" = "The Moon's face";
+"info.credit.names" = "The stars' names";
+"info.credit.sky" = "The daylight sky";
+"info.credit.survey" = "The monument's dimensions and the archaeology";
+"info.credit.terrain" = "Salisbury Plain — the ground the shadows fall on";
+"info.credit.textures" = "Stone and turf detail";
+"info.credit.vsop" = "The planets — Mercury to Saturn";
 "info.privacy" = "River.io — data stays on the device; this app makes no network calls at all.";
 "info.standingOn" = "Standing on";
 "lore.close" = "Close the lore";
@@ -176,6 +185,10 @@
 "travel.title" = "Travel";
 "viewpoint.here" = "Here";
 "viewpoint.wiltshire" = "Wiltshire";
+"weather.clear" = "clear";
+"weather.frost" = "frost";
+"weather.overcast" = "overcast";
+"weather.rain" = "rain";
 "yearbar.hint" = "Drag to change the date; the marked lights are the festivals of the wheel and the moons";
 "yearbar.jumpToMoonrise %@" = "Jump to the moonrise of %@";
 "yearbar.jumpToSunrise %@" = "Jump to %@ sunrise";

@@ -64,6 +64,15 @@
 "ground.west" = "西";
 "info.blurb" = "一座照片级真实的巨石阵，同时也是一部真正可用的天文历。画面所主张的一切——太阳从何处升起、月亮正在做什么、哪颗星占据天极——都经过计算、与已发表数值核验，并出自与读数所印相同的算术。";
 "info.close" = "关闭";
+"info.credit.algorithms" = "太阳、月亮与历法的算术";
+"info.credit.hipparcos" = "恒星——8,870 颗肉眼可见恒星的位置、星等、颜色与自行";
+"info.credit.moon" = "月面";
+"info.credit.names" = "恒星的名称";
+"info.credit.sky" = "白昼天空";
+"info.credit.survey" = "遗迹的尺寸与考古";
+"info.credit.terrain" = "索尔兹伯里平原——投下影子的地面";
+"info.credit.textures" = "石材与草皮细节";
+"info.credit.vsop" = "行星——从水星到土星";
 "info.privacy" = "River.io——数据始终留在设备上；本应用完全不进行任何网络请求。";
 "info.standingOn" = "所依据者";
 "lore.close" = "关闭释义";
@@ -176,6 +185,10 @@
 "travel.title" = "穿越";
 "viewpoint.here" = "此处";
 "viewpoint.wiltshire" = "Wiltshire";
+"weather.clear" = "晴";
+"weather.frost" = "霜";
+"weather.overcast" = "阴";
+"weather.rain" = "雨";
 "yearbar.hint" = "拖动以改变日期；标记的光点是年轮上的节日与月相";
 "yearbar.jumpToMoonrise %@" = "跳转到%@月出";
 "yearbar.jumpToSunrise %@" = "跳转到%@日出";

@@ -64,6 +64,15 @@
 "ground.west" = "O";
 "info.blurb" = "Un Stonehenge photoréaliste qui est aussi un calendrier astronomique en état de marche. Tout ce que l’image affirme — où le soleil se lève, ce que fait la lune, quelle étoile tient le pôle — est calculé, vérifié contre des valeurs publiées et tiré de la même arithmétique que celle qu’affiche le relevé.";
 "info.close" = "Fermer";
+"info.credit.algorithms" = "L’arithmétique du soleil, de la lune et du calendrier";
+"info.credit.hipparcos" = "Les étoiles — 8 870 positions à l’œil nu, magnitudes, couleurs et mouvements propres";
+"info.credit.moon" = "La face de la Lune";
+"info.credit.names" = "Les noms des étoiles";
+"info.credit.sky" = "Le ciel diurne";
+"info.credit.survey" = "Les dimensions du monument et l’archéologie";
+"info.credit.terrain" = "La plaine de Salisbury — le sol sur lequel tombent les ombres";
+"info.credit.textures" = "Détail de la pierre et du gazon";
+"info.credit.vsop" = "Les planètes — de Mercure à Saturne";
 "info.privacy" = "River.io — les données restent sur l’appareil ; cette app n’effectue aucun appel réseau.";
 "info.standingOn" = "Il repose sur";
 "lore.close" = "Fermer le savoir";
@@ -176,6 +185,10 @@
 "travel.title" = "Voyager";
 "viewpoint.here" = "Ici";
 "viewpoint.wiltshire" = "Wiltshire";
+"weather.clear" = "dégagé";
+"weather.frost" = "gel";
+"weather.overcast" = "couvert";
+"weather.rain" = "pluie";
 "yearbar.hint" = "Faites glisser pour changer la date ; les lumières marquées sont les fêtes de la roue et les lunes";
 "yearbar.jumpToMoonrise %@" = "Aller au lever de lune de %@";
 "yearbar.jumpToSunrise %@" = "Aller au lever de soleil de %@";
