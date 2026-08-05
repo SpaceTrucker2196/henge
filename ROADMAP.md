@@ -129,13 +129,12 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       `fastlane ios beta` and processed to *Ready to Submit*, expiring in
       90 days. The lane created the "Stone Circle" external group. Beta
       App Description and Feedback Email are written.
-      **Stopped one field short of external distribution.** Apple's Beta
-      App Review contact block wants a phone number, and the upload's
-      last step fails with "Beta App Description is missing" until the
-      whole block validates — a misleading error, since the description
-      is present and it is the phone that is absent. Owner's to fill;
-      the Review Notes are typed and will save with it. Internal testing
-      needs no review and is available now.
+      **Submitted to Beta App Review 2026-08-05**; 0.1.0 (1) is *Waiting
+      for Review* in "Stone Circle", whose public link is already live at
+      `https://testflight.apple.com/join/YJk7Uejj`. Test Information is
+      complete: beta description, feedback address, reviewer contact,
+      review notes, and What to Test. Sign-in is declared *not* required,
+      which is true — the app has no account and no network.
       **Left after that:** screenshots and store copy, an IAP review
       screenshot, age rating, privacy questionnaire. The first
       non-consumable must be submitted *with* an app version, so the

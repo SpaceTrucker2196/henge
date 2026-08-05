@@ -170,6 +170,24 @@ while doing nothing. `Henge.storekit` is the local storefront that lets
 the flow be rehearsed in the simulator; it is scheme configuration and
 has no bearing on what the App Store sells.
 
+**The house pattern for the store fields**, read off `Corn 3000` and
+`Spacetrucker Galactic` rather than invented here:
+
+| Field | Pattern | Henge |
+|---|---|---|
+| Support URL | `https://www.river.io/<app>.html#support` | `…/henge.html#support` |
+| Marketing URL | `https://www.river.io/<app>.html` | `…/henge.html` |
+| Copyright | `2026 river.io LLC` | same |
+| Release | Automatically release this version | same |
+| Review contact | Jeff Kunzelman, 6088651284, jeff@river.io | same |
+
+Two things the survey settled. The reviewer contact lives on the *version*
+page under App Review Information, not in TestFlight — TestFlight keeps its
+own copy and neither fills the other. And `Spacetrucker Galactic` shipped
+through **internal testing only**, with no external group at all: external
+TestFlight is Henge's own choice, not the house default, and it is the
+thing that drags in Beta App Review.
+
 **A trap worth knowing about.** An older record already held the name
 "Henge" on the bundle id `riverio.henge`. Apple locks a record's bundle
 id permanently once any build is uploaded, and that one had an expired
