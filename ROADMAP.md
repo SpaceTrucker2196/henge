@@ -125,12 +125,28 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       `riverio.henge`, with an expired TestFlight build that had locked
       its bundle id permanently. It is renamed "Henge (retired)" rather
       than deleted, so its history survives and the name is free.
-      **Left before submission:** screenshots and store copy, an IAP
-      review screenshot, age rating, and the privacy questionnaire. The
-      first non-consumable must be submitted *with* an app version, so
-      the build and the purchase go to review together. macOS
-      distribution is not started; the app icon needs its store-quality
-      pass on nobody's list but ours.
+      **The first build is on TestFlight**: 0.1.0 (1), uploaded by
+      `fastlane ios beta` and processed to *Ready to Submit*, expiring in
+      90 days. The lane created the "Stone Circle" external group. Beta
+      App Description and Feedback Email are written.
+      **Stopped one field short of external distribution.** Apple's Beta
+      App Review contact block wants a phone number, and the upload's
+      last step fails with "Beta App Description is missing" until the
+      whole block validates — a misleading error, since the description
+      is present and it is the phone that is absent. Owner's to fill;
+      the Review Notes are typed and will save with it. Internal testing
+      needs no review and is available now.
+      **Left after that:** screenshots and store copy, an IAP review
+      screenshot, age rating, privacy questionnaire. The first
+      non-consumable must be submitted *with* an app version, so the
+      build and the purchase go to review together.
+      **A version mismatch to settle first:** the build is 0.1.0 and the
+      App Store version record is 1.0. Fine for TestFlight — they are
+      separate trains — but a build cannot be submitted against a version
+      record it does not match, so either `MARKETING_VERSION` moves to
+      1.0 or the record moves to 0.1.0 before submission.
+      macOS distribution is not started; the app icon needs its
+      store-quality pass on nobody's list but ours.
 
 - [x] **M7 — The Ground Plan (M).** *Owner requests, 2026-07-31; landed the
       same day.* (1) The year bar's moon lights jump to the *moonrise* of
