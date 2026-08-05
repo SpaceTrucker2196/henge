@@ -64,3 +64,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 3cd3547 | 2026-08-03T20:35:53Z | claude-fable-5 | 209 | 86755 | 73620684 | 1481907 | 107.5987 | Mac dmg build script; download page and register entry on river.io |
 | 518d827 | 2026-08-03T21:11:39Z | claude-fable-5 | 67 | 15097 | 25362742 | 18032 | 26.4789 | Shipping runbook in FACTORY.md; stale private-repo rationale corrected |
 | ae9beb6 | 2026-08-04T19:30:30Z | claude-fable-5,claude-opus-5 | 799 | 655375 | 89647770 | 1258776 | 76.7445 | IAP full version at $4.99 with a 15-minute session clock, gated time travel, and |
+| 63425e2 | 2026-08-05T04:11:00Z | claude-opus-5 | 62 | 25918 | 11863279 | 1161901 | 18.1989 | Translate the remaining chrome: attributions, months, era marks and weather |
