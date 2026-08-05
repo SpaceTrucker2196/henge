@@ -112,16 +112,23 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       re-proved 2026-08-04 with the paywall and the nine languages aboard:
       `Apple Distribution: river.io llc`, `UIDeviceFamily [1, 2]`, all nine
       `.lproj` present in both resource bundles.
-      **Blocked on two owner actions, both behind Apple ID 2FA:**
-      (1) Apple will not let an API key create the app *record* — the
-      `apps` resource refuses `CREATE`, re-verified against both keys on
-      2026-08-04. One-time `fastlane produce` with an Apple ID, or App
-      Store Connect → My Apps → ＋.
-      (2) The in-app purchase must be created in App Store Connect:
-      non-consumable, product id `io.river.henge.full`, $4.99. Without it
-      `Product.products(for:)` returns nothing and the paywall shows only
-      its fallback price — the button looks right and does nothing.
-      Then `fastlane ios beta` puts the first build on TestFlight. macOS
+      **Both App Store Connect gates are through as of 2026-08-04.**
+      The app record exists — Henge, `io.river.henge`, Apple ID
+      6798126839, SKU `io.river.henge`, iOS 1.0 Prepare for Submission —
+      created in the web console, because Apple's `apps` resource refuses
+      `CREATE` for an API key and does so for every repo here, not just
+      this one. The in-app purchase exists too: `io.river.henge.full`,
+      non-consumable, $4.99 base USD across 175 regions, English
+      localisation written.
+      One thing the console turned up that nothing else would have: an
+      older record was already holding the name "Henge" on the bundle id
+      `riverio.henge`, with an expired TestFlight build that had locked
+      its bundle id permanently. It is renamed "Henge (retired)" rather
+      than deleted, so its history survives and the name is free.
+      **Left before submission:** screenshots and store copy, an IAP
+      review screenshot, age rating, and the privacy questionnaire. The
+      first non-consumable must be submitted *with* an app version, so
+      the build and the purchase go to review together. macOS
       distribution is not started; the app icon needs its store-quality
       pass on nobody's list but ours.
 

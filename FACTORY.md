@@ -155,14 +155,28 @@ shipped siblings do it by hand as well — `clientAPT`'s FACTORY.md §5
 — and the `apps` resource refuses `CREATE` for both of the account's API
 keys. It is a house-wide human step.
 
-**The in-app purchase is a second one.** `io.river.henge.full` must be
-created in App Store Connect as a non-consumable at $4.99 before
-StoreKit will return anything. The failure is quiet rather than loud:
+**Both are done** (2026-08-04), through the web console:
+
+| Thing | Value |
+|---|---|
+| App record | Henge, `io.river.henge`, Apple ID 6798126839, SKU `io.river.henge` |
+| In-app purchase | `io.river.henge.full`, non-consumable, $4.99 USD base, 175 regions |
+
+`io.river.henge.full` had to exist before StoreKit would return
+anything, and its absence fails quietly rather than loudly:
 `Product.products(for:)` comes back empty, the paywall falls through to
 `StoreProducts.fallbackPrice`, and the button looks entirely correct
 while doing nothing. `Henge.storekit` is the local storefront that lets
-the flow be rehearsed in the simulator meanwhile; it is scheme
-configuration and has no bearing on what the App Store sells.
+the flow be rehearsed in the simulator; it is scheme configuration and
+has no bearing on what the App Store sells.
+
+**A trap worth knowing about.** An older record already held the name
+"Henge" on the bundle id `riverio.henge`. Apple locks a record's bundle
+id permanently once any build is uploaded, and that one had an expired
+TestFlight build — so it could never have been pointed at
+`io.river.henge`. It is renamed "Henge (retired)", not deleted: the name
+is freed, the history survives. If a store name ever appears to be taken
+by a stranger, check this account first.
 
 ## Xcode Cloud — the house pattern for shipping
 
