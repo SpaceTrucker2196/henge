@@ -65,3 +65,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 518d827 | 2026-08-03T21:11:39Z | claude-fable-5 | 67 | 15097 | 25362742 | 18032 | 26.4789 | Shipping runbook in FACTORY.md; stale private-repo rationale corrected |
 | ae9beb6 | 2026-08-04T19:30:30Z | claude-fable-5,claude-opus-5 | 799 | 655375 | 89647770 | 1258776 | 76.7445 | IAP full version at $4.99 with a 15-minute session clock, gated time travel, and |
 | 63425e2 | 2026-08-05T04:11:00Z | claude-opus-5 | 62 | 25918 | 11863279 | 1161901 | 18.1989 | Translate the remaining chrome: attributions, months, era marks and weather |
+| 1b411d8 | 2026-08-05T04:18:33Z | claude-opus-5 | 35 | 12908 | 7599713 | 19287 | 4.3156 | Re-prove the signed release path and record the two remaining App Store Connect  |
