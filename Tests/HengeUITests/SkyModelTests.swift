@@ -2,6 +2,7 @@ import XCTest
 import simd
 @testable import HengeUI
 import HengeAstro
+import HengeEngine
 import HengeGeometry
 
 /// The app's state machine.
@@ -285,4 +286,107 @@ extension SkyModelTests {
         XCTAssertEqual(profile.count, 48)
         XCTAssertGreaterThan(profile.max() ?? 0, 55, "midsummer sun in the builders' era")
     }
+}
+
+extension SkyModelTests {
+
+    /// Angular extent of a stone's box seen from `eye` along `forward`, in
+    /// degrees: how wide it is across the frame, and how high its top sits
+    /// above the level line the eye is looking down.
+    ///
+    /// Computed from the stone's own `toWorld` and plain trigonometry over the
+    /// eight corners of its box — nothing here reads the standoff the camera
+    /// was placed at, which is the number under test.
+    private func framing(of stone: Stone, from camera: Camera)
+        -> (width: Double, top: Double) {
+        let eye = SIMD3<Double>(camera.position)
+        let forward = simd_normalize(SIMD3<Double>(camera.target) - eye)
+        let right = simd_normalize(simd_cross(forward, SIMD3<Double>(0, 1, 0)))
+        let up = simd_cross(right, forward)
+
+        var yaws: [Double] = [], pitches: [Double] = []
+        for acrossFactor in [-0.5, 0.5] {
+            for upFactor in [0.0, 1.0] {
+                for throughFactor in [-0.5, 0.5] {
+                    let corner = stone.toWorld(SIMD3(acrossFactor * stone.width,
+                                                     upFactor * stone.height,
+                                                     throughFactor * stone.thickness))
+                    let direction = simd_normalize(corner - eye)
+                    yaws.append(atan2(simd_dot(direction, right),
+                                      simd_dot(direction, forward)).degrees)
+                    pitches.append(asin(simd_dot(direction, up)).degrees)
+                }
+            }
+        }
+        return (yaws.max()! - yaws.min()!, pitches.max()!)
+    }
+
+    /// **The Heel Stone station shows the monument past the Heel Stone.**
+    ///
+    /// The station is named after the stone, but what it is *for* is the circle
+    /// seen beyond it — the view someone arriving up the Avenue gets. At the
+    /// four-metre standoff it shipped with, a 4.7 m stone subtended some 37° of
+    /// a 62° frame and filled it edge to edge: choosing "Heel Stone" showed you
+    /// the Heel Stone and nothing else. The owner caught that in a screenshot,
+    /// which was the only place it could show up, because every geometric fact
+    /// about the stone and the camera was individually correct.
+    ///
+    /// So the claim is about proportion rather than position, and it is bounded
+    /// at both ends: the stone must not swallow the frame, and it must still be
+    /// standing in it. A standoff of half a kilometre would answer the first
+    /// complaint and lose the subject.
+    func testTheHeelStoneStationFramesTheMonumentNotTheStone() {
+        let model = SkyModel()
+        model.viewpoint = .stonehenge
+        model.station = .heelStone
+        let camera = model.camera
+
+        let scene = MonumentScene.complete()
+        let heelStone = try! XCTUnwrap(scene.stone(id: "stone-96"))
+        let seen = framing(of: heelStone, from: camera)
+
+        // There is sky above it. The frame's top edge is half the vertical
+        // field of view up, and the stone's crown has to sit well inside that
+        // — at four metres it was over the edge entirely.
+        let frameTop = model.fieldOfView / 2
+        XCTAssertLessThan(seen.top, frameTop - 8,
+                          "the Heel Stone's top is \(seen.top)° up in a "
+                          + "\(model.fieldOfView)° frame — no horizon above it")
+
+        // And the monument is the larger thing in the frame. The sarsen circle
+        // is 33 m across at some 95 m, which is about 20°; the stone at this
+        // standoff is about 8°. At four metres that ordering was inverted.
+        let ring = scene.sarsens.filter { $0.position.distanceFromCentre < 20 }
+        XCTAssertGreaterThan(ring.count, 20, "the sarsen circle is not in the scene")
+        let ringSpan = span(of: ring, from: camera)
+        XCTAssertGreaterThan(ringSpan, seen.width * 1.8,
+                             "the circle spans \(ringSpan)° against the stone's "
+                             + "\(seen.width)° — the stone is the view")
+
+        // But the stone is still the foreground subject, not a distant chip.
+        XCTAssertGreaterThan(seen.width, 5,
+                             "the Heel Stone spans only \(seen.width)° — "
+                             + "the station has retreated off its own subject")
+    }
+
+    /// Horizontal span of a group of stones across the frame, in degrees.
+    private func span(of stones: [Stone], from camera: Camera) -> Double {
+        let eye = SIMD3<Double>(camera.position)
+        let forward = simd_normalize(SIMD3<Double>(camera.target) - eye)
+        let right = simd_normalize(simd_cross(forward, SIMD3<Double>(0, 1, 0)))
+        let yaws = stones.map { stone -> Double in
+            let direction = simd_normalize(stone.position - eye)
+            return atan2(simd_dot(direction, right), simd_dot(direction, forward)).degrees
+        }
+        return yaws.max()! - yaws.min()!
+    }
+}
+
+private extension Double {
+    /// Radians as read off `atan2`/`asin`, in degrees.
+    var degrees: Double { self * 180 / .pi }
+}
+
+private extension SIMD3 where Scalar == Double {
+    var distanceFromCentre: Double { simd_length(SIMD3(x, 0, z)) }
 }
