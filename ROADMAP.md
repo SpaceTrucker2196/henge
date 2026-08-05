@@ -108,13 +108,22 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       the one-command simulator loop, the pixel inspection, and `beta` —
       archive, automatic signing minted by the App Store Connect API key,
       build number from TestFlight, upload. The bundle id io.river.henge
-      is registered and a signed App Store .ipa has been produced.
-      **Blocked on one owner action:** Apple will not let an API key
-      create the app *record* — one-time `fastlane produce` with an Apple
-      ID, or App Store Connect → My Apps → ＋; then `fastlane ios beta`
-      puts the first build on TestFlight. macOS distribution is not
-      started; the app icon needs its store-quality pass on nobody's list
-      but ours.
+      is registered and a signed App Store .ipa has been produced —
+      re-proved 2026-08-04 with the paywall and the nine languages aboard:
+      `Apple Distribution: river.io llc`, `UIDeviceFamily [1, 2]`, all nine
+      `.lproj` present in both resource bundles.
+      **Blocked on two owner actions, both behind Apple ID 2FA:**
+      (1) Apple will not let an API key create the app *record* — the
+      `apps` resource refuses `CREATE`, re-verified against both keys on
+      2026-08-04. One-time `fastlane produce` with an Apple ID, or App
+      Store Connect → My Apps → ＋.
+      (2) The in-app purchase must be created in App Store Connect:
+      non-consumable, product id `io.river.henge.full`, $4.99. Without it
+      `Product.products(for:)` returns nothing and the paywall shows only
+      its fallback price — the button looks right and does nothing.
+      Then `fastlane ios beta` puts the first build on TestFlight. macOS
+      distribution is not started; the app icon needs its store-quality
+      pass on nobody's list but ours.
 
 - [x] **M7 — The Ground Plan (M).** *Owner requests, 2026-07-31; landed the
       same day.* (1) The year bar's moon lights jump to the *moonrise* of
