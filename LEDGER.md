@@ -67,3 +67,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 63425e2 | 2026-08-05T04:11:00Z | claude-opus-5 | 62 | 25918 | 11863279 | 1161901 | 18.1989 | Translate the remaining chrome: attributions, months, era marks and weather |
 | 1b411d8 | 2026-08-05T04:18:33Z | claude-opus-5 | 35 | 12908 | 7599713 | 19287 | 4.3156 | Re-prove the signed release path and record the two remaining App Store Connect  |
 | 5b2e464 | 2026-08-05T04:24:43Z | claude-opus-5 | 64 | 23155 | 14861615 | 52156 | 8.5316 | Adopt the sibling repos' Xcode Cloud shipping pattern and correct the team id |
+| 3fabf07 | 2026-08-05T04:54:48Z | claude-opus-5 | 116 | 50939 | 29886280 | 532648 | 21.5437 | Fix the Heel Stone station framing so the monument is visible past the stone |
