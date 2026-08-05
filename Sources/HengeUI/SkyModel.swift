@@ -368,8 +368,23 @@ public final class SkyModel {
             return standing(at: apex * 5.4, looking: axis)
 
         case .heelStone:
-            // Standing at the Heel Stone looking back into the circle.
-            return standing(at: WorldAxes.direction(azimuth: axis) * (Monument.heelStoneDistance + 4),
+            // Beyond the Heel Stone, looking back down the axis at the
+            // monument — the stone in the foreground, the circle behind it.
+            //
+            // The standoff is the whole content of this case and it was
+            // wrong at 4 m. The stone is 4.7 m tall and the eye is at 1.7 m,
+            // so from four metres away it subtends about 37° of vertical and
+            // fills the frame with sarsen: the "Heel Stone" view showed the
+            // Heel Stone and nothing else, which is not what anyone opening
+            // it wants to see.
+            //
+            // At 18 m the stone's top sits ~9.5° above eye level
+            // (atan(3.0/18)) and is ~7.6° wide, while the sarsen circle —
+            // 30 m across, 95 m away — spans some 18°. The stone reads as a
+            // silhouette with the monument standing open around it, which is
+            // the view someone arriving up the Avenue actually gets.
+            let standoff = Monument.heelStoneDistance + 18
+            return standing(at: WorldAxes.direction(azimuth: axis) * standoff,
                             looking: (axis + HengeAstro.Angle(degrees: 180)).normalized)
 
         case .avenue:
