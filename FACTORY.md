@@ -140,7 +140,7 @@ does not replace it.
 
 The beta lane signs automatically with the App Store Connect API key
 (`AuthKey_H3U2MJCD77.p8`, probed from the standard key directories) and
-the river.io llc team (U3Z59RXPUB → `DEVELOPMENT_TEAM` in project.yml);
+the river.io llc team (U3Z59VXPUB → `DEVELOPMENT_TEAM` in project.yml);
 no profile lives in the repo. It registered the `io.river.henge` bundle
 id itself. The **app record** is the one artefact Apple will not let an
 API key create — a one-time human step (`fastlane produce` with an
@@ -149,11 +149,85 @@ regardless and stops before upload with instructions until the record
 exists. Build numbers come from TestFlight (`latest + 1`) and are
 injected as a build-setting override because the project is generated.
 
+That the record is manual is not a gap in this repo's tooling. Both
+shipped siblings do it by hand as well — `clientAPT`'s FACTORY.md §5
+"One-time setup" step 2 is *App Store Connect → My Apps → "+" → New App*
+— and the `apps` resource refuses `CREATE` for both of the account's API
+keys. It is a house-wide human step.
+
+**The in-app purchase is a second one.** `io.river.henge.full` must be
+created in App Store Connect as a non-consumable at $4.99 before
+StoreKit will return anything. The failure is quiet rather than loud:
+`Product.products(for:)` comes back empty, the paywall falls through to
+`StoreProducts.fallbackPrice`, and the button looks entirely correct
+while doing nothing. `Henge.storekit` is the local storefront that lets
+the flow be rehearsed in the simulator meanwhile; it is scheme
+configuration and has no bearing on what the App Store sells.
+
+## Xcode Cloud — the house pattern for shipping
+
+`StatusGalactic-iOS` and `clientAPT` both ship through **Xcode Cloud**
+rather than by archiving locally, and henge now carries the same
+bootstrap so it can join them. Apple's runner builds inside App Store
+Connect: signing, provisioning, archive upload and the TestFlight
+notification all live in Apple's pipeline, so there is no certificate to
+manage, nothing to rotate by hand, and no secret in GitHub.
+
+| Path | Purpose |
+|---|---|
+| `ci_scripts/ci_post_clone.sh` | Apple-convention hook. Installs xcodegen if the VM lacks it and regenerates `Henge.xcodeproj`, which is generated and gitignored — without this the runner has nothing to open. |
+
+**One difference from the siblings, deliberately.** Both of them also
+stage a hand-committed `ci_scripts/Package.resolved`, because Xcode Cloud
+disables automatic SPM resolution and will not build without a lockfile.
+That is about *remote* dependencies. henge has none — the first is a
+stops-and-asks — and its only package is `HengeLocal`, a local path
+package pointing at the repo root. Nothing resolves over the network, so
+there is nothing to pin. The script says where the sibling pattern would
+go back if that ever changes.
+
+### One-time wiring in App Store Connect
+
+Nothing here is automatable; all of it is behind an Apple ID.
+
+1. The **app record** must exist first (see below) — Xcode Cloud is
+   configured *on* an app, so there is nowhere to enable it until then.
+2. App Store Connect → My Apps → Henge → **Xcode Cloud → Get Started**.
+   Pick the GitHub repo; grant Apple's GitHub app read access.
+3. First workflow: accept the *Build* + *Archive* template, then edit —
+   **Start condition** Tag changes, pattern `v*`; **source-branch filter**
+   `master` (henge works on `master`, inherited from the repo's first
+   life); **Environment** most recent stable Xcode; keep the *Archive*
+   action; add **Post-Actions → TestFlight** with the "Stone Circle"
+   group. Add the *Test* action if you want XCTest ahead of each archive.
+4. Grant Access when the first archive asks to manage signing.
+
+The tag start condition does not filter by branch — "tags come from
+`master`" is enforced by only ever tagging a `master` commit.
+
+### Cutting a release
+
+```sh
+git switch master && git pull --ff-only
+# MARKETING_VERSION in project.yml must already match the tag, less the v.
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+### Which door to use
+
+Both doors stay open and they do different jobs. `fastlane ios beta`
+archives and signs **locally** — the fastest way to prove the release
+path still works after a change, and it is what proved the paywall and
+the nine localisations were correctly signed and bundled. Xcode Cloud is
+the door a *release* goes through. Neither replaces `make test`.
+
 ## CI
 
-None yet. The merge gate is the **local green suite enforced pre-push**. When CI
-arrives it is a post-hoc judge, never the gate. Adding it is a stops-and-asks:
-it bills minutes on a private repo.
+No pre-merge CI. The merge gate is the **local green suite enforced
+pre-push**; when CI arrives it is a post-hoc judge, never the gate.
+Xcode Cloud above is a release pipeline rather than a merge gate, and it
+bills only on tags.
 
 ## Cold-start sanity loop
 
