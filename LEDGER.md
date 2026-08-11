@@ -71,3 +71,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 9de50fc | 2026-08-05T05:36:30Z | claude-opus-5 | 389 | 70250 | 114191439 | 236148 | 61.2154 | Create the App Store Connect app record and the $4.99 in-app purchase |
 | a042bda | 2026-08-05T05:49:21Z | claude-opus-5 | 79 | 24561 | 27820113 | 62703 | 15.1515 | Upload the first TestFlight build and write the beta test information |
 | b811bb1 | 2026-08-05T14:54:30Z | claude-opus-5 | 171 | 26878 | 56487408 | 1927579 | 48.1923 | Complete TestFlight test information and submit the first build to Beta App Revi |
+| 461b0d8 | 2026-08-11T20:27:10Z | claude-fable-5,claude-opus-5 | 28546 | 333214 | 50624367 | 689211 | 80.9847 | Stage the App Store listing: nine-locale metadata, screenshots, IAP, pricing, av |
