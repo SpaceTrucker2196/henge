@@ -196,6 +196,57 @@ TestFlight build — so it could never have been pointed at
 is freed, the history survives. If a store name ever appears to be taken
 by a stranger, check this account first.
 
+## The App Store listing (2026-08-11)
+
+`fastlane ios store_metadata` is the listing door: it pushes
+`fastlane/metadata/` — nine locales, matching the app's own languages —
+plus review information and screenshots to App Store Connect, against
+whatever version is editable. Screenshots live in `fastlane/screenshots/`
+(gitignored; the canonical copies are on App Store Connect).
+
+What the survey of shipping this taught, so nobody re-derives it:
+
+- **The name "Henge" is taken in some storefronts.** Adding a store
+  locale fails with a trademark-claim error if the bare name is in use
+  there. en-US plus the European locales took "Henge"; **ja and zh-Hans
+  carry suffixed names** (`Henge · ストーンヘンジ暦`, `Henge · 巨石阵历`) —
+  the Corn 3000 pattern. `fastlane/metadata/<locale>/name.txt` must match
+  what App Store Connect holds or deliver fails trying to rename.
+- **The age rating cannot go through deliver.** Apple's 2025 declaration
+  schema added required fields (`advertising`, `ageAssurance`, …) this
+  fastlane predates. `fastlane/rating.json` records the answers (all
+  none); they were applied with a direct `PATCH
+  /v1/ageRatingDeclarations/<appInfo id>`.
+- **App privacy is the one field the API key cannot touch.** The
+  data-usage endpoints answer only to an Apple ID session. The answers
+  are `fastlane/app_privacy_details.json` (Data Not Collected — true:
+  no account, no network); publishing them is a human step in App Store
+  Connect → App Privacy, or
+  `fastlane run upload_app_privacy_details_to_app_store` with an
+  Apple ID. Submission for review is blocked until it is done
+  (`STATE_ERROR.APP_DATA_USAGES_REQUIRED`).
+- **Everything else went through the API key**: version string 0.1.0,
+  copyright, categories (EDUCATION / REFERENCE), review contact, price
+  (free; base territory USA), availability (all 175 territories,
+  available in new ones), content rights (no third-party content), the
+  IAP's nine localizations and its review screenshot — the paywall,
+  captured from the simulator. `io.river.henge.full` sits in Ready to
+  Submit and rides the version's review submission automatically.
+- **Screenshots come from the simulator**, iPhone 17 Pro Max (6.9",
+  1320×2868) and iPad Pro 13" (2064×2752) — both required display
+  classes. simctl cannot inject touches, so scenes were staged with a
+  temporary launch-environment hook in `RootView` (jump to a wheel
+  station's sunrise, pick a station, torch on, and so on), captured, and
+  the hook reverted before commit. `simctl status_bar override` gives the
+  clean 9:41 bar. Allow ~30 s after launch: the stones raise
+  asynchronously and a shot taken early is a progress bar on an empty
+  plain.
+
+The support and marketing URL is the live `https://www.river.io/henge/`;
+the privacy policy is `https://www.river.io/henge-privacy.html`, staged
+in the river-io-site checkout — publishing that site remains a
+deliberate push, not a side effect of this repo.
+
 ## Xcode Cloud — the house pattern for shipping
 
 `StatusGalactic-iOS` and `clientAPT` both ship through **Xcode Cloud**

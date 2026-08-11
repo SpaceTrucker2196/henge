@@ -172,6 +172,37 @@ platform :ios do
     )
   end
 
+  desc "Push the App Store listing — metadata, screenshots, rating — from the repo"
+  lane :store_metadata do
+    key_path = asc_key_path
+    UI.user_error!("No AuthKey_#{ASC_KEY_ID}.p8 found in " \
+                   "#{ASC_KEY_DIRS.join(', ')}") unless key_path
+    api_key = app_store_connect_api_key(
+      key_id:       ASC_KEY_ID,
+      issuer_id:    ASC_ISSUER_ID,
+      key_filepath: key_path,
+      in_house:     false
+    )
+    # The listing lives in fastlane/metadata (nine locales, matching the
+    # app's own languages) and fastlane/screenshots (en-US only — the
+    # store falls back to the primary locale's images). The version string
+    # follows MARKETING_VERSION; screenshots are 6.9" iPhone and 13" iPad.
+    deliver(
+      api_key: api_key,
+      app_identifier: BUNDLE_ID,
+      app_version: "0.1.0",
+      # The age rating is NOT pushed from here: Apple's 2025 declaration
+      # schema (advertising, ageAssurance, …) predates this fastlane and
+      # the upload fails. fastlane/rating.json records the answers; they
+      # were applied with a direct PATCH to /v1/ageRatingDeclarations.
+      overwrite_screenshots: true,
+      run_precheck_before_submit: false,
+      skip_binary_upload: true,
+      submit_for_review: false,
+      force: true
+    )
+  end
+
   desc "TEMP probe: retry app-record creation with the account's other key"
   lane :try_create do
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(

@@ -23,3 +23,8 @@ fastlane/report.xml
 fastlane/README.md
 fastlane/test_output/
 fastlane/build/
+
+# App Store screenshots: uploaded by `fastlane ios store_metadata`; the
+# canonical copies live on App Store Connect, and 27 MB of PNG does not
+# belong in history. FACTORY.md records how they were staged.
+fastlane/screenshots/
