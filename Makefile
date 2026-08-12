@@ -2,7 +2,7 @@
 # `make test` is the oracle (factory/converge.md step 4): green plus a
 # warning-clean `make build` means the factory is operational.
 
-.PHONY: test uitest build build-ios build-mac generate clean run-mac dmg
+.PHONY: test uitest build build-ios build-mac generate clean run-mac dmg deploy-site publish-site
 
 # The oracle. Runs against the shared engine through SwiftPM, so it needs no
 # simulator and no Xcode project — which is what keeps it fast enough to run
@@ -75,6 +75,16 @@ clean:
 # /releases/latest link points at.
 dmg: generate
 	scripts/build_dmg.sh
+
+# Mirror docs/ (the marketing site) into the river-io-site repo under
+# henge/, served at www.river.io/henge/ — the nighthawk-iOS pattern.
+# `make deploy-site` copies and commits locally; `make publish-site`
+# also pushes, which is the outward step that deploys www.river.io.
+deploy-site:
+	scripts/deploy-site.sh
+
+publish-site:
+	scripts/deploy-site.sh --push
 
 run-mac: build-mac
 	@open "$$(xcodebuild -project Henge.xcodeproj -scheme Henge-macOS \

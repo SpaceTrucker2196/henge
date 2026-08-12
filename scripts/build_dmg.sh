@@ -98,20 +98,22 @@ if [[ "${1:-}" == "--release" ]]; then
     fi
     gh release upload "$TAG" "$DMG" "$DIST/Henge.dmg" --clobber
 
-    # Stage the site copy and keep the download page's figures honest —
-    # the version and size it shows are stamped from the artifact itself,
-    # never typed by hand. The site checkout can sit elsewhere; say so
-    # with RIVER_IO_SITE.
+    # Keep the download page's figures honest — the version and size it
+    # shows are stamped from the artifact itself, never typed by hand.
+    # The page's SOURCE is docs/index.html in this repo (the site is
+    # repo-owned and mirrored by scripts/deploy-site.sh); the artifact
+    # itself is staged straight into the site checkout, which the deploy
+    # script deliberately never touches.
+    SIZE=$(du -h "$DMG" | cut -f1 | tr -d ' ')
+    sed -i '' \
+        -e "s|<!--v-->[^<]*<!--/v-->|<!--v-->$VERSION<!--/v-->|g" \
+        -e "s|<!--s-->[^<]*<!--/s-->|<!--s-->$SIZE<!--/s-->|g" \
+        docs/index.html
     SITE="${RIVER_IO_SITE:-../river-io-site}"
-    PAGE="$SITE/henge/index.html"
-    if [[ -f "$PAGE" ]]; then
+    if [[ -d "$SITE/henge" ]]; then
         cp "$DMG" "$SITE/henge/Henge.dmg"
-        SIZE=$(du -h "$SITE/henge/Henge.dmg" | cut -f1 | tr -d ' ')
-        sed -i '' \
-            -e "s|<!--v-->[^<]*<!--/v-->|<!--v-->$VERSION<!--/v-->|g" \
-            -e "s|<!--s-->[^<]*<!--/s-->|<!--s-->$SIZE<!--/s-->|g" \
-            "$PAGE"
-        echo "published release $TAG; staged $SITE/henge/ — commit and push river-io-site to deploy"
+        scripts/deploy-site.sh
+        echo "published release $TAG; staged $SITE/henge/ — push river-io-site (or make publish-site) to deploy"
     else
         echo "published release $TAG — river-io-site not found at $SITE; set RIVER_IO_SITE to stage the public copy" >&2
     fi

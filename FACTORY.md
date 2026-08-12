@@ -242,9 +242,16 @@ What the survey of shipping this taught, so nobody re-derives it:
   asynchronously and a shot taken early is a progress bar on an empty
   plain.
 
-The support and marketing URL is the live `https://www.river.io/henge/`;
-the privacy policy is `https://www.river.io/henge-privacy.html`, staged
-in the river-io-site checkout — publishing that site remains a
+The marketing site is repo-owned: `docs/` holds the page and the
+privacy policy, and `scripts/deploy-site.sh` mirrors it into the
+river-io-site checkout under `henge/` (`make deploy-site` commits
+locally; `make publish-site` pushes — the nighthawk-iOS pattern).
+The store's support and marketing URL is `https://www.river.io/henge/`;
+the privacy policy is `https://www.river.io/henge/privacy.html`, with
+the old root `henge-privacy.html` left as a redirect. The deploy
+mirror deliberately never touches `Henge.dmg` — build_dmg.sh stages
+the artifact and stamps the page's version and size in `docs/`, where
+the source of truth now lives. Publishing www.river.io remains a
 deliberate push, not a side effect of this repo.
 
 ## Xcode Cloud — the house pattern for shipping

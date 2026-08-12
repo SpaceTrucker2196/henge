@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Henge — a photoreal Stonehenge that keeps real time</title>
+<meta name="description" content="Henge is a photoreal 3D Stonehenge that is also a working astronomical calendar. iPhone, iPad and Mac. The sun is computed, the shadows are real, and every claim carries its citation.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='8' width='7' height='20' fill='%23C9A227'/%3E%3Crect x='21' y='8' width='7' height='20' fill='%23C9A227'/%3E%3Crect x='2' y='3' width='28' height='6' fill='%23C9A227'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --night:   #0E1626;
+    --dusk:    #1B2740;
+    --violet:  #3D3A5C;
+    --ember:   #8A4A2F;
+    --gold:    #C9A227;
+    --gold-hi: #E8C55A;
+    --chalk:   #EDE8DA;
+    --parch:   #D8D0BC;
+    --ink:     #14110C;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--serif);
+    background: linear-gradient(to bottom, var(--night) 0%, var(--dusk) 38%, var(--violet) 68%, var(--ember) 96%);
+    min-height: 100vh;
+    color: var(--chalk);
+    line-height: 1.65;
+    font-size: 17px;
+    padding: 48px 24px 64px;
+  }
+  main { max-width: 760px; margin: 0 auto; text-align: center; }
+  .back {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .3em;
+    color: var(--gold-hi); text-decoration: none;
+  }
+  .back:hover { color: var(--chalk); }
+  .glyph { margin: 34px auto 26px; display: block; }
+  h1 {
+    font-size: clamp(38px, 7vw, 58px);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .sub { margin-top: 12px; font-style: italic; font-size: 19px; color: var(--parch); }
+  h2 {
+    font-size: 15px; font-family: var(--mono); font-weight: 400;
+    letter-spacing: .3em; text-transform: uppercase; color: var(--gold);
+    margin: 64px 0 18px;
+  }
+  h2::after { content: ""; display: block; width: 48px; height: 2px; background: var(--gold); margin: 12px auto 0; }
+  p.lede { max-width: 620px; margin: 0 auto; font-size: 18px; color: var(--parch); }
+  p.lede strong { color: var(--chalk); }
+  .buttons { margin-top: 36px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .button {
+    display: inline-block;
+    font-family: var(--mono); font-size: 15px; letter-spacing: .16em;
+    color: var(--ink); background: var(--gold);
+    text-decoration: none; padding: 18px 34px;
+    border: 1px solid var(--gold-hi);
+    box-shadow: 0 6px 30px rgba(201,162,39,.35);
+  }
+  .button:hover { background: var(--gold-hi); }
+  .button.ghost {
+    color: var(--gold-hi); background: transparent;
+    border: 1px solid rgba(201,162,39,.6); box-shadow: none;
+  }
+  .button.ghost:hover { color: var(--chalk); border-color: var(--chalk); }
+  .meta {
+    margin-top: 16px; font-family: var(--mono); font-size: 12.5px;
+    letter-spacing: .12em; color: rgba(216,208,188,.75);
+  }
+  .shots { margin-top: 26px; display: flex; gap: 18px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+  .shots img {
+    max-width: 100%; border: 1px solid rgba(201,162,39,.4);
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+  }
+  .shots .phone { width: 220px; }
+  .shots .pad { width: 420px; }
+  .shots figcaption {
+    margin-top: 10px; font-family: var(--mono); font-size: 11px;
+    letter-spacing: .18em; text-transform: uppercase; color: rgba(216,208,188,.65);
+  }
+  .cols {
+    margin: 26px auto 0; max-width: 680px; text-align: left;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 26px;
+  }
+  .col b { color: var(--gold-hi); font-family: var(--mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; display: block; margin-bottom: 8px; }
+  .col p { font-size: 15.5px; color: rgba(237,232,218,.85); }
+  .notes {
+    margin: 26px auto 0; max-width: 560px; text-align: left;
+    border-top: 1px solid rgba(237,232,218,.25); padding-top: 26px;
+    font-size: 15.5px; color: rgba(237,232,218,.85);
+  }
+  .notes p + p { margin-top: 12px; }
+  .notes b { color: var(--gold-hi); font-weight: 700; }
+  .fine {
+    margin-top: 40px; font-size: 13.5px; font-style: italic;
+    color: rgba(216,208,188,.55);
+  }
+  .fine a { color: var(--gold-hi); }
+  footer {
+    max-width: 760px; margin: 64px auto 0; padding-top: 16px;
+    border-top: 1px solid rgba(201,162,39,.45);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--parch);
+  }
+  footer a { color: var(--gold-hi); text-decoration: none; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../software/">&larr; RIVER.IO SOFTWARE</a>
+  <svg class="glyph" width="88" height="66" viewBox="0 0 88 66" aria-hidden="true">
+    <rect x="10" y="16" width="18" height="50" fill="#C9A227"/>
+    <rect x="60" y="16" width="18" height="50" fill="#C9A227"/>
+    <rect x="4" y="2" width="80" height="12" fill="#C9A227"/>
+  </svg>
+  <h1>Henge</h1>
+  <p class="sub">A photoreal Stonehenge that keeps real time.</p>
+
+  <p class="lede" style="margin-top:28px">The sun in Henge is not an animation.
+  It is <strong>computed</strong> &mdash; the same ephemeris astronomers use,
+  accurate across five thousand years &mdash; and the stones cast exactly the
+  shadows that sun demands. Stand at the Altar Stone on midsummer morning and
+  watch the sunrise arrive over the Heel Stone, within a solar diameter of
+  where the builders aligned it forty-five centuries ago.</p>
+
+  <div class="buttons">
+    <a class="button" href="https://apps.apple.com/app/id6798126839">ON THE APP&nbsp;STORE</a>
+    <a class="button ghost" href="Henge.dmg" download>MAC — DOWNLOAD .DMG</a>
+  </div>
+  <p class="meta">IPHONE &middot; IPAD &middot; iOS 17+ &nbsp;&nbsp;|&nbsp;&nbsp;
+  MAC v<!--v-->0.1.0<!--/v--> &middot; <!--s-->8.7M<!--/s--> &middot; UNIVERSAL &middot; macOS 14+</p>
+
+  <h2>The Instrument</h2>
+  <div class="shots">
+    <figure class="phone">
+      <img src="screenshots/midsummer-iphone.jpg" alt="Midsummer sunrise seen from the Altar Stone, the sun rising between the sarsens" loading="lazy">
+      <figcaption>Midsummer, on the axis</figcaption>
+    </figure>
+    <figure class="pad">
+      <img src="screenshots/almanac-ipad.jpg" alt="The full almanac readout on iPad: sundial, moon, pole star, alignments" loading="lazy">
+      <figcaption>The almanac, on iPad</figcaption>
+    </figure>
+    <figure class="phone">
+      <img src="screenshots/torchlight-iphone.jpg" alt="The stones by torchlight before dawn" loading="lazy">
+      <figcaption>Before dawn, by torchlight</figcaption>
+    </figure>
+  </div>
+
+  <div class="cols">
+    <div class="col">
+      <b>The Monument</b>
+      <p>The whole circle raised &mdash; thirty sarsens and their lintel ring, the
+      five great trilithons, the bluestones, the Altar, Slaughter and Heel
+      Stones, the Station Stone rectangle, the fifty-six Aubrey holes &mdash;
+      every stone carrying its Petrie number, standing on Salisbury Plain's own
+      surveyed ground.</p>
+    </div>
+    <div class="col">
+      <b>The Calendar</b>
+      <p>The Wheel of the Year lands each festival on the instant the sun
+      actually arrives, not a calendar date. Moon phases, eclipse seasons, the
+      18.6-year standstill &mdash; and a time machine from 3000&nbsp;BC to
+      AD&nbsp;3000, where Thuban holds the pole and Polaris stands aside.</p>
+    </div>
+    <div class="col">
+      <b>Honest Archaeology</b>
+      <p>Every claim carries its tier &mdash; Established, Debated, or Modern
+      tradition &mdash; with the sources one tap away. The solstice axis is
+      established. The equinoxes at Stonehenge are modern tradition, and the
+      app says so.</p>
+    </div>
+    <div class="col">
+      <b>Nothing Watching You</b>
+      <p>No account, no network, no analytics, no data collected. The almanac
+      works in a field with no signal. One optional purchase lifts the free
+      tier's session clock for good &mdash; no subscription. The
+      <a href="privacy.html" style="color:var(--gold-hi)">privacy policy</a> is
+      short because the data flows are short.</p>
+    </div>
+  </div>
+
+  <h2 id="support">Support</h2>
+  <div class="notes">
+    <p><b>Questions, bugs, archaeology quarrels:</b>
+    <a href="mailto:jeff@river.io" style="color:var(--gold-hi)">jeff@river.io</a>
+    &mdash; a person reads this, and citations are welcome ammunition.</p>
+    <p><b>Mac install:</b> open the image and drag Henge into Applications.
+    This early build is not yet notarized, so on first launch right-click the
+    app, choose <b>Open</b>, and confirm once &mdash; after that it opens
+    normally.</p>
+    <p><b>No account to recover, no password to reset:</b> there is nothing to
+    sign into. Purchases restore through the App Store on any of your devices
+    with the same Apple account.</p>
+  </div>
+
+  <p class="fine">The astronomy, the archaeology and the accuracy figures live on
+  <a href="https://spacetrucker2196.github.io/henge/">the research site</a>.</p>
+
+  <footer>
+    <span>&copy; river.io LLC</span>
+    <span><a href="privacy.html">Privacy</a> &middot; <a href="../index.html">river.io</a></span>
+  </footer>
+</main>
+</body>
+</html>
