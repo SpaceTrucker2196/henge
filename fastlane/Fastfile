@@ -172,6 +172,26 @@ platform :ios do
     )
   end
 
+  desc "Publish the app privacy answers — the one door an API key cannot open"
+  lane :privacy do
+    # Every other field of the listing rides the .p8. This one cannot:
+    # Apple's data-usage endpoints answer only to an Apple ID session, so
+    # this lane prompts for a password and a 2FA code and there is no way
+    # around that. The answers themselves are in the repo
+    # (app_privacy_details.json — Data Not Collected, which is true: no
+    # account, no network), so the human supplies authentication and
+    # nothing else.
+    #
+    # Until this is published, a review submission cannot even be built:
+    # POST /v1/reviewSubmissionItems refuses the version with
+    # STATE_ERROR.APP_DATA_USAGES_REQUIRED.
+    upload_app_privacy_details_to_app_store(
+      username: ENV["FASTLANE_USER"] || "jeff@river.io",
+      app_identifier: BUNDLE_ID,
+      json_path: "fastlane/app_privacy_details.json"
+    )
+  end
+
   desc "Push the App Store listing — metadata, screenshots, rating — from the repo"
   lane :store_metadata do
     key_path = asc_key_path

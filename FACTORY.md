@@ -134,6 +134,8 @@ simulator, exactly as the make targets do.
 | `fastlane ios sim` | build → install → launch on the booted simulator |
 | `fastlane ios uitest` | the pixel-level `BuildFlowUITests` inspection |
 | `fastlane ios beta` | archive, sign, upload to TestFlight |
+| `fastlane ios store_metadata` | push the listing — nine locales, screenshots, review info |
+| `fastlane ios privacy` | publish the app privacy answers (prompts for an Apple ID) |
 
 `make test` remains the oracle and the gate before any push; fastlane
 does not replace it.
@@ -221,10 +223,15 @@ What the survey of shipping this taught, so nobody re-derives it:
   data-usage endpoints answer only to an Apple ID session. The answers
   are `fastlane/app_privacy_details.json` (Data Not Collected — true:
   no account, no network); publishing them is a human step in App Store
-  Connect → App Privacy, or
-  `fastlane run upload_app_privacy_details_to_app_store` with an
-  Apple ID. Submission for review is blocked until it is done
-  (`STATE_ERROR.APP_DATA_USAGES_REQUIRED`).
+  Connect → App Privacy, or `fastlane ios privacy`, which carries the
+  repo's answers and asks the human for authentication and nothing
+  else. Submission is blocked until it is done, and blocked *early*:
+  the refusal is not at submit but at `POST /v1/reviewSubmissionItems`,
+  which will not accept the version at all
+  (`STATE_ERROR.ENTITY_STATE_INVALID`, associated error
+  `STATE_ERROR.APP_DATA_USAGES_REQUIRED`). That error carries every
+  other reason a version is unreviewable, so an empty list beside the
+  privacy one means privacy is the only thing left.
 - **Everything else went through the API key**: version string 0.1.0,
   copyright, categories (EDUCATION / REFERENCE), review contact, price
   (free; base territory USA), availability (all 175 territories,
@@ -278,7 +285,10 @@ go back if that ever changes.
 
 ### One-time wiring in App Store Connect
 
-Nothing here is automatable; all of it is behind an Apple ID.
+Nothing here is automatable; all of it is behind an Apple ID. **None of
+it is done yet** — as of 2026-08-13 the account has Xcode Cloud products
+for the six siblings and none for Henge, so the `v*` tag triggers
+nothing and every build so far has gone through the local door.
 
 1. The **app record** must exist first (see below) — Xcode Cloud is
    configured *on* an app, so there is nowhere to enable it until then.
