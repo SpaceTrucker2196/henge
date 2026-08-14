@@ -73,3 +73,4 @@ the whole ledger: `ledger.py --energy-total`.
 | b811bb1 | 2026-08-05T14:54:30Z | claude-opus-5 | 171 | 26878 | 56487408 | 1927579 | 48.1923 | Complete TestFlight test information and submit the first build to Beta App Revi |
 | 461b0d8 | 2026-08-11T20:27:10Z | claude-fable-5,claude-opus-5 | 28546 | 333214 | 50624367 | 689211 | 80.9847 | Stage the App Store listing: nine-locale metadata, screenshots, IAP, pricing, av |
 | f3187c5 | 2026-08-12T02:50:58Z | claude-fable-5 | 154 | 65173 | 20906133 | 1374720 | 51.6607 | Repo-owned marketing site: docs/ + deploy-site.sh (nighthawk pattern), privacy u |
+| 9ad9a75 | 2026-08-14T03:35:41Z | claude-fable-5,claude-opus-5 | 172 | 37332 | 6701880 | 164782 | 6.5137 | Cut build 2, attach to 0.1.0, add fastlane ios privacy lane |
