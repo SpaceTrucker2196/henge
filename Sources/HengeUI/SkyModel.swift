@@ -94,7 +94,14 @@ public final class SkyModel {
     public var cameraAzimuth: Double
     public var cameraElevation: Double
     public var cameraDistance: Double
-    public var station: Station
+
+    /// Where the visitor is standing. Moving is a cut, not a pan, so any
+    /// momentum the old view had is dropped on the way: carrying it across
+    /// would swing the new station away from the thing it was chosen to show
+    /// in the first second of arriving there.
+    public var station: Station {
+        didSet { if station != oldValue { drift.stop() } }
+    }
 
     /// Where a standing viewer is looking, relative to the station's own
     /// bearing, and how far up or down.
@@ -298,11 +305,20 @@ public final class SkyModel {
         Sun.horizontal(at: time, site: site)
     }
 
-    /// How far the eye must clear the turf, metres.
+    /// How far the eye must clear the turf, metres. Five feet.
     ///
-    /// Not zero: a camera exactly on the ground plane sees the horizon through
-    /// the grass and clips into the soil banked around the stones.
-    public static let minimumClearance = 0.35
+    /// Not zero, and no longer the old 0.35 m. A camera on the ground plane
+    /// sees the horizon through the grass and clips into the soil banked
+    /// around the stones, so there was always a floor — but a floor of a third
+    /// of a metre is a floor for a *lens*, and the view it gives is one no
+    /// visitor has ever had. Freeing the camera to swing all the way down (see
+    /// `elevationLimits`) made that the common case rather than the corner
+    /// one, so the floor becomes eye level instead: 5 ft, 1.524 m, the height
+    /// a shortish adult looks out from.
+    ///
+    /// The ground stations are unaffected — they stand at 1.7 m, which already
+    /// clears this.
+    public static let minimumClearance = 1.524
 
     /// Keep the eye above the ground it is actually over.
     ///
@@ -724,22 +740,108 @@ public final class SkyModel {
 
     // ── gestures ────────────────────────────────────────────────────────────
 
+    /// How far the aerial camera may be tipped, degrees.
+    ///
+    /// The bottom stop is far below the horizon on purpose. The real floor is
+    /// the ground, and the ground is a heightfield — it stops the eye at a
+    /// different angle from every bearing, so an angular stop can only be
+    /// wrong. `liftAboveGround` is the honest limit; this pair only keeps the
+    /// look-at basis away from straight up, where it degenerates and the
+    /// horizon rolls over.
+    public static let elevationLimits = -85.0...85.0
+
+    /// The same, for a head turned on the ground.
+    public static let pitchLimits = -85.0...85.0
+
+    /// Whether a drag hands the view momentum instead of moving it directly.
+    ///
+    /// Off by default: direct dragging is precise, and precision is what you
+    /// want when you are lining an eye up on a sunrise. On, the view gains
+    /// mass — see `CameraDrift` — which is the only way to get a pan, tilt or
+    /// crane move slow and even enough to watch.
+    public var smoothPan = false
+
+    /// The momentum itself. Ignored by observation: it changes every frame
+    /// while a drift is running, and a view that redrew on it would redraw on
+    /// its own animation.
+    @ObservationIgnored private var drift = CameraDrift()
+
     /// Drag. From the air this orbits the monument; on the ground it turns your
     /// head, because walking backwards through a stone circle to get a wider
     /// view is not a thing a person can do.
+    ///
+    /// With `smoothPan` on the drag becomes a push rather than a move, and the
+    /// turning happens in `advance(byRealSeconds:)` for as long as the momentum
+    /// lasts. The gain is the same either way — a held drag settles at exactly
+    /// the direct speed — so the two modes cannot disagree about what a gesture
+    /// is worth. Only about when it arrives.
     public func drag(by translation: SIMD2<Double>) {
-        if station == .aerial {
-            cameraAzimuth = (cameraAzimuth - translation.x * 0.35)
-                .truncatingRemainder(dividingBy: 360)
-            if cameraAzimuth < 0 { cameraAzimuth += 360 }
-            cameraElevation = min(max(cameraElevation + translation.y * 0.22, -2), 85)
+        let degrees = turn(forDrag: translation)
+        if smoothPan {
+            drift.push(degrees)
         } else {
-            lookBearingOffset -= translation.x * 0.22
-            // Stop short of straight up and straight down: the look-at basis
-            // degenerates there and the horizon rolls over.
-            lookPitch = min(max(lookPitch + translation.y * 0.18, -35), 70)
+            turn(by: degrees)
         }
     }
+
+    /// What a drag of this many points is worth in degrees, at this station.
+    ///
+    /// `x` swings the view about the vertical and `y` tips it, both already
+    /// carrying the sign the camera wants: dragging right swings the monument
+    /// right, which means the eye goes the other way.
+    private func turn(forDrag translation: SIMD2<Double>) -> SIMD2<Double> {
+        station == .aerial
+            ? SIMD2(-translation.x * 0.35, translation.y * 0.22)
+            : SIMD2(-translation.x * 0.22, translation.y * 0.18)
+    }
+
+    /// Apply a turn, and tell the momentum when it has run into a stop.
+    ///
+    /// Momentum pressing against a limit has to be taken out of the axis, or
+    /// the camera stays pinned to the floor for as long as the flick lasts and
+    /// a user who let go watches a view that will not settle.
+    private func turn(by degrees: SIMD2<Double>) {
+        guard degrees != .zero else { return }
+        if station == .aerial {
+            cameraAzimuth = (cameraAzimuth + degrees.x)
+                .truncatingRemainder(dividingBy: 360)
+            if cameraAzimuth < 0 { cameraAzimuth += 360 }
+            let wanted = cameraElevation + degrees.y
+            cameraElevation = min(max(wanted, Self.elevationLimits.lowerBound),
+                                  Self.elevationLimits.upperBound)
+            if cameraElevation != wanted { drift.stopTilting() }
+        } else {
+            lookBearingOffset += degrees.x
+            let wanted = lookPitch + degrees.y
+            lookPitch = min(max(wanted, Self.pitchLimits.lowerBound),
+                            Self.pitchLimits.upperBound)
+            if lookPitch != wanted { drift.stopTilting() }
+        }
+    }
+
+    /// Spend a frame's worth of momentum. Does nothing when the view is still,
+    /// and nothing at all when smooth panning is off.
+    private func advanceDrift(by seconds: Double) {
+        guard drift.isMoving else { return }
+        turn(by: drift.advance(by: seconds))
+    }
+
+    /// The finger has left the glass.
+    ///
+    /// From here the momentum runs on under lighter friction and the view
+    /// carries past where the hand stopped — see `CameraDrift`'s two time
+    /// constants. Without this call the view would keep the heavier tracking
+    /// friction and settle too soon, which is exactly how it felt on the
+    /// device before the owner tried it.
+    public func endDrag() { drift.release() }
+
+    /// Take the momentum out of the view. A change of station or a recentre
+    /// is a cut, not a move, and momentum carried across one would swing the
+    /// new view away from the thing it was chosen to show.
+    public func stopDrifting() { drift.stop() }
+
+    /// Whether the view is still coasting. The scene keeps drawing while it is.
+    public var isDrifting: Bool { drift.isMoving }
 
     /// Pinch is a lens, everywhere — the owner's order: zooming out widens
     /// the field of view so more of the sky comes into frame, like backing
@@ -753,6 +855,7 @@ public final class SkyModel {
 
     /// Put the view back where the station intends it to point.
     public func recentre() {
+        drift.stop()
         lookBearingOffset = 0
         lookPitch = 0
         fieldOfView = 62
@@ -769,6 +872,10 @@ public final class SkyModel {
     /// astronomical clock is paused.
     public func advance(byRealSeconds seconds: Double) {
         windTime += seconds
+        // Momentum is wall-clock too, and for the same reason: the view coasts
+        // to a stop in the time the hand expects, whether the sun is paused,
+        // running, or sweeping a year a minute.
+        advanceDrift(by: seconds)
         // The era transition owns the clock while it plays: the calendar
         // follows the timeline's path between the eras, and the ordinary
         // time-lapse waits its turn.
