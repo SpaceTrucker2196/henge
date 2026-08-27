@@ -17,6 +17,11 @@ struct HengeApp: App {
         #if os(macOS)
         .defaultSize(width: 1100, height: 760)
         .windowResizability(.contentMinSize)
+        // The Mac's keyboard and assistive route to every function the
+        // floating rails offer. See `HengeCommands` and GitHub issue #1:
+        // before this, a rail was the only way in, which for a keyboard-only
+        // or Switch Control user is no way in at all.
+        .commands { HengeCommands() }
         #endif
     }
 }

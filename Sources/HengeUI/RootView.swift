@@ -91,7 +91,8 @@ public struct RootView: View {
                             // centred over a stack of plates lands on a seam.
                             .overlay(alignment: .leading) {
                                 drawerHandle(isOpen: true, edge: .leading,
-                                             label: "chrome.drawer.hide") {
+                                             label: "chrome.drawer.hide",
+                                             identifier: "henge.chrome.controls") {
                                     controlsDrawerOpen = false
                                 }
                                 .offset(x: drawerTabOverhang)
@@ -107,7 +108,8 @@ public struct RootView: View {
         .overlay(alignment: .bottomLeading) {
             if !controlsDrawerOpen {
                 drawerHandle(isOpen: false, edge: .leading,
-                             label: "chrome.drawer.show") {
+                             label: "chrome.drawer.show",
+                             identifier: "henge.chrome.controls") {
                     controlsDrawerOpen = true
                 }
                 // Flush with the screen edge, the way a closed drawer's tab
@@ -206,7 +208,8 @@ public struct RootView: View {
                         // the container, on the plate's edge, one material.
                         .overlay(alignment: .leading) {
                             drawerHandle(isOpen: true, edge: .leading,
-                                         label: "chrome.strip.hide") {
+                                         label: "chrome.strip.hide",
+                                         identifier: "henge.chrome.strip") {
                                 stripDrawerOpen = false
                             }
                             .offset(x: drawerTabOverhang)
@@ -223,7 +226,8 @@ public struct RootView: View {
         .overlay(alignment: .topLeading) {
             if showingAlmanac, !stripDrawerOpen {
                 drawerHandle(isOpen: false, edge: .leading,
-                             label: "chrome.strip.show") {
+                             label: "chrome.strip.show",
+                             identifier: "henge.chrome.strip") {
                     stripDrawerOpen = true
                 }
                 .offset(x: drawerTabTuck)
@@ -255,6 +259,7 @@ public struct RootView: View {
                             starLabelToggle
                             constellationToggle
                             zodiacToggle
+                            smoothPanToggle
                         }
                         .padding(.vertical, Henge.Space.tight)
                     }
@@ -276,6 +281,11 @@ public struct RootView: View {
         .animation(Henge.settle(reduceMotion), value: store.access.isLocked)
         .foregroundStyle(Henge.stone)
         .tint(Henge.bronze)
+        // The menu bar reaches the model through the focused scene rather
+        // than through a shared instance: two windows are two moments.
+        #if os(macOS)
+        .focusedSceneValue(\.hengeModel, model)
+        #endif
         .task { await runClock() }
         .task { await store.start() }
         .task {
@@ -358,6 +368,7 @@ public struct RootView: View {
     /// grabber glyph and the eye already knows what it means.
     private func drawerHandle(isOpen: Bool, edge: HorizontalEdge,
                               label: LocalizedStringKey,
+                              identifier: String,
                               toggle: @escaping () -> Void) -> some View {
         Button {
             withAnimation(Henge.settle(reduceMotion)) { toggle() }
@@ -373,6 +384,11 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(Henge.stone)
+        // Without one of these, SwiftUI hands the AX API the SF Symbol's own
+        // name as the identifier, and every drawer tab in the app answers to
+        // "chevron.compact.left". That is what made driving the Mac build by
+        // accessibility impossible in issue #1.
+        .accessibilityIdentifier(identifier)
         .accessibilityLabel(Text(label, bundle: .module))
         .accessibilityHint(Text("chrome.drawer.hint", bundle: .module))
     }
@@ -397,6 +413,7 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(Henge.stone)
+        .accessibilityIdentifier("henge.chrome.rail")
         .accessibilityLabel(Text(isOpen ? "chrome.rail.hide" : "chrome.rail.show",
                                  bundle: .module))
         .accessibilityHint(Text("chrome.rail.hint", bundle: .module))
@@ -421,7 +438,10 @@ public struct RootView: View {
                                              Double(value.translation.height - lastDrag.height)))
                         lastDrag = value.translation
                     }
-                    .onEnded { _ in lastDrag = .zero }
+                    .onEnded { _ in
+                        lastDrag = .zero
+                        model.endDrag()
+                    }
                     .simultaneously(with:
                         MagnifyGesture(minimumScaleDelta: 0)
                             .onChanged { value in
@@ -441,14 +461,17 @@ public struct RootView: View {
                     model.recentre()
                 }
             }
+            .accessibilityIdentifier("henge.scene")
             .accessibilityLabel(Text("scene.label", bundle: .module))
             .accessibilityHint(Text("scene.hint", bundle: .module))
             .accessibilityAction(named: Text("scene.action.recentre",
                                              bundle: .module)) { model.recentre() }
             // VoiceOver cannot pinch. Zoom has to be reachable as an action or
             // it does not exist for anyone using it — invariant 7.
-            .accessibilityAction(named: "Zoom in") { model.zoom(by: 1.25) }
-            .accessibilityAction(named: "Zoom out") { model.zoom(by: 0.8) }
+            .accessibilityAction(named: Text("scene.action.zoomIn",
+                                             bundle: .module)) { model.zoom(by: 1.25) }
+            .accessibilityAction(named: Text("scene.action.zoomOut",
+                                             bundle: .module)) { model.zoom(by: 0.8) }
             .modifier(ScrollZoom { model.zoom(by: $0) })
     }
 
@@ -480,6 +503,7 @@ public struct RootView: View {
                     .hengeControl(isSelected: model.station == station)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("henge.station.\(station.rawValue)")
                 .accessibilityLabel(station.localizedName)
                 .accessibilityAddTraits(model.station == station ? [.isSelected] : [])
             }
@@ -574,7 +598,10 @@ public struct RootView: View {
             }
             .buttonStyle(.plain)
             .hengeControl()
-            .accessibilityLabel(model.isPlaying ? "Pause time" : "Run time forward")
+            .accessibilityIdentifier("henge.control.play")
+            .accessibilityLabel(Text(model.isPlaying
+                                     ? "control.play.pause" : "control.play.run",
+                                     bundle: .module))
             .padding(.trailing, Henge.Space.element)
 
             ForEach(Self.rates, id: \.label) { rate in
@@ -587,6 +614,7 @@ public struct RootView: View {
                     .buttonStyle(.plain)
                     .disabled(!allowed)
                     .opacity(allowed ? 1 : 0.35)
+                    .accessibilityIdentifier("henge.rate.\(rate.label)")
                     .accessibilityLabel(Text("rate.perSecond \(rate.label)",
                                              bundle: .module))
                     .accessibilityHint(allowed ? Text("")
@@ -600,6 +628,7 @@ public struct RootView: View {
                 Image(systemName: "chevron.left").frame(width: 28, height: 30)
             }
             .buttonStyle(.plain).hengeControl()
+            .accessibilityIdentifier("henge.control.backOneDay")
             .accessibilityLabel(Text("control.backOneDay", bundle: .module))
 
             Button { model.time = JulianDay(Date()) } label: {
@@ -610,17 +639,20 @@ public struct RootView: View {
                 .padding(.horizontal, 10).padding(.vertical, 7)
                 .hengeControl()
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("henge.control.now")
 
             Button { model.jump(toDaysFromNow: 1) } label: {
                 Image(systemName: "chevron.right").frame(width: 28, height: 30)
             }
             .buttonStyle(.plain).hengeControl()
+            .accessibilityIdentifier("henge.control.forwardOneDay")
             .accessibilityLabel(Text("control.forwardOneDay", bundle: .module))
 
             Button { showingLore = true } label: {
                 Image(systemName: "book.closed").frame(width: 34, height: 30)
             }
             .buttonStyle(.plain).hengeControl()
+            .accessibilityIdentifier("henge.control.lore")
             .accessibilityLabel(Text("control.lore", bundle: .module))
             .accessibilityHint(Text("control.lore.hint", bundle: .module))
 
@@ -628,6 +660,7 @@ public struct RootView: View {
                 Image(systemName: "info.circle").frame(width: 34, height: 30)
             }
             .buttonStyle(.plain).hengeControl()
+            .accessibilityIdentifier("henge.control.about")
             .accessibilityLabel(Text("control.about", bundle: .module))
             .accessibilityHint(Text("control.about.hint", bundle: .module))
     }
@@ -669,7 +702,11 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(Henge.stone)
-        .accessibilityLabel(showingAlmanac ? "Hide the almanac" : "Show the almanac")
+        .accessibilityIdentifier("henge.toggle.almanac")
+        .accessibilityLabel(Text(showingAlmanac
+                                 ? "toggle.almanac.hide" : "toggle.almanac.show",
+                                 bundle: .module))
+        .accessibilityAddTraits(showingAlmanac ? [.isSelected] : [])
     }
 
     /// The reading strip. What was a tall corner panel is now columns across
@@ -694,8 +731,11 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.showsAlignmentOverlay ? Henge.bronze : Henge.stone)
-        .accessibilityLabel(model.showsAlignmentOverlay
-                            ? "Hide the alignment lines" : "Show the alignment lines")
+        .accessibilityIdentifier("henge.toggle.overlay")
+        .accessibilityLabel(Text(model.showsAlignmentOverlay
+                                 ? "toggle.overlay.hide" : "toggle.overlay.show",
+                                 bundle: .module))
+        .accessibilityAddTraits(model.showsAlignmentOverlay ? [.isSelected] : [])
         .accessibilityHint(Text("toggle.overlay.hint", bundle: .module))
     }
 
@@ -729,8 +769,47 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.torchlight ? Henge.bronze : Henge.stone)
-        .accessibilityLabel(model.torchlight ? "Put out the torch" : "Light the torch")
+        .accessibilityIdentifier("henge.toggle.torch")
+        .accessibilityLabel(Text(model.torchlight
+                                 ? "toggle.torch.out" : "toggle.torch.light",
+                                 bundle: .module))
+        .accessibilityAddTraits(model.torchlight ? [.isSelected] : [])
         .accessibilityHint(Text("toggle.torch.hint", bundle: .module))
+    }
+
+    /// Give the view weight.
+    ///
+    /// Off, a drag moves the camera exactly as far as the finger and stops
+    /// dead — precise, and what you want when lining an eye up on a sunrise.
+    /// On, the drag becomes a push: the view builds up speed, lags the hand,
+    /// and coasts to a stop on the same curve it started on. That is the only
+    /// way to get a pan, tilt or crane move slow and even enough to watch,
+    /// because no hand is steady enough to fake one.
+    ///
+    /// The physics is `CameraDrift`, in `HengeGeometry`, where a test can
+    /// reach it. Nothing is decided here.
+    private var smoothPanToggle: some View {
+        Button {
+            model.smoothPan.toggle()
+            // Turning it off must not leave the view coasting: the control
+            // says "stop carrying momentum", and a view that kept gliding for
+            // another second would be answering the opposite question.
+            if !model.smoothPan { model.stopDrifting() }
+        } label: {
+            Image(systemName: model.smoothPan ? "hand.draw.fill" : "hand.draw")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.smoothPan)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(model.smoothPan ? Henge.bronze : Henge.stone)
+        .accessibilityIdentifier("henge.toggle.smoothPan")
+        .accessibilityLabel(Text(model.smoothPan
+                                 ? "toggle.smoothPan.off" : "toggle.smoothPan.on",
+                                 bundle: .module))
+        .accessibilityHint(Text("toggle.smoothPan.hint", bundle: .module))
+        .accessibilityAddTraits(model.smoothPan ? [.isSelected] : [])
     }
 
     /// The sky's condition, cycled: clear, overcast, rain, frost. Dressing,
@@ -752,6 +831,7 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.weather != .clear ? Henge.bronze : Henge.stone)
+        .accessibilityIdentifier("henge.toggle.weather")
         .accessibilityLabel(Text("toggle.weather.label", bundle: .module))
         .accessibilityValue(model.weather.localizedName)
         .accessibilityHint(Text("toggle.weather.hint", bundle: .module))
@@ -783,9 +863,12 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.showsConstellationLines ? Henge.bronze : Henge.stone)
-        .accessibilityLabel(model.showsConstellationLines
-                            ? "Hide the constellation figures"
-                            : "Show the constellation figures")
+        .accessibilityIdentifier("henge.toggle.constellations")
+        .accessibilityLabel(Text(model.showsConstellationLines
+                                 ? "toggle.constellations.hide"
+                                 : "toggle.constellations.show",
+                                 bundle: .module))
+        .accessibilityAddTraits(model.showsConstellationLines ? [.isSelected] : [])
         .accessibilityHint(Text("toggle.constellations.hint", bundle: .module))
     }
 
@@ -801,8 +884,11 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.showsZodiac ? Henge.bronze : Henge.stone)
-        .accessibilityLabel(model.showsZodiac
-                            ? "Hide the zodiac" : "Show the zodiac")
+        .accessibilityIdentifier("henge.toggle.zodiac")
+        .accessibilityLabel(Text(model.showsZodiac
+                                 ? "toggle.zodiac.hide" : "toggle.zodiac.show",
+                                 bundle: .module))
+        .accessibilityAddTraits(model.showsZodiac ? [.isSelected] : [])
         .accessibilityHint(Text("toggle.zodiac.hint", bundle: .module))
     }
 
@@ -827,9 +913,11 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.monumentState == .asItWas ? Henge.bronze : Henge.stone)
-        .accessibilityLabel(model.monumentState == .asItWas
-                            ? "Showing the monument as built"
-                            : "Showing the ruin as it stands")
+        .accessibilityIdentifier("henge.toggle.monument")
+        .accessibilityLabel(Text(model.monumentState == .asItWas
+                                 ? "toggle.monument.built" : "toggle.monument.ruin",
+                                 bundle: .module))
+        .accessibilityAddTraits(model.monumentState == .asItWas ? [.isSelected] : [])
         .accessibilityHint(Text("toggle.monument.hint", bundle: .module))
     }
 
@@ -846,8 +934,11 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.showsStarLabels ? Henge.bronze : Henge.stone)
-        .accessibilityLabel(model.showsStarLabels
-                            ? "Hide the star names" : "Show the star names")
+        .accessibilityIdentifier("henge.toggle.starLabels")
+        .accessibilityLabel(Text(model.showsStarLabels
+                                 ? "toggle.starLabels.hide" : "toggle.starLabels.show",
+                                 bundle: .module))
+        .accessibilityAddTraits(model.showsStarLabels ? [.isSelected] : [])
         .accessibilityHint(Text("toggle.starLabels.hint", bundle: .module))
     }
 
@@ -867,8 +958,11 @@ public struct RootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(model.showsLunarMarkers ? Henge.bronze : Henge.stone)
-        .accessibilityLabel(model.showsLunarMarkers
-                            ? "Hide the eclipse markers" : "Show the eclipse markers")
+        .accessibilityIdentifier("henge.toggle.markers")
+        .accessibilityLabel(Text(model.showsLunarMarkers
+                                 ? "toggle.markers.hide" : "toggle.markers.show",
+                                 bundle: .module))
+        .accessibilityAddTraits(model.showsLunarMarkers ? [.isSelected] : [])
         .accessibilityHint(Text("toggle.markers.hint", bundle: .module))
     }
 
@@ -909,6 +1003,7 @@ public struct RootView: View {
                     .buttonStyle(.plain)
                     .hengeControl()
                     .padding(.top, 2)
+                    .accessibilityIdentifier("henge.control.travel")
                     .accessibilityHint(Text("almanac.travel.hint", bundle: .module))
                 }
 
@@ -992,6 +1087,9 @@ public struct RootView: View {
                                 .padding(.horizontal, 8).padding(.vertical, 5)
                                 .hengeControl(isSelected: model.viewpoint == viewpoint)
                                 .buttonStyle(.plain)
+                                .accessibilityIdentifier("henge.viewpoint.\(viewpoint.rawValue)")
+                                .accessibilityAddTraits(model.viewpoint == viewpoint
+                                                        ? [.isSelected] : [])
                         }
                     }
                 }
