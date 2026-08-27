@@ -75,3 +75,4 @@ the whole ledger: `ledger.py --energy-total`.
 | f3187c5 | 2026-08-12T02:50:58Z | claude-fable-5 | 154 | 65173 | 20906133 | 1374720 | 51.6607 | Repo-owned marketing site: docs/ + deploy-site.sh (nighthawk pattern), privacy u |
 | 9ad9a75 | 2026-08-14T03:35:41Z | claude-fable-5,claude-opus-5 | 172 | 37332 | 6701880 | 164782 | 6.5137 | Cut build 2, attach to 0.1.0, add fastlane ios privacy lane |
 | 97dd765 | 2026-08-27T20:35:00Z | claude-opus-5 | 650 | 295078 | 43012019 | 1018726 | 39.0735 | Give a dragged view mass, so the camera can make a crane move |
+| e37622e | 2026-08-27T20:35:32Z | claude-opus-5 | 8 | 1947 | 887065 | 2188 | 0.5141 | Give every control a name the accessibility tree can read |
