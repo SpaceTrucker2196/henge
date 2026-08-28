@@ -40,6 +40,17 @@ def regenerate
   sh("cd .. && make generate")
 end
 
+# The one place the version is written down is project.yml, so read it
+# there rather than repeating it. A second copy is a copy that goes stale:
+# this lane's own comment already promised the version "follows
+# MARKETING_VERSION" while a literal underneath it said 0.1.0, which would
+# have pushed the 0.2.0 listing onto the 0.1.0 record.
+def marketing_version
+  File.read(File.expand_path("../project.yml", __dir__))[
+    /^\s*MARKETING_VERSION:\s*"([^"]+)"/, 1
+  ] or UI.user_error!("no MARKETING_VERSION in project.yml")
+end
+
 platform :ios do
   desc "Debug build for the simulator — the factory's warning-clean check"
   lane :build do
@@ -210,7 +221,7 @@ platform :ios do
     deliver(
       api_key: api_key,
       app_identifier: BUNDLE_ID,
-      app_version: "0.1.0",
+      app_version: marketing_version,
       # The age rating is NOT pushed from here: Apple's 2025 declaration
       # schema (advertising, ageAssurance, …) predates this fastlane and
       # the upload fails. fastlane/rating.json records the answers; they
