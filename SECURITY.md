@@ -8,6 +8,17 @@ user chooses. The thing to protect is therefore the *absence* of a surface:
 this app should still work, unchanged, on a phone in a field with the radios
 off.
 
+The claim about location is a design decision rather than an accident, and it
+is worth recording here. The "Here" viewpoint, which puts the sky over the
+user's own meridian, derives its longitude from the device's *time zone*: the
+standard offset at 15° per hour, with daylight saving removed first. It does
+not use CoreLocation. Nothing in the app imports that framework, no
+`NSLocation*` usage string exists in either target, and no location permission
+is ever requested. The cost is real and is stated at `SkyModel.deviceSite`: a
+time zone can be 7.5° wide, which is half an hour of solar time. The trade was
+taken deliberately, because a monument that works in a field with no signal
+should not need permission to tell you where the sun is.
+
 The house rule across river.io software applies: data stays on the device that
 made it.
 
@@ -16,15 +27,29 @@ made it.
 Every network destination, credential, and external process this repo touches.
 Adding to this list is a stops-and-asks (`factory/dark-factory.md` §4).
 
-- **none.** `Package.swift` declares no remote dependencies; the app makes no
-  network calls; there are no credentials, no entitlements beyond the default,
-  and no external processes. A cold clone builds offline.
+- **The app itself: none.** `Package.swift` declares no remote dependencies.
+  There is no `URLSession`, no socket, no App Transport Security configuration,
+  no credentials, and no external processes. A cold clone builds offline and the
+  almanac works with the radios off.
+- **StoreKit, and only StoreKit.** Added with the paywall on 2026-08-04, and
+  the reason this section no longer reads a flat "none". Buying or restoring the
+  non-consumable `io.river.henge.full` goes through Apple's framework to Apple's
+  servers. The app never sees a payment detail, there is no river.io server for
+  anything to reach, and nothing about the user or the dates they choose leaves
+  the device. The session clock and the entitlement are evaluated locally
+  (`HengeStore/TrialClock.swift`, `HengeStore/Entitlement.swift`); purchase
+  state arrives through `Transaction.updates` and nowhere else. The store
+  listing's "no network" claim stands on this distinction: the app does not
+  phone home, and the one outbound path is Apple's purchase pipe.
 
 ## Data provenance
 
 Astronomical data is vendored, not fetched. Each row records what it is, where
 it came from, and under what terms — because MISSION.md invariant 5 makes
 adding a data set a deliberate act rather than a convenience.
+
+Every row below was re-checked against the shipping source on 2026-09-07,
+the day after 0.2.0 went on sale.
 
 | Data | Source | Licence | Status |
 |---|---|---|---|
@@ -39,8 +64,7 @@ adding a data set a deliberate act rather than a convenience.
 | Planetary theory | **VSOP87D** — Bretagnon & Francou, "Planetary theories in rectangular and spherical variables", A&A 202, 309 (1988); machine-readable tables from CDS VI/81 | Freely redistributed by CDS; cited here and in the generated source | **In use** — `Sources/HengeAstro/VSOP87Tables.swift`, truncated to terms worth ≥ 0.2″ over ±5 millennia (2,774 terms, Earth + the naked-eye five) |
 | Star names | **IAU-CSN** — the IAU Working Group on Star Names' Catalog of Star Names, maintained by E. Mamajek | Official IAU nomenclature, freely published; cited here and in `StarCatalog.swift` | **In use** — the 338 register names matching the bundled catalogue, generated into `StarCatalog.properNames` by `scripts/generate_star_names.py` |
 | Constellation figures | **Authored in-repo** — which pairs of stars to join was drawn by hand for this app (`scripts/generate_constellation_lines.py`); constellation membership itself is ancient common knowledge (Ptolemy's *Almagest*) and star positions come from the Hipparcos row above | No external stick-figure dataset consulted — that authorship is what keeps the layer licence-free where the published figure sets (Stellarium sky cultures, H. A. Rey) were not | **In use** — 29 figures, 188 segments, `Sources/HengeGeometry/ConstellationLines.swift` |
-| Constellation figures | — | — | **Dropped from scope** (owner, 2026-07-27). Stars will be drawn as a field without lines, which removes the only GPL entanglement in the project |
-| Lunar theory | ELP2000 truncation, from the IMCCE-published series | To be confirmed before vendoring | Pending (M3) |
+| Lunar theory | **Meeus, *Astronomical Algorithms* 2nd ed., ch. 47**, a truncation of ELP-2000/82, keeping the larger periodic terms rather than the full series | Algorithms, implemented from the published method and cited. No series vendored | **In use** (M3) — `Sources/HengeAstro/Moon.swift`; checked against Meeus's own worked example to 0.01° in longitude and latitude and 60 km in distance |
 | Milky Way texture | undecided | — | Pending (M3) |
 
 The terrain is the first data this repo vendors, and it went in under the rule
@@ -94,10 +118,13 @@ were incorporated; what was taken is knowledge, not data.
   its software. Hipparcos gives the same ~9,000 stars brighter than magnitude
   6.5 with terms that are unambiguous.
 - **Stellarium's constellation lines are GPL** and therefore incompatible with
-  a closed application. Rather than draw a set or license one, constellation
-  figures were dropped from scope. The sky gets stars without lines, which is
-  arguably truer to what the builders saw anyway — the figures are a much later
-  overlay on the same points of light.
+  a closed application, and H. A. Rey's figures are in copyright. The feature
+  was dropped for that reason on 2026-07-27, then recovered three days later by
+  a third route: the figures were authored in this repo rather than licensed
+  from anyone. 29 figures, 188 segments, drawn by hand against the bundled
+  catalogue. Membership is Ptolemy's, the positions are Hipparcos's, the drawing
+  is ours. That authorship is the whole reason the layer ships at all. See the
+  constellation figures row above.
 - **Pole stars** are seven published J2000 positions cited as constants, not a
   catalogue. Nothing to license.
 - **Meeus's printed tables are not transcribed wholesale.** Algorithms are
