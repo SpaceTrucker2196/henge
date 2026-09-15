@@ -75,6 +75,9 @@
 "info.credit.vsop" = "Les planètes — de Mercure à Saturne";
 "info.privacy" = "River.io — les données restent sur l’appareil ; cette app n’effectue aucun appel réseau.";
 "info.standingOn" = "Il repose sur";
+"info.thanks" = "Avec nos remerciements à";
+"info.thanks.benton" = "La ligne d’horizon au nord-est — une vérification indépendante de l’endroit où le soleil du solstice d’été franchit réellement la crête";
+"info.thanks.hoyle" = "L’horizon photographié du cercle de pierres";
 "lore.close" = "Fermer le savoir";
 "lore.monument.altarStone.body" = "La dalle de six tonnes couchée à plat au cœur du monument ne vient pas du pays de Galles, comme on l’a longtemps supposé avec les pierres bleues. La datation de grains de zircon, d’apatite et de rutile qu’elle contient rattache la pierre au bassin orcadien du nord-est de l’Écosse — à au moins 750 km, probablement déplacée par voie maritime. Le résultat plaide pour une ampleur des contacts néolithiques à longue distance à travers la Grande-Bretagne qu’on ne créditait pas jusqu’ici à cette période.";
 "lore.monument.altarStone.title" = "l’Altar Stone";

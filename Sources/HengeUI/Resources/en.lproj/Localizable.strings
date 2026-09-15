@@ -75,6 +75,9 @@
 "info.credit.vsop" = "The planets — Mercury to Saturn";
 "info.privacy" = "River.io — data stays on the device; this app makes no network calls at all.";
 "info.standingOn" = "Standing on";
+"info.thanks" = "With thanks to";
+"info.thanks.benton" = "The north-east skyline — an independent check of where the midsummer sun actually clears the ridge";
+"info.thanks.hoyle" = "The photographed horizon of the stone circle";
 "lore.close" = "Close the lore";
 "lore.monument.altarStone.body" = "The six-tonne slab lying flat at the monument's heart is not from Wales, as long assumed alongside the bluestones. Dating of zircon, apatite and rutile grains within it traces the stone to the Orcadian Basin of north-east Scotland — at least 750 km away, likely moved by sea. The finding argues for a scale of Neolithic long-range contact across Britain not previously credited for this period.";
 "lore.monument.altarStone.title" = "The Altar Stone";

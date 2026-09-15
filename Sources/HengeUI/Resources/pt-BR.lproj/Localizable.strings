@@ -75,6 +75,9 @@
 "info.credit.vsop" = "Os planetas — de Mercúrio a Saturno";
 "info.privacy" = "River.io — os dados permanecem no dispositivo; este app não faz nenhuma chamada de rede.";
 "info.standingOn" = "Apoia-se em";
+"info.thanks" = "Com agradecimentos a";
+"info.thanks.benton" = "O horizonte a nordeste — uma verificação independente de onde o sol do solstício de verão realmente transpõe a elevação";
+"info.thanks.hoyle" = "O horizonte fotografado do círculo de pedras";
 "lore.close" = "Fechar o saber";
 "lore.monument.altarStone.body" = "A laje de seis toneladas deitada no coração do monumento não vem do País de Gales, como por muito tempo se supôs junto com as pedras azuis. A datação de grãos de zircão, apatita e rutilo em seu interior remonta a pedra à bacia Orcadiana do nordeste da Escócia — a pelo menos 750 km de distância, provavelmente movida por mar. O achado defende uma escala de contato neolítico de longa distância pela Grã-Bretanha não creditada antes a este período.";
 "lore.monument.altarStone.title" = "A Pedra do Altar";

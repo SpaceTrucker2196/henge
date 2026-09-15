@@ -75,6 +75,9 @@
 "info.credit.vsop" = "行星——从水星到土星";
 "info.privacy" = "River.io——数据始终留在设备上；本应用完全不进行任何网络请求。";
 "info.standingOn" = "所依据者";
+"info.thanks" = "致谢";
+"info.thanks.benton" = "东北方的地平线——对仲夏太阳实际越过山脊位置的独立核验";
+"info.thanks.hoyle" = "石圈的实拍地平线";
 "lore.close" = "关闭释义";
 "lore.monument.altarStone.body" = "平卧于遗迹中心的这块六吨石板，并非如长期以来随蓝砂岩一并假定的那样来自威尔士。对其内部锆石、磷灰石与金红石颗粒的定年，将这块石头追溯至苏格兰东北部的奥克尼盆地——至少750公里之遥，很可能经海路运来。这一发现表明，新石器时代横跨不列颠的远距离往来规模，超出了此前对该时期的认定。";
 "lore.monument.altarStone.title" = "祭坛石";

@@ -75,6 +75,9 @@
 "info.credit.vsop" = "Los planetas: de Mercurio a Saturno";
 "info.privacy" = "River.io: los datos permanecen en el dispositivo; esta app no hace ninguna llamada de red.";
 "info.standingOn" = "Se apoya en";
+"info.thanks" = "Con agradecimiento a";
+"info.thanks.benton" = "El horizonte al noreste: una comprobación independiente de dónde el sol de pleno verano supera realmente la loma";
+"info.thanks.hoyle" = "El horizonte fotografiado del círculo de piedras";
 "lore.close" = "Cerrar el saber";
 "lore.monument.altarStone.body" = "La losa de seis toneladas que yace plana en el corazón del monumento no procede de Gales, como largamente se supuso junto con las piedras azules. La datación de granos de circón, apatito y rutilo en su interior remonta la piedra a la cuenca Orcadiana del noreste de Escocia: al menos 750 km de distancia, probablemente trasladada por mar. El hallazgo aboga por una escala de contacto neolítico a larga distancia por Gran Bretaña que no se atribuía antes a este período.";
 "lore.monument.altarStone.title" = "La Piedra del Altar";

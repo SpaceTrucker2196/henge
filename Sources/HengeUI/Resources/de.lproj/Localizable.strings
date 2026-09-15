@@ -75,6 +75,9 @@
 "info.credit.vsop" = "Die Planeten – Merkur bis Saturn";
 "info.privacy" = "River.io – die Daten bleiben auf dem Gerät; diese App führt überhaupt keine Netzwerkaufrufe durch.";
 "info.standingOn" = "Es stützt sich auf";
+"info.thanks" = "Mit Dank an";
+"info.thanks.benton" = "Die Skyline im Nordosten – eine unabhängige Prüfung, wo die Mittsommersonne den Höhenzug tatsächlich überschreitet";
+"info.thanks.hoyle" = "Der fotografierte Horizont des Steinkreises";
 "lore.close" = "Wissen schließen";
 "lore.monument.altarStone.body" = "Die sechs Tonnen schwere Platte, die flach im Herzen des Monuments liegt, stammt nicht aus Wales, wie lange zusammen mit den Bluestones angenommen. Die Datierung von Zirkon-, Apatit- und Rutilkörnern in ihr führt den Stein auf das Orcadian Basin im Nordosten Schottlands zurück – mindestens 750 km entfernt, wahrscheinlich auf dem Seeweg bewegt. Der Befund spricht für ein Ausmaß neolithischer Fernkontakte in Britannien, das dieser Zeit zuvor nicht zugetraut wurde.";
 "lore.monument.altarStone.title" = "Der Altar Stone";

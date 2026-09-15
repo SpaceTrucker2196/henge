@@ -75,6 +75,9 @@
 "info.credit.vsop" = "I pianeti — da Mercurio a Saturno";
 "info.privacy" = "River.io — i dati restano sul dispositivo; questa app non effettua alcuna chiamata di rete.";
 "info.standingOn" = "Si basa su";
+"info.thanks" = "Con un ringraziamento a";
+"info.thanks.benton" = "La linea dell’orizzonte a nord-est — una verifica indipendente di dove il sole di mezza estate supera davvero il crinale";
+"info.thanks.hoyle" = "L’orizzonte fotografato del cerchio di pietre";
 "lore.close" = "Chiudi il sapere";
 "lore.monument.altarStone.body" = "La lastra di sei tonnellate distesa al cuore del monumento non proviene dal Galles, come a lungo si è supposto insieme alle pietre azzurre. La datazione di grani di zircone, apatite e rutilo al suo interno riconduce la pietra al bacino orcadiano della Scozia nord-orientale — ad almeno 750 km di distanza, probabilmente spostata per mare. Il risultato depone per una scala di contatti neolitici a lunga distanza attraverso la Gran Bretagna finora non attribuita a questo periodo.";
 "lore.monument.altarStone.title" = "l’Altar Stone";

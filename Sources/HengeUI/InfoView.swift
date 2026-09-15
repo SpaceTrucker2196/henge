@@ -63,6 +63,20 @@ struct InfoView: View {
                    + "citations appear beside every claim in the Lore panel.")
     ]
 
+    /// People, not datasets — but the same rule: what they gave is prose and
+    /// travels, who they are is a name and does not.
+    private static let people: [Credit] = [
+        Credit(id: "benton",
+               what: "info.thanks.benton",
+               source: "Simon Benton — horizon altitude read in Stellarium "
+                   + "with ArchaeoLines against the landscape below: the "
+                   + "2500 BC midsummer sun crosses a skyline at 0.35°."),
+        Credit(id: "hoyle",
+               what: "info.thanks.hoyle",
+               source: "David Hoyle — Stellarium landscape "
+                   + "stonehenge_su1224742194 (51.178851° N, 1.826177° W).")
+    ]
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Henge.Space.margin) {
@@ -77,6 +91,21 @@ struct InfoView: View {
                     .padding(.top, Henge.Space.tight)
 
                 ForEach(Self.data) { credit in
+                    VStack(alignment: .leading, spacing: Henge.Space.hair) {
+                        Text(credit.what, bundle: .module)
+                            .font(Henge.body(.callout))
+                        Text(credit.source)
+                            .font(Henge.body(.caption))
+                            .opacity(Henge.Ink.dim)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                Text("info.thanks", bundle: .module)
+                    .font(Henge.title(.headline))
+                    .padding(.top, Henge.Space.tight)
+
+                ForEach(Self.people) { credit in
                     VStack(alignment: .leading, spacing: Henge.Space.hair) {
                         Text(credit.what, bundle: .module)
                             .font(Henge.body(.callout))

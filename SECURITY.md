@@ -59,6 +59,7 @@ the day after 0.2.0 went on sale.
 | Sky model | Preetham et al. (1999), closed form | Published formula, no data tables to vendor | **In use** (M1) |
 | **Surface textures** | **ambientCG** `Rock030` and `Grass004`, 1K JPG sets (colour, normal, roughness) | **CC0 1.0 Universal** — public domain dedication, no attribution required. Credited anyway | **In use** — `Sources/HengeEngine/Resources/{rock,grass}-{albedo,normal,roughness}.jpg`, 1.7 MB total, colour and normal downsampled to 1024/512 |
 | **Terrain** | **SRTM 1-arc-second (NASA/USGS)**, fetched as Skadi `.hgt` tiles N51W002 and N51W003 | **Public domain** (US government work). Baked by `scripts/bake_terrain.py`; the bake script and the tile names are in-tree so the result is reproducible | **In use** — `Sources/HengeGeometry/Resources/salisbury-plain.heightfield`, 1.18 MB, 768x768 at 40 m (±15.3 km) |
+| Skyline check | **Simon Benton**, reading **David Hoyle**'s Stellarium landscape `stonehenge_su1224742194` (a calibrated photographic panorama from the circle, 51.178851 −1.826177) with ArchaeoLines: the 2500 BC midsummer sun crosses a skyline at 0.35° | Courtesy of the authors; the panorama is **not vendored** | **Reference, not in use** — the app still marches the SRTM heightfield for its skyline (0.71° at the same bearing). The two disagree by more than a solar radius, credited in the info view, and the disagreement is an open question below |
 | Star catalogue | **Hipparcos (ESA)** — ESA, 1997, *The Hipparcos and Tycho Catalogues*, ESA SP-1200, via CDS I/239 `hip_main.dat` | Free with attribution, no share-alike — attribution here and in `StarCatalog.swift` | **In use** — `Sources/HengeGeometry/Resources/hipparcos-bright.csv`, the 8,870 stars with V ≤ 6.5 (HIP, ICRS J1991.25 position, V, B−V, proper motions), 443 KB |
 | Moon colour map | **NASA SVS CGI Moon Kit** (`lroc_color_poles_1k`), from Lunar Reconnaissance Orbiter LROC data, NASA Goddard Scientific Visualization Studio | Public domain (US government work); credit appreciated and given here | **In use** — `Sources/HengeEngine/Resources/moon-albedo.jpg`, 1024×512 equirectangular, 139 KB |
 | Planetary theory | **VSOP87D** — Bretagnon & Francou, "Planetary theories in rectangular and spherical variables", A&A 202, 309 (1988); machine-readable tables from CDS VI/81 | Freely redistributed by CDS; cited here and in the generated source | **In use** — `Sources/HengeAstro/VSOP87Tables.swift`, truncated to terms worth ≥ 0.2″ over ±5 millennia (2,774 terms, Earth + the naked-eye five) |
@@ -127,6 +128,16 @@ were incorporated; what was taken is knowledge, not data.
   constellation figures row above.
 - **Pole stars** are seven published J2000 positions cited as constants, not a
   catalogue. Nothing to license.
+- **The north-east skyline is in dispute, and the dispute is recorded rather
+  than settled.** The SRTM march gives 0.71° at the solstice bearing; a
+  calibrated photographic panorama from the circle, read in Stellarium,
+  gives 0.35° (skyline check row above). SRTM is a radar *surface* model and
+  carries tree canopy on the Larkhill ridge as ground, which is the likely
+  sign of the error. If it is resolved by data, the bare-earth source is the
+  Environment Agency's open LiDAR DTM (OGL), which the note above declined
+  when the terrain was thought settled; the photograph would remain the
+  cross-check, not the source. Nothing here touches the sky or the shadows —
+  it moves the rise and set bearings the almanac prints, by up to a degree.
 - **Meeus's printed tables are not transcribed wholesale.** Algorithms are
   implemented from the published method and cited; where a long series is
   needed, it comes from the original IMCCE machine-readable data.
