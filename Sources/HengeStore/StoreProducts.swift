@@ -16,5 +16,5 @@ public enum StoreProducts {
     /// always `Product.displayPrice`, which is localised and correct for the
     /// user's storefront — this is scaffolding for the first half-second and
     /// for the Mac build, never a claim about what anyone will be charged.
-    public static let fallbackPrice = "$4.99"
+    public static let fallbackPrice = "$19.99"
 }

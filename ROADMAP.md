@@ -118,7 +118,7 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       created in the web console, because Apple's `apps` resource refuses
       `CREATE` for an API key and does so for every repo here, not just
       this one. The in-app purchase exists too: `io.river.henge.full`,
-      non-consumable, $4.99 base USD across 175 regions, English
+      non-consumable, $19.99 base USD across 175 regions, English
       localisation written.
       One thing the console turned up that nothing else would have: an
       older record was already holding the name "Henge" on the bundle id

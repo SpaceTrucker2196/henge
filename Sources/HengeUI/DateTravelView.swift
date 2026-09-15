@@ -159,7 +159,7 @@ struct DateTravelView: View {
             }
 
             // The pickers stay live either way. Someone deciding whether the
-            // calendar is worth five dollars should be able to dial the
+            // calendar is worth twenty dollars should be able to dial the
             // morning they are curious about and see the price with it in
             // front of them — a paywall that disabled the dials would be
             // asking them to buy a thing they had not been allowed to hold.

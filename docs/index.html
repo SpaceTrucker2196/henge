@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Henge — a photoreal Stonehenge that keeps real time</title>
-<meta name="description" content="Henge is a photoreal 3D Stonehenge that is also a working astronomical calendar. iPhone, iPad and Mac. The sun is computed, the shadows are real, and every claim carries its citation.">
+<meta name="description" content="Henge is a photoreal 3D Stonehenge that is also a working sky simulator. iPhone, iPad and Mac. The sun is computed from published ephemerides, the shadows are real, and every claim carries its citation.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='8' width='7' height='20' fill='%23C9A227'/%3E%3Crect x='21' y='8' width='7' height='20' fill='%23C9A227'/%3E%3Crect x='2' y='3' width='28' height='6' fill='%23C9A227'/%3E%3C/svg%3E">
 <style>
   :root {
@@ -72,6 +72,25 @@
     margin-top: 16px; font-family: var(--mono); font-size: 12.5px;
     letter-spacing: .12em; color: rgba(216,208,188,.75);
   }
+  .watch { margin: 40px auto 0; max-width: 560px; }
+  .watch a {
+    display: flex; align-items: center; gap: 18px; text-decoration: none;
+    padding: 20px 24px; border: 1px solid rgba(201,162,39,.6);
+    background: rgba(14,22,38,.45); color: var(--chalk);
+  }
+  .watch a:hover { border-color: var(--gold-hi); background: rgba(201,162,39,.10); }
+  .watch svg { flex: none; }
+  .watch a:hover .disc { fill: var(--gold-hi); }
+  .watch .label { text-align: left; }
+  .watch .label b {
+    display: block; font-family: var(--mono); font-size: 13px;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--gold-hi); font-weight: 400;
+  }
+  .watch .label span { display: block; margin-top: 4px; font-size: 15px; color: rgba(237,232,218,.85); }
+  .watch figcaption {
+    margin-top: 10px; font-family: var(--mono); font-size: 11px;
+    letter-spacing: .14em; text-transform: uppercase; color: rgba(216,208,188,.55);
+  }
   .shots { margin-top: 26px; display: flex; gap: 18px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
   .shots img {
     max-width: 100%; border: 1px solid rgba(201,162,39,.4);
@@ -136,6 +155,20 @@
   <p class="meta">IPHONE &middot; IPAD &middot; iOS 17+ &nbsp;&nbsp;|&nbsp;&nbsp;
   MAC v<!--v-->0.1.0<!--/v--> &middot; <!--s-->8.7M<!--/s--> &middot; UNIVERSAL &middot; macOS 14+</p>
 
+  <figure class="watch">
+    <a href="https://www.youtube.com/watch?v=q7Fuo2rVkuE" rel="noopener">
+      <svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+        <circle class="disc" cx="23" cy="23" r="22" fill="rgba(201,162,39,.85)"/>
+        <path d="M19 15 L33 23 L19 31 Z" fill="#14110C"/>
+      </svg>
+      <span class="label">
+        <b>Watch the walkthrough</b>
+        <span>Twelve minutes, from midsummer sunrise to the 3000&nbsp;BC sky.</span>
+      </span>
+    </a>
+    <figcaption>Opens YouTube &middot; nothing is embedded on this page</figcaption>
+  </figure>
+
   <h2>The Instrument</h2>
   <div class="shots">
     <figure class="phone">
@@ -178,8 +211,9 @@
     <div class="col">
       <b>Nothing Watching You</b>
       <p>No account, no network, no analytics, no data collected. The almanac
-      works in a field with no signal. One optional purchase lifts the free
-      tier's session clock for good &mdash; no subscription. The
+      works in a field with no signal. One optional purchase of $19.99 lifts the
+      free tier's session clock for good &mdash; no subscription, and it is the
+      same unlock on iPhone, iPad and Mac. Nine languages. The
       <a href="privacy.html" style="color:var(--gold-hi)">privacy policy</a> is
       short because the data flows are short.</p>
     </div>

@@ -162,7 +162,7 @@ keys. It is a house-wide human step.
 | Thing | Value |
 |---|---|
 | App record | Henge, `io.river.henge`, Apple ID 6798126839, SKU `io.river.henge` |
-| In-app purchase | `io.river.henge.full`, non-consumable, $4.99 USD base, 175 regions |
+| In-app purchase | `io.river.henge.full`, non-consumable, $19.99 USD base, 175 regions |
 
 `io.river.henge.full` had to exist before StoreKit would return
 anything, and its absence fails quietly rather than loudly:

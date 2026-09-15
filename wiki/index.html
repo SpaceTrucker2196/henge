@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Henge — a photoreal Stonehenge that keeps real time</title>
-<meta name="description" content="A photoreal 3D Stonehenge that is a working astronomical calendar. Druidic in spirit, archaeological in fact. iOS and macOS, hand-rolled Metal 3.">
+<meta name="description" content="A photoreal 3D Stonehenge that is also a working sky simulator. Druidic in spirit, archaeological in fact. iOS and macOS, hand-rolled Metal 3.">
 <meta property="og:title" content="Henge">
 <meta property="og:description" content="A photoreal Stonehenge that keeps real time. The sky is computed, the shadows are the calendar, the stones are surveyed.">
 <meta property="og:type" content="website">
@@ -155,6 +155,12 @@
     animation: settle 1.2s 1s ease-out both;
   }
   .hero .get:hover { background: var(--gold-hi); }
+  .hero .get.alt {
+    color: var(--gold-hi); background: transparent;
+    border-color: rgba(201,162,39,.55); box-shadow: none;
+    margin-left: 10px;
+  }
+  .hero .get.alt:hover { color: var(--chalk); border-color: var(--chalk); background: transparent; }
   @keyframes settle {
     from { opacity: 0; transform: translateY(18px); }
     to   { opacity: 1; transform: none; }
@@ -281,7 +287,7 @@
   .tier { border: 1px solid; border-radius: 2px; padding: 5px 10px; }
   .tier.est { color: #3C5A2E; border-color: #3C5A2E; }
   .tier.deb { color: var(--ember); border-color: var(--ember); }
-  .tier.spec { color: #6B5A8E; border-color: #6B5A8E; }
+  .tier.trad { color: #6B5A8E; border-color: #6B5A8E; }
   .tier-note { margin-top: 14px; font-size: 14.5px; font-style: italic; color: #55503F; max-width: 640px; }
 
   /* ── footer ──────────────────────────────────────────────────────────── */
@@ -314,12 +320,14 @@
   <div class="stars" aria-hidden="true"></div>
   <div class="sun" aria-hidden="true"></div>
   <div class="hero-inner">
-    <p class="kicker">iOS &amp; macOS &middot; in the making</p>
+    <p class="kicker">iOS &amp; macOS &middot; on the App Store</p>
     <h1>Henge</h1>
     <p class="tagline">A photoreal Stonehenge that keeps real time.</p>
     <p class="creed">Druidic in spirit, ceremony and season&thinsp;&mdash;&thinsp;archaeological in fact, stone by cited stone.</p>
     <p class="platforms">HAND-ROLLED <span>METAL&nbsp;3</span> &middot; NO ENGINE &middot; NO NETWORK</p>
-    <a class="get" href="https://www.river.io/henge/">DOWNLOAD FOR MAC &mdash; EARLY BUILD</a>
+    <a class="get" href="https://apps.apple.com/app/id6798126839">ON THE APP&nbsp;STORE</a>
+    <a class="get alt" href="https://www.youtube.com/watch?v=q7Fuo2rVkuE">WATCH THE WALKTHROUGH</a>
+    <a class="get alt" href="https://www.river.io/henge/">MAC &mdash; EARLY BUILD</a>
   </div>
   <svg class="skyline" viewBox="0 0 1200 140" preserveAspectRatio="xMidYMax slice" aria-label="The monument on the horizon at sunrise">
     <!-- the plain -->
@@ -357,7 +365,7 @@
   <section>
     <div class="measure">
       <p class="rule-label">The instrument</p>
-      <h2>The monument is the calendar, and every claim in it can be checked.</h2>
+      <h2>The sky is computed, and every claim about the stones can be checked.</h2>
       <p class="lede">Henge is a real-time 3D simulation of Stonehenge for iPhone and Mac,
       built on a hand-rolled Metal&nbsp;3 renderer&thinsp;&mdash;&thinsp;no game engine, no
       third-party code. Choose any date, from the monument's own era to tonight, and stand
@@ -367,7 +375,7 @@
         <article class="claim">
           <span class="n">I</span>
           <h3>The sky is computed, never faked</h3>
-          <p>Sun, moon, planets and nine thousand Hipparcos stars from the published
+          <p>Sun, moon, planets and 8,870 Hipparcos stars from the published
           ephemerides&thinsp;&mdash;&thinsp;Meeus, VSOP87, Laskar's obliquity&thinsp;&mdash;&thinsp;with
           &Delta;T and atmospheric refraction carried honestly back to 3000&nbsp;BC.
           No hardcoded azimuths. The solstice bearing is <em>derived</em>, and the fact
@@ -511,7 +519,7 @@
       <div class="tiers" aria-label="Claim tiers">
         <span class="tier est">ESTABLISHED</span>
         <span class="tier deb">DEBATED</span>
-        <span class="tier spec">SPECULATIVE</span>
+        <span class="tier trad">MODERN TRADITION</span>
       </div>
       <p class="tier-note">Every claim carries one of three tiers, the same register the
       app enforces on screen. Druidry is presented as living inheritance, never as the
@@ -524,8 +532,10 @@
 <footer>
   <p class="silent">No network, no telemetry, no account.<br>
   The almanac works in a field with no signal.</p>
-  <a href="https://www.river.io/henge/">DOWNLOAD FOR MAC</a>
-  <a href="https://github.com/SpaceTrucker2196/henge" style="margin-left:12px">FOLLOW THE BUILD ON GITHUB</a>
+  <a href="https://apps.apple.com/app/id6798126839">ON THE APP STORE</a>
+  <a href="https://www.youtube.com/watch?v=q7Fuo2rVkuE" style="margin-left:12px">WALKTHROUGH</a>
+  <a href="https://www.river.io/henge/" style="margin-left:12px">MAC BUILD</a>
+  <a href="https://github.com/SpaceTrucker2196/henge" style="margin-left:12px">GITHUB</a>
   <p class="fine">&copy; 2026 River.io LLC &middot; Astronomy from published ephemerides &middot;
   Archaeology from cited survey &middot; Built by hand, measured by tests</p>
 </footer>
