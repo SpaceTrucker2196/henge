@@ -38,6 +38,8 @@ struct FrameUniforms {
                              // (0 removes the term)
     float4   weatherState;   // x: cloud cover, y: wetness, z: frost, w spare
                              // — all zero under the default clear sky
+    float4x4 worldToJ2000;   // view ray -> J2000 equatorial, for the star map
+    float4   milkyWay;       // x: band radiance this frame, w: map bound
 };
 
 struct DrawUniforms {
@@ -1266,7 +1268,9 @@ static float cloudAmount(float3 direction, constant FrameUniforms &frame)
 fragment float4 sky_fragment(SkyInOut in [[stage_in]],
                              constant FrameUniforms &frame [[buffer(0)]],
                              texture2d<float> moonMap [[texture(1)]],
-                             sampler moonSampler [[sampler(1)]])
+                             sampler moonSampler [[sampler(1)]],
+                             texture2d<float> milkyWayMap [[texture(2)]],
+                             sampler milkyWaySampler [[sampler(2)]])
 {
     // Unproject the pixel into a world ray. The renderer supplies the inverse
     // view-projection ready-made rather than inverting a matrix per pixel.
@@ -1290,6 +1294,40 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
         const float3 kPrussianNight = float3(0.006, 0.016, 0.040);
         float horizonLift = 1.0 + 0.6 * (1.0 - clamp(direction.y, 0.0, 1.0));
         sky += kPrussianNight * horizonLift * nightness;
+    }
+
+    // The Milky Way: NASA's map of the Gaia sky, looked up in J2000 by
+    // carrying the view ray back through the star pass's frame and the
+    // epoch's precession, so the band turns with the stars it is made of
+    // and stands where it stood over the sarsens. It comes out with the
+    // fourth-magnitude stars (the fade is decided on the CPU, in
+    // MilkyWay.visibility), thins toward the horizon by the same airmass
+    // that dims them, and goes under the cloud deck below. The lookup
+    // restates MilkyWay.textureCoordinate by hand — MSL cannot import it,
+    // and MilkyWayTests is the oracle for the convention. Sampled at level
+    // zero: the right-ascension seam at u = 0 would otherwise pick a mip
+    // from its own wrapped derivative and draw a line down the sky.
+    if (frame.milkyWay.x > 0.0 && frame.milkyWay.w > 0.5 && direction.y > -0.02) {
+        float3 eq = normalize((frame.worldToJ2000 * float4(direction, 0.0)).xyz);
+        float rightAscension = atan2(eq.y, eq.x);
+        float declination = asin(clamp(eq.z, -1.0, 1.0));
+        float2 uv = float2(fract(0.5 - rightAscension / (2.0 * M_PI_F)),
+                           0.5 - declination / M_PI_F);
+        float3 band = milkyWayMap.sample(milkyWaySampler, uv, level(0)).rgb;
+        // The map is a long exposure: its bulge is ten times its Cygnus
+        // band. The eye at night is not — the bulge is plainly the brighter
+        // stretch, three times or so, and nearly colourless, because the
+        // rods that see it do not see colour. A soft knee (x / (x + k))
+        // closes the range toward what the eye reports while leaving the
+        // map's black sky black — a square root here lifted the whole dome
+        // into a grey wash — and most of the photograph's orange is drained
+        // toward its own luminance. Artistic readings of real physiology,
+        // both, and labelled as such.
+        band = band / (band + 0.15);
+        float grey = dot(band, float3(0.2126, 0.7152, 0.0722));
+        band = mix(float3(grey), band, 0.35);
+        float airmass = 1.0 - clamp(direction.y, 0.0, 1.0);
+        sky += band * frame.milkyWay.x * (1.0 - 0.7 * airmass * airmass);
     }
 
     // The cloud deck, laid over the blue and under the sun's disc. Colour

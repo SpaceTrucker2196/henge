@@ -15,8 +15,9 @@ if the two ever disagree, `SECURITY.md` wins and this page has a bug.
 | Surface textures | ambientCG Rock030 / Grass004 | CC0 1.0 | engine resource bundle |
 | Sky model | Preetham et al. 1999 | Published formula, no data vendored | implemented in MSL |
 | Algorithms | Meeus; Espenak & Meeus ΔT | Published methods, cited | implemented in `HengeAstro` |
+| Milky Way | NASA SVS Deep Star Maps 2020 (SVS 4851), from Gaia DR2 | Public domain; credit NASA/GSFC SVS and ESA/Gaia/DPAC | `milkyway-2020.jpg`, 2048×1024 |
 
-Declined or waiting on licence: Milky Way texture, Hosek–Wilkie sky data,
+Declined or waiting on licence: Hosek–Wilkie sky data,
 any recorded ambient sound, Stellarium-style constellation datasets
 (mooted by drawing our own), H. A. Rey figure drawings (same).
 

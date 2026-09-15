@@ -66,6 +66,7 @@
 "info.close" = "閉じる";
 "info.credit.algorithms" = "太陽・月・暦の計算";
 "info.credit.hipparcos" = "星々 — 肉眼で見える8,870個の位置、等級、色、固有運動";
+"info.credit.milkyway" = "天の川";
 "info.credit.moon" = "月の表面";
 "info.credit.names" = "星の名前";
 "info.credit.sky" = "昼の空";

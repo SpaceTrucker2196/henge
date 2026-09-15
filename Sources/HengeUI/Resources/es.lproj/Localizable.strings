@@ -66,6 +66,7 @@
 "info.close" = "Cerrar";
 "info.credit.algorithms" = "La aritmética del sol, la luna y el calendario";
 "info.credit.hipparcos" = "Las estrellas: 8870 posiciones a simple vista, magnitudes, colores y movimientos propios";
+"info.credit.milkyway" = "La Vía Láctea";
 "info.credit.moon" = "La faz de la Luna";
 "info.credit.names" = "Los nombres de las estrellas";
 "info.credit.sky" = "El cielo diurno";

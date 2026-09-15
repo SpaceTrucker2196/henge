@@ -71,6 +71,14 @@ public struct FrameUniforms {
     /// x, y and z are all zero under the default clear sky, which is what
     /// keeps every weather term out of the shadow-agreement oracle's frames.
     public var weatherState: SIMD4<Float>
+    /// World axes back to the J2000 equatorial frame, so the sky pass can
+    /// look a view ray up on a star map drawn in that frame: the transpose
+    /// of the star pass's matrix, then the epoch's precession undone.
+    public var worldToJ2000: float4x4
+    /// x: the Milky Way's radiance this frame — `MilkyWay.visibility` times
+    /// the band's calibrated brightness, zero when the sky's lights are off.
+    /// w: 1 when the map is bound; an unbound texture samples as zero.
+    public var milkyWay: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -93,7 +101,9 @@ public struct FrameUniforms {
                 shadowSource: SIMD4<Float> = .zero,
                 haze: SIMD4<Float> = SIMD4(0, 90, 12, 0),
                 torch: SIMD4<Float> = .zero,
-                weatherState: SIMD4<Float> = .zero) {
+                weatherState: SIMD4<Float> = .zero,
+                worldToJ2000: float4x4 = matrix_identity_float4x4,
+                milkyWay: SIMD4<Float> = .zero) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -115,6 +125,8 @@ public struct FrameUniforms {
         self.haze = haze
         self.torch = torch
         self.weatherState = weatherState
+        self.worldToJ2000 = worldToJ2000
+        self.milkyWay = milkyWay
     }
 }
 

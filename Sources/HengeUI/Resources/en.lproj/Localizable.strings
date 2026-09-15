@@ -66,6 +66,7 @@
 "info.close" = "Close";
 "info.credit.algorithms" = "The sun, moon and calendar arithmetic";
 "info.credit.hipparcos" = "The stars — 8,870 naked-eye positions, magnitudes, colours and proper motions";
+"info.credit.milkyway" = "The Milky Way";
 "info.credit.moon" = "The Moon's face";
 "info.credit.names" = "The stars' names";
 "info.credit.sky" = "The daylight sky";

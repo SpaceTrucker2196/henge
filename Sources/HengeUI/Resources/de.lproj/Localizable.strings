@@ -66,6 +66,7 @@
 "info.close" = "Schließen";
 "info.credit.algorithms" = "Die Rechnung für Sonne, Mond und Kalender";
 "info.credit.hipparcos" = "Die Sterne – 8.870 mit bloßem Auge sichtbare Positionen, Helligkeiten, Farben und Eigenbewegungen";
+"info.credit.milkyway" = "Die Milchstraße";
 "info.credit.moon" = "Das Gesicht des Mondes";
 "info.credit.names" = "Die Namen der Sterne";
 "info.credit.sky" = "Der Taghimmel";

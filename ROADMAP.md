@@ -41,8 +41,9 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       drawings are ours), riding the same instance buffer as the stars so
       they precess for free. Along the way the authoring caught a shipped
       register bug: multi-word IAU names truncated at the first space —
-      the sky was labelling three stars "Kaus". **Remaining:** the Milky
-      Way (licence undecided) — now the only thing left of M3.
+      the sky was labelling three stars "Kaus". The Milky Way landed
+      2026-09-15 from NASA's Deep Star Maps (public domain, Gaia-derived),
+      precessing with the stars — M3 is complete.
 
 - [x] **M4 — The Calendar (M–L).** *In progress.* The Wheel of the Year has
       landed: eight stations solved from apparent solar longitude, festival
@@ -186,9 +187,6 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
          dimensions projected onto the terrain rather than floating.
 
 ## Still open, needing a decision
-
-- **The Milky Way** (M3). Needs a licensed texture. May be worth dropping the
-  way constellation figures were.
 
 (The Hipparcos star catalogue was asked, answered and vendored 2026-07-28 —
 the naked-eye sky is in, with proper motion and precession, attribution in

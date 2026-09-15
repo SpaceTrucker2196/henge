@@ -66,6 +66,7 @@
 "info.close" = "关闭";
 "info.credit.algorithms" = "太阳、月亮与历法的算术";
 "info.credit.hipparcos" = "恒星——8,870 颗肉眼可见恒星的位置、星等、颜色与自行";
+"info.credit.milkyway" = "银河";
 "info.credit.moon" = "月面";
 "info.credit.names" = "恒星的名称";
 "info.credit.sky" = "白昼天空";

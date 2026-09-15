@@ -37,6 +37,11 @@ struct InfoView: View {
                what: "info.credit.vsop",
                source: "Bretagnon & Francou, VSOP87 (A&A 202, 309, 1988), "
                    + "via CDS VI/81."),
+        Credit(id: "milkyway",
+               what: "info.credit.milkyway",
+               source: "NASA/Goddard Space Flight Center Scientific "
+                   + "Visualization Studio, Deep Star Maps 2020 (SVS 4851). "
+                   + "Gaia DR2: ESA/Gaia/DPAC."),
         Credit(id: "moon",
                what: "info.credit.moon",
                source: "NASA Goddard Scientific Visualization Studio, CGI "

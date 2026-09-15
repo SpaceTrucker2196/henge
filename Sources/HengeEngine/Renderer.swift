@@ -166,6 +166,12 @@ public struct SceneState: Sendable {
     /// reading aid a viewer asks for.
     public var constellationLines: Bool = false
 
+    /// The Milky Way, under the stars. On by default — a sky before street
+    /// light had it, and the picture is poorer without — and switchable on
+    /// its own so a test can weigh the band without the points, and so the
+    /// stars switch keeps its meaning. Off whenever `stars` is off.
+    public var milkyWay: Bool = true
+
     /// The animated switch between the monument's two states, when one is
     /// playing — nil in every resting frame, which is what keeps every
     /// oracle render exactly what it was. The numbers are computed by the
@@ -469,6 +475,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// sampler in every respect, and for good reason: this one is filtering
     /// colour, where averaging is the whole point.
     private let surfaceSampler: MTLSamplerState
+    private let skySampler: MTLSamplerState
     /// Rock and grass maps. Optional throughout: a missing texture must degrade
     /// to the flat-shaded look the renderer had before, not take the app down.
     /// The almanac is still correct without a photograph of a rock.
@@ -477,6 +484,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// SECURITY.md). Optional like every photograph here: absent, the disc
     /// falls back to the plain lit sphere it was.
     private var moonTexture: MTLTexture?
+    /// NASA's map of the Gaia sky (Deep Star Maps 2020), J2000 plate carrée.
+    private var milkyWayTexture: MTLTexture?
     private let shadowMap: MTLTexture
     private let shadowResolution: Int
 
@@ -712,6 +721,19 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             throw RendererError.resourceCreationFailed("surface sampler")
         }
         self.surfaceSampler = colourSampler
+
+        // The star map wraps in right ascension and stops at the poles, and
+        // is sampled at level zero — no mip chain to filter.
+        let skyDescriptor = MTLSamplerDescriptor()
+        skyDescriptor.minFilter = .linear
+        skyDescriptor.magFilter = .linear
+        skyDescriptor.mipFilter = .notMipmapped
+        skyDescriptor.sAddressMode = .repeat
+        skyDescriptor.tAddressMode = .clampToEdge
+        guard let skySampler = device.makeSamplerState(descriptor: skyDescriptor) else {
+            throw RendererError.resourceCreationFailed("sky sampler")
+        }
+        self.skySampler = skySampler
         self.surfaces = SurfaceTextures.Kind.allCases.compactMap {
             SurfaceTextures.load($0, device: device)
         }
@@ -722,6 +744,16 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 .textureUsage: NSNumber(value: MTLTextureUsage.shaderRead.rawValue),
                 .textureStorageMode: NSNumber(value: MTLStorageMode.private.rawValue),
                 .generateMipmaps: NSNumber(value: true),
+                .SRGB: NSNumber(value: true)
+            ])
+        }()
+        self.milkyWayTexture = {
+            guard let url = Bundle.module.url(forResource: "milkyway-2020",
+                                              withExtension: "jpg") else { return nil }
+            return try? MTKTextureLoader(device: device).newTexture(URL: url, options: [
+                .textureUsage: NSNumber(value: MTLTextureUsage.shaderRead.rawValue),
+                .textureStorageMode: NSNumber(value: MTLStorageMode.private.rawValue),
+                .generateMipmaps: NSNumber(value: false),
                 .SRGB: NSNumber(value: true)
             ])
         }()
@@ -1524,8 +1556,41 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                 // bound": an unbound texture samples as
                                 // zero, which would render the disc black
                                 // rather than plain.
-                                moonTexture == nil ? 0 : 1)
+                                moonTexture == nil ? 0 : 1),
+            worldToJ2000: Self.milkyWayMatrix(state: state),
+            milkyWay: {
+                guard state.stars, state.milkyWay else { return .zero }
+                let radiance = MilkyWay.visibility(sunAltitude: state.sun.altitude)
+                    * Self.milkyWayRadiance
+                return SIMD4(Float(radiance), 0, 0, milkyWayTexture == nil ? 0 : 1)
+            }()
         )
+    }
+
+    /// The band's radiance, in the sky pass's linear units, applied after
+    /// the shader's soft knee on the map (vendored by sips from NASA's EXR,
+    /// no levels touched: the Cygnus band reads 0.03–0.08 after sRGB
+    /// decode, the bulge about 0.6, the empty sky near 0.001; through the
+    /// knee, 0.25 and 0.8 and nothing). At 1.2 the summer band comes out at
+    /// two to three times the Prussian night floor the sky already carries
+    /// and the bulge tonemaps to a pale grey core — a dark-site sky, the
+    /// band plainly there and never white. A first guess of 0.16 on the raw
+    /// map vanished into the floor; 3.0 on the raw map made Sagittarius a
+    /// photograph. An artistic reading; the owner's eye is the instrument,
+    /// as with the moon's size.
+    static let milkyWayRadiance: Double = 1.2
+
+    /// World axes to J2000 equatorial: the star pass's matrix run backwards
+    /// (a rotation, so its transpose), then the epoch's precession undone.
+    static func milkyWayMatrix(state: SceneState) -> float4x4 {
+        let rows = MilkyWay.j2000Rows(at: state.epoch.terrestrialTime)
+        let dateToJ2000 = float4x4(rows: [
+            SIMD4<Float>(SIMD3<Float>(rows.x), 0),
+            SIMD4<Float>(SIMD3<Float>(rows.y), 0),
+            SIMD4<Float>(SIMD3<Float>(rows.z), 0),
+            SIMD4<Float>(0, 0, 0, 1)
+        ])
+        return dateToJ2000 * starMatrix(state: state).transpose
     }
 
     // ── drawing ─────────────────────────────────────────────────────────────
@@ -1631,6 +1696,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         if let moon = moonTexture {
             encoder.setFragmentTexture(moon, index: 1)
             encoder.setFragmentSamplerState(surfaceSampler, index: 1)
+        }
+        if let band = milkyWayTexture {
+            encoder.setFragmentTexture(band, index: 2)
+            encoder.setFragmentSamplerState(skySampler, index: 2)
         }
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
 

@@ -66,6 +66,7 @@
 "info.close" = "Chiudi";
 "info.credit.algorithms" = "L’aritmetica di sole, luna e calendario";
 "info.credit.hipparcos" = "Le stelle — 8.870 posizioni a occhio nudo, magnitudini, colori e moti propri";
+"info.credit.milkyway" = "La Via Lattea";
 "info.credit.moon" = "Il volto della Luna";
 "info.credit.names" = "I nomi delle stelle";
 "info.credit.sky" = "Il cielo diurno";
