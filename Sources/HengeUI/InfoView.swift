@@ -44,7 +44,10 @@ struct InfoView: View {
                    + "domain."),
         Credit(id: "terrain",
                what: "info.credit.terrain",
-               source: "NASA/USGS SRTM 1 arc-second elevation. Public domain."),
+               source: "Environment Agency LIDAR Composite DTM 2022, 1 m, "
+                   + "Open Government Licence v3. © Environment Agency "
+                   + "copyright and/or database right 2022. All rights "
+                   + "reserved."),
         Credit(id: "algorithms",
                what: "info.credit.algorithms",
                source: "Jean Meeus, Astronomical Algorithms (2nd ed.); "
@@ -68,9 +71,9 @@ struct InfoView: View {
     private static let people: [Credit] = [
         Credit(id: "benton",
                what: "info.thanks.benton",
-               source: "Simon Benton — horizon altitude read in Stellarium "
-                   + "with ArchaeoLines against the landscape below: the "
-                   + "2500 BC midsummer sun crosses a skyline at 0.35°."),
+               source: "Simon Benton — sent the landscape below and asked "
+                   + "what the sun actually clears. Its skyline matches the "
+                   + "bare-earth LiDAR to 0.03° and retired the SRTM bake."),
         Credit(id: "hoyle",
                what: "info.thanks.hoyle",
                source: "David Hoyle — Stellarium landscape "

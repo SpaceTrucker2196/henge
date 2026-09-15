@@ -40,7 +40,7 @@ let package = Package(
             name: "HengeGeometry",
             dependencies: ["HengeAstro"],
             path: "Sources/HengeGeometry",
-            // Salisbury Plain as a heightfield, baked from SRTM by
+            // Salisbury Plain as a heightfield, baked from EA LiDAR by
             // scripts/bake_terrain.py. Provenance in SECURITY.md.
             resources: [.copy("Resources")],
             swiftSettings: [.swiftLanguageMode(.v6)]

@@ -58,8 +58,8 @@ the day after 0.2.0 went on sale.
 | ΔT | Espenak & Meeus, NASA/TP–2006–214141 | US government work | **In use** (M1) |
 | Sky model | Preetham et al. (1999), closed form | Published formula, no data tables to vendor | **In use** (M1) |
 | **Surface textures** | **ambientCG** `Rock030` and `Grass004`, 1K JPG sets (colour, normal, roughness) | **CC0 1.0 Universal** — public domain dedication, no attribution required. Credited anyway | **In use** — `Sources/HengeEngine/Resources/{rock,grass}-{albedo,normal,roughness}.jpg`, 1.7 MB total, colour and normal downsampled to 1024/512 |
-| **Terrain** | **SRTM 1-arc-second (NASA/USGS)**, fetched as Skadi `.hgt` tiles N51W002 and N51W003 | **Public domain** (US government work). Baked by `scripts/bake_terrain.py`; the bake script and the tile names are in-tree so the result is reproducible | **In use** — `Sources/HengeGeometry/Resources/salisbury-plain.heightfield`, 1.18 MB, 768x768 at 40 m (±15.3 km) |
-| Skyline check | **Simon Benton**, reading **David Hoyle**'s Stellarium landscape `stonehenge_su1224742194` (a calibrated photographic panorama from the circle, 51.178851 −1.826177) with ArchaeoLines: the 2500 BC midsummer sun crosses a skyline at 0.35° | Courtesy of the authors; the panorama is **not vendored** | **Reference, not in use** — the app still marches the SRTM heightfield for its skyline (0.71° at the same bearing). The two disagree by more than a solar radius, credited in the info view, and the disagreement is an open question below |
+| **Terrain** | **Environment Agency LIDAR Composite DTM 2022, 1 m** (bare earth), fetched from Defra's WCS as a float32 GeoTIFF already scaled to 40 m by `scripts/bake_terrain.py --fetch-lidar` | **Open Government Licence v3** — attribution required and given in the info view: "© Environment Agency copyright and/or database right 2022. All rights reserved." The request URL is in the script, so the result is reproducible | **In use** — `Sources/HengeGeometry/Resources/salisbury-plain.heightfield`, 1.18 MB, 768x768 at 40 m (±15.3 km). Replaced the SRTM 1-arc-second bake (NASA/USGS, public domain, tiles N51W002/N51W003, still the script's fallback for voids) on 2026-09-15: SRTM is a radar *surface* model and stood the north-east skyline at 0.71° where bare earth is 0.60° |
+| Skyline check | **David Hoyle**'s Stellarium landscape `stonehenge_su1224742194`, a calibrated 360° panorama from inside the circle (51.178851 −1.826177), sent by **Simon Benton** | Courtesy of the authors; the panorama is **not vendored** | **Reference** — the cross-check on the terrain, not a source. Its skyline, read off the alpha channel at 1° steps, matches the LiDAR march all the way round (r = 0.96, mean difference 0.03°) and reads 0.57–0.60° across 48–50°. Against the SRTM bake it differed by 0.26° on average |
 | Star catalogue | **Hipparcos (ESA)** — ESA, 1997, *The Hipparcos and Tycho Catalogues*, ESA SP-1200, via CDS I/239 `hip_main.dat` | Free with attribution, no share-alike — attribution here and in `StarCatalog.swift` | **In use** — `Sources/HengeGeometry/Resources/hipparcos-bright.csv`, the 8,870 stars with V ≤ 6.5 (HIP, ICRS J1991.25 position, V, B−V, proper motions), 443 KB |
 | Moon colour map | **NASA SVS CGI Moon Kit** (`lroc_color_poles_1k`), from Lunar Reconnaissance Orbiter LROC data, NASA Goddard Scientific Visualization Studio | Public domain (US government work); credit appreciated and given here | **In use** — `Sources/HengeEngine/Resources/moon-albedo.jpg`, 1024×512 equirectangular, 139 KB |
 | Planetary theory | **VSOP87D** — Bretagnon & Francou, "Planetary theories in rectangular and spherical variables", A&A 202, 309 (1988); machine-readable tables from CDS VI/81 | Freely redistributed by CDS; cited here and in the generated source | **In use** — `Sources/HengeAstro/VSOP87Tables.swift`, truncated to terms worth ≥ 0.2″ over ±5 millennia (2,774 terms, Earth + the naked-eye five) |
@@ -69,10 +69,11 @@ the day after 0.2.0 went on sale.
 | Milky Way texture | undecided | — | Pending (M3) |
 
 The terrain is the first data this repo vendors, and it went in under the rule
-in MISSION.md invariant 5: provenance settled first. SRTM is a US government
-work and therefore public domain, with no attribution obligation — though the
-app will credit it anyway, because a claim about where the sun rises should say
-what it was measured against.
+in MISSION.md invariant 5: provenance settled first. The Environment Agency
+LiDAR is Open Government Licence, which obliges the attribution statement the
+info view carries verbatim; the SRTM it replaced was public domain with no
+obligation at all and was credited anyway, because a claim about where the sun
+rises should say what it was measured against.
 
 The surface textures were added at the owner's explicit request, which is what
 resolves the stops-and-asks; CC0 is what makes it clean. Two notes on how they
@@ -105,8 +106,9 @@ were incorporated; what was taken is knowledge, not data.
 - **Petrie's numbering (1874–77)** — adopted. Not data, a convention, and the
   one the literature has used for 150 years.
 - **Sketchfab LiDAR landscapes** — several are CC-BY over Environment Agency
-  open LiDAR. Nothing to gain: this repo already bakes the terrain from SRTM
-  itself, which is public domain and reproducible from `scripts/bake_terrain.py`.
+  open LiDAR. Nothing to gain: this repo bakes the same Environment Agency
+  LiDAR itself, straight from Defra's service, under the original OGL rather
+  than a re-publisher's CC-BY, and reproducibly from `scripts/bake_terrain.py`.
 - **Sketchfab monument models** — mixed licences, mostly artistic
   reconstructions rather than survey. Incorporating one would put a licence and
   an unverifiable provenance at the centre of a project whose first invariant is
@@ -128,16 +130,17 @@ were incorporated; what was taken is knowledge, not data.
   constellation figures row above.
 - **Pole stars** are seven published J2000 positions cited as constants, not a
   catalogue. Nothing to license.
-- **The north-east skyline is in dispute, and the dispute is recorded rather
-  than settled.** The SRTM march gives 0.71° at the solstice bearing; a
-  calibrated photographic panorama from the circle, read in Stellarium,
-  gives 0.35° (skyline check row above). SRTM is a radar *surface* model and
-  carries tree canopy on the Larkhill ridge as ground, which is the likely
-  sign of the error. If it is resolved by data, the bare-earth source is the
-  Environment Agency's open LiDAR DTM (OGL), which the note above declined
-  when the terrain was thought settled; the photograph would remain the
-  cross-check, not the source. Nothing here touches the sky or the shadows —
-  it moves the rise and set bearings the almanac prints, by up to a degree.
+- **The north-east skyline was in dispute, and the dispute is settled by
+  data.** The original SRTM bake gave 0.71° at the solstice bearing. A
+  calibrated photographic panorama from the circle (skyline check row above)
+  reads 0.57–0.60° there, and the Environment Agency's bare-earth LiDAR gives
+  0.60°: the photograph and the LiDAR agree all the way round the horizon to
+  0.03° on average, and SRTM sits a quarter of a degree above both, which is
+  tree canopy on the Larkhill ridge read as ground by radar. The LiDAR is now
+  the source and the photograph the cross-check. Nothing here touched the sky
+  or the shadows — it moved the rise and set bearings the almanac prints by a
+  quarter of a degree, in the same direction as the refraction correction of
+  issue #2, which is how the two errors had been hiding each other.
 - **Meeus's printed tables are not transcribed wholesale.** Algorithms are
   implemented from the published method and cited; where a long series is
   needed, it comes from the original IMCCE machine-readable data.

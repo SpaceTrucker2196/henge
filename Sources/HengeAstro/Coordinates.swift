@@ -82,27 +82,56 @@ public struct HorizontalCoordinate: Sendable, Hashable {
 }
 
 /// Atmospheric refraction.
+///
+/// Two formulae, because the two questions are different and each has its own
+/// closed form (Meeus, *Astronomical Algorithms*, ch. 16). Given where a body
+/// *truly* is, how high does it *appear*? That is 16.3, Sæmundsson's. Given
+/// where it *appears*, how far down is it *truly*? That is 16.4, Bennett's.
+/// They are not inverses of each other to better than a few arcminutes near
+/// the horizon, and the two famous numbers there — a body truly on the horizon
+/// appears about 29′ up; one appearing on the horizon is truly about 34′ down
+/// — are the same physics read from opposite ends. Feeding a true altitude to
+/// 16.4 returned 34′ where 29′ was right, and moved the 2500 BC midsummer
+/// sunrise bearing half a degree (issue #2).
 public enum Refraction {
 
-    /// Bennett's formula: apparent minus true altitude, for a body seen at
-    /// *true* altitude `h`. Accurate to about 0.07′ over the whole range.
+    /// Sæmundsson's formula, Meeus 16.3: apparent minus true altitude, for a
+    /// body at *true* altitude `h`. Consistent with 16.4 to about 0.1′.
     ///
     /// This is what lifts the rising sun visibly above where geometry alone
-    /// would put it — roughly its own diameter at the horizon, which is why
-    /// the rise-set condition below sits at −0.833° rather than zero.
-    public static func bennett(trueAltitude h: Angle) -> Angle {
+    /// would put it — roughly its own diameter at the horizon.
+    public static func saemundsson(trueAltitude h: Angle) -> Angle {
         let hDeg = h.degrees
-        let arcminutes = 1.0 / tan(Angle(degrees: hDeg + 7.31 / (hDeg + 4.4)).radians)
+        let arcminutes = 1.02 / tan(Angle(degrees: hDeg + 10.3 / (hDeg + 5.11)).radians)
+        return Angle(degrees: arcminutes / 60.0)
+    }
+
+    /// Bennett's formula, Meeus 16.4: apparent minus true altitude, for a body
+    /// seen at *apparent* altitude `h0`. Accurate to about 0.07′ over the whole
+    /// range. This is the one to use when the observation is the given — a
+    /// body seen touching the skyline, say — and the geometry is wanted.
+    public static func bennett(apparentAltitude h0: Angle) -> Angle {
+        let h0Deg = h0.degrees
+        let arcminutes = 1.0 / tan(Angle(degrees: h0Deg + 7.31 / (h0Deg + 4.4)).radians)
         return Angle(degrees: arcminutes / 60.0)
     }
 
     /// Apparent altitude for a true altitude, refraction included.
     public static func apparentAltitude(trueAltitude h: Angle) -> Angle {
-        h + bennett(trueAltitude: h)
+        h + saemundsson(trueAltitude: h)
     }
 
-    /// Standard altitude of the sun's centre at rise and set: refraction at the
-    /// horizon (about 34′) plus the sun's semi-diameter (about 16′).
+    /// True altitude for an apparent one, refraction removed.
+    public static func trueAltitude(apparentAltitude h0: Angle) -> Angle {
+        h0 - bennett(apparentAltitude: h0)
+    }
+
+    /// Standard altitude of the sun's centre at rise and set, *true* altitude:
+    /// refraction for a body seen at the horizon (about 34′, from 16.4) plus
+    /// the sun's semi-diameter (about 16′). `RiseSet` does not use it — it
+    /// compares apparent altitudes and carries only the semi-diameter — but it
+    /// is the conventional figure and it is stated so that nobody reaches for
+    /// the 29′ by mistake.
     public static let sunriseAltitude = Angle(degrees: -0.833)
 }
 

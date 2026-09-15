@@ -121,20 +121,45 @@ final class HorizontalCoordinateTests: XCTestCase {
         XCTAssertGreaterThan(sun.altitude.degrees, 40)
     }
 
+    /// Two horizon numbers, both famous, both right, and for different
+    /// questions — which is how issue #2 survived review. Fixtures are Meeus
+    /// 16.3 and 16.4 evaluated by hand at h = 0:
+    ///   16.3  1.02 / tan(10.3 / 5.11 °) = 1.02 / tan(2.0157°) = 28.98′
+    ///   16.4  1.00 / tan(7.31 / 4.4 °)  = 1.00 / tan(1.6614°) = 34.48′
     func testRefractionLiftsTheRisingSun() {
-        // At the horizon refraction is about 34 arcminutes — roughly the sun's
-        // own diameter, which is why it is already fully visible when geometry
-        // says it has not yet risen.
-        let atHorizon = Refraction.bennett(trueAltitude: .zero)
-        XCTAssertEqual(atHorizon.degrees * 60, 34, accuracy: 2)
+        // A body *truly* on the horizon appears about 29′ up.
+        let trulyAtHorizon = Refraction.saemundsson(trueAltitude: .zero)
+        XCTAssertEqual(trulyAtHorizon.degrees * 60, 28.98, accuracy: 0.05)
+
+        // A body *seen* on the horizon is truly about 34′ down.
+        let seenAtHorizon = Refraction.bennett(apparentAltitude: .zero)
+        XCTAssertEqual(seenAtHorizon.degrees * 60, 34.48, accuracy: 0.05)
+
+        // The two are the same physics read from opposite ends: lift a body
+        // by 16.3, then ask 16.4 how far down it truly is, and you should get
+        // back close to where you started. Meeus quotes their disagreement as
+        // under a few tenths of an arcminute.
+        let apparent = Refraction.apparentAltitude(trueAltitude: .zero)
+        let roundTrip = Refraction.trueAltitude(apparentAltitude: apparent)
+        XCTAssertEqual(roundTrip.degrees * 60, 0, accuracy: 0.5)
 
         // High in the sky it all but vanishes.
-        let overhead = Refraction.bennett(trueAltitude: Angle(degrees: 80))
+        let overhead = Refraction.saemundsson(trueAltitude: Angle(degrees: 80))
         XCTAssertLessThan(overhead.degrees * 60, 0.3)
     }
 }
 
 /// The tests that make the monument a calendar rather than a model.
+///
+/// Bearing fixtures are checked against the closed form a reader can redo on
+/// paper — cos A = (sin δ − sin h sin φ) / (cos h cos φ) — with δ the Laskar
+/// obliquity of the epoch (23.974° for 2500 BC, 23.436° for 2026), φ =
+/// 51.1789°, and h the *true* altitude of the sun's centre at first flash:
+/// the skyline minus a 16′ semi-diameter, un-refracted through Meeus 16.3.
+/// Over a flat horizon that is h = −0.896° and A = 48.11° (2500 BC) or
+/// 49.16° (2026); the ephemeris path lands within 0.005° of both. Until
+/// issue #2 the refraction was Meeus 16.4 fed a true altitude, which put the
+/// sun 5.5′ higher and every rising bearing half a degree too far north.
 final class StonehengeAlignmentTests: XCTestCase {
 
     let site = GeographicSite.stonehenge
@@ -144,9 +169,10 @@ final class StonehengeAlignmentTests: XCTestCase {
     /// skyline moves the sunrise bearing by well over a degree here, which is
     /// the difference between the axis fitting and missing.
     ///
-    /// Debated — published horizon profiles differ. Treated as a parameter
-    /// throughout rather than folded into a constant, so the sensitivity stays
-    /// visible instead of being buried.
+    /// 0.6° is what the bare-earth LiDAR and a photographic panorama from the
+    /// circle both give (see `TerrainTests`); here it is a parameter rather
+    /// than a lookup so `HengeAstro` stays free of the terrain and the
+    /// sensitivity stays visible instead of being buried.
     let northEastHorizon = Angle(degrees: 0.6)
 
     /// The single most important assertion in the suite.
@@ -162,7 +188,7 @@ final class StonehengeAlignmentTests: XCTestCase {
         // little north of the line the builders laid. That near-miss is real
         // archaeology, not an error in the ephemeris, and it is why the
         // "solar corridor" of a lost companion stone is argued about at all.
-        XCTAssertEqual(ancient.degrees, 49.08, accuracy: 0.3)
+        XCTAssertEqual(ancient.degrees, 49.59, accuracy: 0.3)
         XCTAssertLessThan(ancient.separation(to: Monument.axisAzimuthForTesting).degrees, 1.5,
                           "midsummer sunrise should sit within a degree or so of the axis")
     }
@@ -176,8 +202,8 @@ final class StonehengeAlignmentTests: XCTestCase {
         let modern = try XCTUnwrap(RiseSet.seasonalSunriseAzimuth(
             .juneSolstice, year: 2026, site: site))
 
-        XCTAssertEqual(ancient.degrees, 47.71, accuracy: 0.3)
-        XCTAssertEqual(modern.degrees, 48.77, accuracy: 0.3)
+        XCTAssertEqual(ancient.degrees, 48.11, accuracy: 0.3)
+        XCTAssertEqual(modern.degrees, 49.16, accuracy: 0.3)
         XCTAssertGreaterThan(modern.degrees, ancient.degrees,
                              "a shallower obliquity moves midsummer sunrise toward the east")
         XCTAssertEqual(modern.degrees - ancient.degrees, 1.05, accuracy: 0.4,
@@ -197,7 +223,7 @@ final class StonehengeAlignmentTests: XCTestCase {
             .juneSolstice, year: -2500, site: site, horizonAltitude: northEastHorizon))
 
         let reciprocal = (Monument.axisAzimuthForTesting + Angle(degrees: 180)).normalized
-        XCTAssertEqual(sunset.degrees, 230.10, accuracy: 0.3)
+        XCTAssertEqual(sunset.degrees, 229.60, accuracy: 0.3)
         XCTAssertLessThan(sunset.separation(to: reciprocal).degrees, 0.6,
                           "midwinter sunset should run back down the axis")
 
@@ -217,7 +243,7 @@ final class StonehengeAlignmentTests: XCTestCase {
             .decemberSolstice, year: -2500, site: site))
 
         let separation = (sunset - sunrise).normalized.degrees
-        XCTAssertEqual(separation, 183.7, accuracy: 0.5)
+        XCTAssertEqual(separation, 182.9, accuracy: 0.5)
         XCTAssertNotEqual(separation, 180, accuracy: 1.0,
                           "the asymmetry is real and should not be rounded away")
     }
@@ -230,7 +256,7 @@ final class StonehengeAlignmentTests: XCTestCase {
         let winter = try XCTUnwrap(RiseSet.seasonalSunriseAzimuth(
             .decemberSolstice, year: 2026, site: site))
 
-        XCTAssertEqual(winter.degrees, 127.59, accuracy: 0.3)
+        XCTAssertEqual(winter.degrees, 127.96, accuracy: 0.3)
         XCTAssertEqual(winter.degrees - summer.degrees, 78.8, accuracy: 1.0)
     }
 

@@ -45,7 +45,7 @@ final class AlignmentTests: XCTestCase {
     /// Measured against the terrain like the midsummer case, and the number
     /// that comes out is worth stating plainly rather than tuning away.
     ///
-    /// Midsummer sunrise sits 0.41° off the axis; midwinter sunset sits 1.85°
+    /// Midsummer sunrise sits 0.43° off the axis; midwinter sunset sits 1.57°
     /// off its reciprocal. **The line is not equally good read both ways.** The
     /// two solstitial bearings are not exactly 180° apart at this latitude —
     /// the horizon altitude differs between north-east and south-west, and the
@@ -127,11 +127,20 @@ final class AlignmentTests: XCTestCase {
     /// Alignment is a claim about a moment, not a season: a fortnight off the
     /// solstice the sun is still within a degree or so, which is exactly why
     /// "it lines up at midsummer" needs a number attached.
-    func testTheAlignmentDegradesGentlyAroundTheSolstice() {
+    ///
+    /// Over the real skyline, as the app measures it. Over a flat horizon the
+    /// modern solstice sun rises 0.7° *north* of the axis and drifts through
+    /// it a fortnight later, so the closest morning is not the solstice and
+    /// the shape this test pins is inverted — which is a fact about a horizon
+    /// the monument does not have.
+    func testTheAlignmentDegradesGentlyAroundTheSolstice() throws {
+        let terrain = try TerrainModel.salisburyPlain()
+        let horizon = terrain.horizonAltitude(azimuth: Monument.axisAzimuth)
         let deviations = (-14...14).compactMap { offset -> Double? in
             let date = (JulianDay(CalendarDate(year: 2026, month: 6, day: 21)) + Double(offset))
                 .calendarDate
-            return AlignmentSolver.deviation(of: .midsummerSunrise, on: date)?.degrees
+            return AlignmentSolver.deviation(of: .midsummerSunrise, on: date,
+                                             horizonAltitude: horizon)?.degrees
         }
         XCTAssertEqual(deviations.count, 29)
         XCTAssertLessThan(deviations.min()!, 0.6)

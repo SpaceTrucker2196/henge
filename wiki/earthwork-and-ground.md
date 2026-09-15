@@ -48,7 +48,7 @@ Altar Stone work). What it shows, and what the renderer takes from it:
 
 ## The wider landscape — *Established*
 
-- Terrain: NASA/USGS SRTM 1-arc-second heightfield, baked to a 768×768
+- Terrain: Environment Agency LiDAR (1 m, bare earth) heightfield, baked to a 768×768
   grid at 40 m spacing (±15.3 km) by `scripts/bake_terrain.py` — the
   skyline the sun actually rises over.
 - Barrows and field boundaries visible in the reference photograph are

@@ -18,8 +18,12 @@ import HengeAstro
 /// existed that number was passed in by hand, in defiance of MISSION.md
 /// invariant 1. Now it is measured from the terrain.
 ///
-/// Data: SRTM 1-arc-second (NASA/USGS), public domain. Baked by
-/// `scripts/bake_terrain.py`; provenance in `SECURITY.md`.
+/// Data: Environment Agency LIDAR Composite DTM 2022 (1 m, bare earth), Open
+/// Government Licence v3 — © Environment Agency copyright and/or database
+/// right 2022. All rights reserved. Baked by `scripts/bake_terrain.py`;
+/// provenance in `SECURITY.md`. It replaced an SRTM bake whose radar surface
+/// carried the tree canopy on the Larkhill ridge as ground and stood the
+/// north-east skyline a tenth of a degree too high.
 public struct TerrainModel: Sendable {
 
     public let width: Int
