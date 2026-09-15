@@ -81,3 +81,4 @@ the whole ledger: `ledger.py --energy-total`.
 | e334ce8 | 2026-09-15T18:27:56Z | claude-fable-5-1 | 1030 | 107938 | 5746241 | 142563 | 9.6950 | Refract by Meeus 16.3, and bake the skyline from bare-earth LiDAR |
 | 8be5282 | 2026-09-15T18:35:50Z | claude-fable-5-1 | 360 | 12080 | 3008719 | 19282 | 1.7454 | Spell Simon Banton's name correctly |
 | ea39c2c | 2026-09-15T19:01:35Z | claude-fable-5-1 | 2232 | 190392 | 21180832 | 305613 | 20.9494 | Raise the Milky Way, from NASA's map of the Gaia sky |
+| 3d6e336 | 2026-09-15T19:06:26Z | claude-fable-5-1 | 480 | 53434 | 4935043 | 90144 | 5.7131 | Add a zodiac-only sky: the twelve figures' stars and the planets |
