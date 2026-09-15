@@ -172,6 +172,13 @@ public struct SceneState: Sendable {
     /// stars switch keeps its meaning. Off whenever `stars` is off.
     public var milkyWay: Bool = true
 
+    /// Only the zodiac's stars and the wandering planets — the strip of sky
+    /// the planets walk through, which is the part any pre-telescopic
+    /// watcher of omens was actually tracking; the rest of the night goes
+    /// dark. Off by default: the whole sky is the honest one. Constellations
+    /// rather than signs, decided in `ConstellationFigure.zodiacHIPs`.
+    public var zodiacOnly: Bool = false
+
     /// The animated switch between the monument's two states, when one is
     /// playing — nil in every resting frame, which is what keeps every
     /// oracle render exactly what it was. The numbers are computed by the
@@ -445,6 +452,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// years from it — a deep-time scrub rebuilds a few times per millennium
     /// crossed, never per frame.
     private var starEpoch = Double.infinity
+    /// Which sky the buffer was last built for; a flip rebuilds it at once.
+    private var starZodiacOnly = false
     private let constellationPipeline: MTLRenderPipelineState
     private var constellationBuffer: MTLBuffer?
     private var constellationVertexCount = 0
@@ -452,21 +461,27 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// the same indices then read from whichever epoch's instances the star
     /// buffer was built from, so the figures precess with their stars for
     /// free.
-    private lazy var constellationIndexPairs: [(Int, Int)] = {
+    private lazy var constellationIndexPairs: [(Int, Int)] = indexPairs { _ in true }
+    /// The zodiac's figures alone, for the zodiac-only sky.
+    private lazy var zodiacIndexPairs: [(Int, Int)] = indexPairs(\.isZodiacal)
+    /// The catalogue indices the zodiac-only sky keeps.
+    private lazy var zodiacStarIndices: Set<Int> = starCatalog?.zodiacIndices ?? []
+
+    private func indexPairs(_ wanted: (ConstellationFigure) -> Bool) -> [(Int, Int)] {
         guard let catalog = starCatalog else { return [] }
         var indexByHIP: [Int: Int] = [:]
         indexByHIP.reserveCapacity(catalog.entries.count)
         for (index, entry) in catalog.entries.enumerated() {
             indexByHIP[entry.hip] = index
         }
-        return ConstellationFigure.all.flatMap { figure in
+        return ConstellationFigure.all.filter(wanted).flatMap { figure in
             figure.segments.compactMap { segment in
                 guard let a = indexByHIP[segment.0],
                       let b = indexByHIP[segment.1] else { return nil }
                 return (a, b)
             }
         }
-    }()
+    }
     private let sceneDepthState: MTLDepthStencilState
     private let shadowDepthState: MTLDepthStencilState
     private let skyDepthState: MTLDepthStencilState
@@ -1649,12 +1664,17 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         // the show, so the sweep tolerates eighty years — well under what an
         // eye can catch at that speed.
         let staleness = state.transition == nil ? 730.0 : 29_220.0
-        guard abs(state.epoch.value - starEpoch) > staleness else { return }
+        guard abs(state.epoch.value - starEpoch) > staleness
+                || state.zodiacOnly != starZodiacOnly else { return }
         let instances = catalog.instances(at: state.epoch.terrestrialTime)
-        let vertices = instances.map { star in
-            StarVertex(direction: SIMD4(SIMD3<Float>(star.direction),
-                                        Float(star.magnitude)),
-                       colour: SIMD4(star.colour, 0))
+        // The zodiac-only sky drops the points, not the instances: the
+        // figure lines below index into the full array either way.
+        let keep: Set<Int>? = state.zodiacOnly ? zodiacStarIndices : nil
+        let vertices = instances.enumerated().compactMap { index, star -> StarVertex? in
+            if let keep, !keep.contains(index) { return nil }
+            return StarVertex(direction: SIMD4(SIMD3<Float>(star.direction),
+                                               Float(star.magnitude)),
+                              colour: SIMD4(star.colour, 0))
         }
         starBuffer = device.makeBuffer(
             bytes: vertices,
@@ -1663,10 +1683,12 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         starBuffer?.label = "stars"
         starCount = starBuffer == nil ? 0 : vertices.count
         starEpoch = state.epoch.value
+        starZodiacOnly = state.zodiacOnly
 
         // The figures ride the same instances, so a deep-time scrub that
         // precesses the stars carries their lines along by construction.
-        let lineVertices = constellationIndexPairs.flatMap { pair in
+        let pairs = state.zodiacOnly ? zodiacIndexPairs : constellationIndexPairs
+        let lineVertices = pairs.flatMap { pair in
             [pair.0, pair.1].map { index in
                 StarVertex(direction: SIMD4(SIMD3<Float>(instances[index].direction), 0),
                            colour: SIMD4<Float>(0, 0, 0, 0))

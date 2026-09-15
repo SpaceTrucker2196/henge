@@ -174,6 +174,7 @@
 "toggle.weather.hint" = "Fait défiler le ciel : dégagé, couvert, pluie, gel. Décor seulement — le soleil garde la vérité de l’almanach";
 "toggle.weather.label" = "Météo";
 "toggle.zodiac.hint" = "Les douze constellations à leur véritable place dans le ciel nocturne — les figures stellaires, non les signes astrologiques dont elles ont dérivé";
+"toggle.zodiacStars.hint" = "Ne garde que les étoiles des douze constellations du zodiaque et les planètes — la bande de ciel que parcourent les planètes, celle où l’on a toujours lu les horoscopes — et éteint le reste";
 "travel.blurb" = "N’importe quand entre 3000 av. J.-C. et 3000 apr. J.-C. — l’intervalle pour lequel le calcul est prévu. Les dates antérieures à octobre 1582 sont des dates du calendrier julien, comme elles l’étaient pour ceux qui les ont vécues.";
 "travel.close" = "Fermer sans voyager";
 "travel.go" = "Y aller";
@@ -226,6 +227,8 @@
 "toggle.constellations.show" = "Afficher les figures des constellations";
 "toggle.zodiac.hide" = "Masquer le zodiaque";
 "toggle.zodiac.show" = "Afficher le zodiaque";
+"toggle.zodiacStars.all" = "Afficher tout le ciel";
+"toggle.zodiacStars.only" = "N’afficher que les étoiles du zodiaque";
 "toggle.monument.built" = "Montre le monument tel qu’il fut bâti";
 "toggle.monument.ruin" = "Montre la ruine telle qu’elle est aujourd’hui";
 "toggle.starLabels.hide" = "Masquer les noms des étoiles";

@@ -259,6 +259,7 @@ public struct RootView: View {
                             starLabelToggle
                             constellationToggle
                             zodiacToggle
+                            zodiacStarsToggle
                             smoothPanToggle
                         }
                         .padding(.vertical, Henge.Space.tight)
@@ -870,6 +871,31 @@ public struct RootView: View {
                                  bundle: .module))
         .accessibilityAddTraits(model.showsConstellationLines ? [.isSelected] : [])
         .accessibilityHint(Text("toggle.constellations.hint", bundle: .module))
+    }
+
+    /// The zodiac's stars alone, with the wandering planets — the strip of
+    /// sky the planets walk through, which is what a watcher of omens was
+    /// tracking; everything else goes dark. A way of seeing how little of
+    /// the night that strip is. The whole sky is the honest default.
+    private var zodiacStarsToggle: some View {
+        Button {
+            model.showsZodiacStarsOnly.toggle()
+        } label: {
+            Image(systemName: "star.circle")
+                .frame(width: 36, height: 32)
+                .hengeControl(isSelected: model.showsZodiacStarsOnly)
+                .frame(width: Henge.Hit.control, height: Henge.Hit.controlHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(model.showsZodiacStarsOnly ? Henge.bronze : Henge.stone)
+        .accessibilityIdentifier("henge.toggle.zodiacStars")
+        .accessibilityLabel(Text(model.showsZodiacStarsOnly
+                                 ? "toggle.zodiacStars.all"
+                                 : "toggle.zodiacStars.only",
+                                 bundle: .module))
+        .accessibilityAddTraits(model.showsZodiacStarsOnly ? [.isSelected] : [])
+        .accessibilityHint(Text("toggle.zodiacStars.hint", bundle: .module))
     }
 
     private var zodiacToggle: some View {

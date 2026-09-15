@@ -1,4 +1,5 @@
 import Foundation
+import HengeAstro
 
 /// The constellation figures, drawn for this app.
 ///
@@ -140,4 +141,24 @@ public struct ConstellationFigure: Sendable {
             (63090, 63608), (65474, 66249), (66249, 63090)
         ])
     ]
+}
+
+extension ConstellationFigure {
+
+    /// The twelve figures of the zodiac. Membership is by the canonical
+    /// names `ZodiacConstellation` carries, so the glyph layer and the star
+    /// filter can never disagree about what the zodiac is.
+    public var isZodiacal: Bool { Self.zodiacNames.contains(name) }
+
+    static let zodiacNames = Set(ZodiacConstellation.all.map(\.name))
+
+    /// Every catalogue star a zodiac figure is drawn through — the sky the
+    /// "zodiac only" switch keeps lit. Constellations rather than signs, as
+    /// everywhere in this app: the strip of stars the planets actually walk
+    /// through, which is what any observer before the telescope was watching
+    /// when they watched the sky for omens.
+    public static let zodiacHIPs: Set<Int> = Set(
+        all.filter(\.isZodiacal).flatMap { figure in
+            figure.segments.flatMap { [$0.0, $0.1] }
+        })
 }

@@ -442,6 +442,9 @@ public final class SkyModel {
     /// Whether the hand-drawn constellation figures are joined on the sky.
     public var showsConstellationLines = false
 
+    /// Whether the night keeps only the zodiac's stars and the planets.
+    public var showsZodiacStarsOnly = false
+
     // ── the year bar ────────────────────────────────────────────────────────
 
     /// The solved civil year, cached until the shown date leaves it — the
@@ -622,6 +625,10 @@ public final class SkyModel {
             }
 
             labels += catalog.namedStars(at: time.terrestrialTime).compactMap { star in
+                // A name on a star the zodiac-only sky has put out would
+                // label nothing; the label layer keeps the renderer's set.
+                guard !showsZodiacStarsOnly
+                        || ConstellationFigure.zodiacHIPs.contains(star.hip) else { return nil }
                 let world = SIMD3<Double>(
                     rows.east.x * star.direction.x + rows.east.y * star.direction.y
                         + rows.east.z * star.direction.z,
@@ -655,6 +662,7 @@ public final class SkyModel {
         state.torchlight = torchlight && station != .aerial
         state.weather = weather
         state.constellationLines = showsConstellationLines
+        state.zodiacOnly = showsZodiacStarsOnly
         return state
     }
 

@@ -174,6 +174,7 @@
 "toggle.weather.hint" = "Wechselt den Himmel: klar, bedeckt, Regen, Frost. Nur Ausstattung – die Sonne behält die Wahrheit des Almanachs";
 "toggle.weather.label" = "Wetter";
 "toggle.zodiac.hint" = "Die zwölf Sternbilder an ihren wahren Orten am Nachthimmel – die Sternmuster, nicht die astrologischen Zeichen, von denen sie abgedriftet sind";
+"toggle.zodiacStars.hint" = "Behält nur die Sterne der zwölf Tierkreis-Sternbilder und die Planeten – den Himmelsstreifen, durch den die Planeten wandern und aus dem je Horoskope gelesen wurden – und dunkelt den Rest ab";
 "travel.blurb" = "Irgendwann zwischen 3000 v. Chr. und 3000 n. Chr. – die Spanne, für die die Rechnung ausgelegt ist. Daten vor Oktober 1582 sind julianische Kalenderdaten, so wie für die Menschen, die sie erlebten.";
 "travel.close" = "Schließen, ohne zu reisen";
 "travel.go" = "Dorthin";
@@ -226,6 +227,8 @@
 "toggle.constellations.show" = "Sternbildfiguren einblenden";
 "toggle.zodiac.hide" = "Tierkreis ausblenden";
 "toggle.zodiac.show" = "Tierkreis einblenden";
+"toggle.zodiacStars.all" = "Den ganzen Himmel zeigen";
+"toggle.zodiacStars.only" = "Nur die Sterne des Tierkreises zeigen";
 "toggle.monument.built" = "Zeigt das Monument im vollendeten Zustand";
 "toggle.monument.ruin" = "Zeigt die Ruine im heutigen Zustand";
 "toggle.starLabels.hide" = "Sternnamen ausblenden";

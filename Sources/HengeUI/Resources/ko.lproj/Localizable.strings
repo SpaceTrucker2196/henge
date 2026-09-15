@@ -174,6 +174,7 @@
 "toggle.weather.hint" = "하늘을 전환합니다: 맑음, 흐림, 비, 서리. 연출일 뿐이며 태양은 역서의 진실을 지킵니다";
 "toggle.weather.label" = "날씨";
 "toggle.zodiac.hint" = "밤하늘의 실제 위치에 있는 열두 별자리 — 별의 배열이며, 그로부터 어긋나 버린 점성술의 궁이 아닙니다";
+"toggle.zodiacStars.hint" = "황도 12궁 별자리의 별과 행성만 남깁니다 — 행성이 지나가고 점성술이 읽어 온 하늘의 띠 — 나머지는 어두워집니다";
 "travel.blurb" = "기원전 3000년부터 서기 3000년까지 언제든 — 산술이 감당하도록 마련된 범위입니다. 1582년 10월 이전의 날짜는 율리우스력 날짜이며, 그 시대를 살았던 이들에게 그러했던 그대로입니다.";
 "travel.close" = "여행하지 않고 닫기";
 "travel.go" = "그곳으로";
@@ -226,6 +227,8 @@
 "toggle.constellations.show" = "별자리 선 보기";
 "toggle.zodiac.hide" = "황도 12궁 숨기기";
 "toggle.zodiac.show" = "황도 12궁 보기";
+"toggle.zodiacStars.all" = "하늘 전체 보기";
+"toggle.zodiacStars.only" = "황도 12궁의 별만 보기";
 "toggle.monument.built" = "세워졌을 당시의 모습을 표시 중";
 "toggle.monument.ruin" = "오늘날 남아 있는 폐허를 표시 중";
 "toggle.starLabels.hide" = "별 이름 숨기기";

@@ -174,6 +174,7 @@
 "toggle.weather.hint" = "Alterna el cielo: despejado, cubierto, lluvia, escarcha. Solo decorado: el sol conserva la verdad del almanaque";
 "toggle.weather.label" = "Tiempo";
 "toggle.zodiac.hint" = "Las doce constelaciones en sus lugares reales del cielo nocturno: los patrones estelares, no los signos astrológicos de los que se han alejado";
+"toggle.zodiacStars.hint" = "Conserva solo las estrellas de las doce constelaciones del zodiaco y los planetas: la franja de cielo por la que caminan los planetas y de la que se leyeron los horóscopos, y oscurece el resto";
 "travel.blurb" = "Cualquier momento entre 3000 a. C. y 3000 d. C.: el intervalo para el que está provista la aritmética. Las fechas anteriores a octubre de 1582 son del calendario juliano, como lo fueron para quienes las vivieron.";
 "travel.close" = "Cerrar sin viajar";
 "travel.go" = "Ir allí";
@@ -226,6 +227,8 @@
 "toggle.constellations.show" = "Mostrar las figuras de las constelaciones";
 "toggle.zodiac.hide" = "Ocultar el zodiaco";
 "toggle.zodiac.show" = "Mostrar el zodiaco";
+"toggle.zodiacStars.all" = "Mostrar todo el cielo";
+"toggle.zodiacStars.only" = "Mostrar solo las estrellas del zodiaco";
 "toggle.monument.built" = "Muestra el monumento tal como se construyó";
 "toggle.monument.ruin" = "Muestra la ruina tal como está hoy";
 "toggle.starLabels.hide" = "Ocultar los nombres de las estrellas";

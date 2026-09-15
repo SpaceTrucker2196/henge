@@ -263,9 +263,16 @@ public struct StarCatalog: Sendable {
         76333: "Zubenelhakrabi", 74785: "Zubeneschamali"
     ]
 
+    /// Indices into `entries` of the stars the zodiac figures are drawn
+    /// through — the points the renderer keeps when the sky is shown
+    /// zodiac-only. The lines and the labels filter by the same HIP set.
+    public var zodiacIndices: Set<Int> {
+        Set(entries.indices.filter { ConstellationFigure.zodiacHIPs.contains(entries[$0].hip) })
+    }
+
     /// The named stars, moved to a date — the label layer's whole diet.
     public func namedStars(at tt: JulianDay)
-        -> [(name: String, direction: SIMD3<Double>, magnitude: Double)] {
+        -> [(hip: Int, name: String, direction: SIMD3<Double>, magnitude: Double)] {
         entries.compactMap { entry in
             guard let name = Self.properNames[entry.hip] else { return nil }
             let moved = StarField.properMotionApplied(
@@ -278,7 +285,7 @@ public struct StarCatalog: Sendable {
                 rightAscension: moved.rightAscension,
                 declination: moved.declination,
                 at: tt)
-            return (name,
+            return (entry.hip, name,
                     StarField.unitVector(rightAscension: dated.rightAscension,
                                          declination: dated.declination),
                     entry.magnitude)

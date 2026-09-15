@@ -106,6 +106,10 @@ public struct HengeCommands: Commands {
                  ? "toggle.zodiac.hide" : "toggle.zodiac.show", "z") {
                 $0.showsZodiac.toggle()
             }
+            item(model?.showsZodiacStarsOnly == true
+                 ? "toggle.zodiacStars.all" : "toggle.zodiacStars.only", "x") {
+                $0.showsZodiacStarsOnly.toggle()
+            }
             // Not the rail's key here. The rail's label states what is on
             // screen — "Showing the monument as built" — which is right for a
             // toggle button and wrong for a menu, where every other line is an
