@@ -80,3 +80,4 @@ the whole ledger: `ledger.py --energy-total`.
 | f7c31dc | 2026-09-15T18:09:24Z | claude-fable-5-1,claude-opus-5 | 2336 | 442236 | 180150052 | 4471074 | 149.7165 | Price the full unlock at $19.99, and point the sites at the store |
 | e334ce8 | 2026-09-15T18:27:56Z | claude-fable-5-1 | 1030 | 107938 | 5746241 | 142563 | 9.6950 | Refract by Meeus 16.3, and bake the skyline from bare-earth LiDAR |
 | 8be5282 | 2026-09-15T18:35:50Z | claude-fable-5-1 | 360 | 12080 | 3008719 | 19282 | 1.7454 | Spell Simon Banton's name correctly |
+| ea39c2c | 2026-09-15T19:01:35Z | claude-fable-5-1 | 2232 | 190392 | 21180832 | 305613 | 20.9494 | Raise the Milky Way, from NASA's map of the Gaia sky |
