@@ -15,11 +15,12 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       and portal, four Station Stones, 56 Aubrey holes. Terrain displaced into
       the ground from the surveyed heightfield. Sarsen / bluestone / chalk
       materials. Four camera stations at 1.7 m eye height, drag and pinch.
-      **Still outstanding:** the ditch, bank and Avenue earthworks; lichen and
-      weathering maps; PCSS penumbra widening (and with it the re-measured
-      shadow tolerance).
+      *Since landed:* the ditch, bank and Avenue earthworks
+      (`Earthwork`, 2026-07-31); lichen and weathering in the stone shader
+      (2026-07-28); PCSS penumbra widening (M5, 2026-07-28). Nothing of M2
+      is outstanding.
 
-- [~] **M3 — The Night (L).** *Moon landed 2026-07-27.* Position, phase,
+- [x] **M3 — The Night (L).** *Complete 2026-09-15.* *Moon landed 2026-07-27.* Position, phase,
       distance and apparent size from a truncated ELP-2000; topocentric
       parallax; the 18.61-year nodal cycle and standstill envelope, emerging
       from the arithmetic rather than scripted. Rendered as a sphere lit by the
@@ -41,11 +42,13 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       drawings are ours), riding the same instance buffer as the stars so
       they precess for free. Along the way the authoring caught a shipped
       register bug: multi-word IAU names truncated at the first space —
-      the sky was labelling three stars "Kaus". The Milky Way landed
-      2026-09-15 from NASA's Deep Star Maps (public domain, Gaia-derived),
-      precessing with the stars — M3 is complete.
+      the sky was labelling three stars "Kaus". *Landed 2026-09-15:* the
+      Milky Way from NASA's Deep Star Maps (public domain, Gaia-derived),
+      precessing with the stars; and a zodiac-only sky switch that keeps
+      the twelve figures' stars and the planets and puts the rest out. M3
+      is complete.
 
-- [x] **M4 — The Calendar (M–L).** *In progress.* The Wheel of the Year has
+- [x] **M4 — The Calendar (M–L).** *Complete.* The Wheel of the Year has
       landed: eight stations solved from apparent solar longitude, festival
       jumps that land on the sunrise of the day rather than midnight of a
       calendar date, and the tier badge shown at the point of use. The lore
@@ -136,17 +139,23 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       complete: beta description, feedback address, reviewer contact,
       review notes, and What to Test. Sign-in is declared *not* required,
       which is true — the app has no account and no network.
-      **Left after that:** screenshots and store copy, an IAP review
-      screenshot, age rating, privacy questionnaire. The first
-      non-consumable must be submitted *with* an app version, so the
-      build and the purchase go to review together.
-      **A version mismatch to settle first:** the build is 0.1.0 and the
-      App Store version record is 1.0. Fine for TestFlight — they are
-      separate trains — but a build cannot be submitted against a version
-      record it does not match, so either `MARKETING_VERSION` moves to
-      1.0 or the record moves to 0.1.0 before submission.
-      macOS distribution is not started; the app icon needs its
-      store-quality pass on nobody's list but ours.
+      **On sale.** The version record moved to 0.1.0 and the build went
+      to review with the non-consumable; 0.1.0 reached *Ready for Sale*
+      in August, and **0.2.0 has been Ready for Sale since 2026-08-27**
+      (App Store Connect API, checked 2026-09-15) at $19.99 for the full
+      unlock. The landing and wiki pages point at the listing and the
+      twelve-minute walkthrough.
+      **macOS** ships outside the store: `make dmg` / `scripts/build_dmg.sh
+      --release` builds the universal Release app into a verified image,
+      tags a GitHub release and stages the download at www.river.io/henge.
+      Only **v0.1.0 (early build)** has gone out that way, 2026-08-03; the
+      download page states how it is signed.
+      **Left:** (1) **0.2.1** — the 0.2.0 on sale carries the refraction
+      and skyline errors fixed 2026-09-15, half a degree in the bearing the
+      app exists to state, and lacks the Milky Way; iOS through fastlane,
+      the Mac image refreshed to match. (2) The app icon's store-quality
+      pass, on nobody's list but ours. (3) A Developer ID for the Mac
+      image, so the download stops admitting to ad hoc signing.
 
 - [x] **M7 — The Ground Plan (M).** *Owner requests, 2026-07-31; landed the
       same day.* (1) The year bar's moon lights jump to the *moonrise* of
@@ -188,9 +197,91 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
 
 ## Still open, needing a decision
 
-(The Hipparcos star catalogue was asked, answered and vendored 2026-07-28 —
-the naked-eye sky is in, with proper motion and precession, attribution in
-`SECURITY.md`. Constellation lines remain blocked on their licence.)
+- **Ambient sound** (M5). Wind over the plain, birds at dawn, the torch's
+  fire. No blocker but time — and a licence conversation for any recorded
+  material, which synthesis would avoid entirely. The invariant-5 question
+  (provenance first) applies to sound as it did to every texture.
+- **Hosek–Wilkie sky** (M5). Waits on its data licence. Preetham serves.
+- **MetalFX and 120 Hz** (M5). Unexplored and unprofiled; researched
+  2026-09-15, see below.
+
+(Settled since this list was written: the Hipparcos catalogue, vendored
+2026-07-28; constellation figures, drawn in-repo 2026-07-30; the Milky Way,
+NASA's public-domain map, 2026-09-15; the north-east skyline, moved from
+SRTM to bare-earth LiDAR 2026-09-15 after a photographic panorama from the
+circle showed the radar bake a quarter of a degree high.)
+
+## Next, in order
+
+1. **Ship 0.2.1** (M6). The store build states a bearing half a degree off.
+2. **Ambient sound**, synthesized (M5).
+3. **Icon store-quality pass** and a Developer ID Mac image (M6).
+
+## MetalFX and 120 Hz — research note, 2026-09-15
+
+**What is true today.** `SceneView` asks the `MTKView` for 120 frames a
+second. On iPad Pro that request is honoured; on iPhone it is inert,
+because iOS caps third-party Metal views at 60 Hz unless the Info.plist
+carries `CADisableMinimumFrameDurationOnPhone = YES`, and ours does not.
+No frame has ever been timed. The drawable is native scale (2× on iPad,
+3× on iPhone), single-sampled `bgra8Unorm`, and a frame is three shadow
+cascades at 2048² plus the scene pass plus, in the golden hours, the
+light-shaft march.
+
+**First measurement** — GPU time per frame from the command buffer's own
+clock (`gpuEndTime − gpuStartTime`), full monument, `swift test` harness
+on the build Mac's **Apple M5 Pro**. Median of 20, after warm-up:
+
+| Pixels | Golden hour, shafts, grass | Golden hour, no shafts, no grass | Noon, grass | Night, stars + Milky Way, grass |
+|---|---|---|---|---|
+| iPad Pro 13" native, 2752×2064 | 34.8 ms | 20.4 ms | 29.4 ms | 13.5 ms |
+| iPhone 17 Pro native, 2622×1206 | 23.9 ms | 10.0 ms | 16.3 ms | 12.4 ms |
+| iPad Pro 13" at 1×, 1376×1032 | 12.8 ms | 5.7 ms | 10.3 ms | 8.7 ms |
+
+Read with three caveats, all of which make the real numbers *worse* than
+the table except the first: (1) the harness renders in bursts with a
+blocking wait, so the GPU never clocks up — minimums ran 30–40 % under
+the medians and a sustained loop would sit nearer them; (2) this is a
+16-core desktop-class GPU, and the iPad's M5 and the iPhone's A19 Pro
+are slower; (3) the harness is a debug build, which does not touch GPU
+time. What the table says regardless: **at native resolution the app is
+a 30 fps app in the golden hour and a 60 fps app at night**, on the best
+hardware it will ever run on. 120 Hz is out of reach by a factor of three
+to four. The frame is fill-rate bound — quartering the pixels cut the
+golden hour from 35 ms to 13 — with grass worth 8–9 ms at iPad
+resolution and the shafts 6 ms on top.
+
+**What MetalFX offers, and to whom** (Apple's documentation feed,
+2026-09-15). `MTLFXSpatialScaler` and `MTLFXTemporalScaler`: iOS 16 /
+macOS 13, so every device this app ships to (deployment iOS 17, macOS
+14), gated by `supportsDevice`. `MTLFXTemporalDenoisedScaler`: iOS 18 /
+macOS 26. `MTLFXFrameInterpolator` and the Metal 4 `MTL4FX*` family:
+iOS 26 / macOS 26 only, needing colour, depth and per-pixel motion
+vectors — which this renderer does not produce.
+
+**Recommendation, in order.**
+
+1. **Profile on the iPad itself first** (it is paired; it was not plugged
+   in today): Instruments' Metal System Trace over a sustained loop, for
+   a true per-pass split. The suspicion to test is the shadow pass —
+   three 2048² cascades of the whole monument and terrain, every frame,
+   whether or not the sun or the camera moved. Caching the cascades until
+   either moves, and 1024² on iPhone, are the cheap wins if so.
+2. **Render scale with MetalFX spatial upscaling** is the right lever for
+   a fill-rate-bound frame, and it fits every device we ship to: draw
+   sky, scene and shafts at 0.6–0.7× into an offscreen target, upscale to
+   the drawable. Expect the golden hour near 60 fps on M-class iPads.
+   Two costs to design for: star point sprites are sized in pixels and
+   must be scaled by the inverse render scale or they shrink and soften;
+   and `renderOffscreen` — the shadow-agreement oracle's eye — must stay
+   at native scale so no measurement moves. Temporal upscaling and frame
+   interpolation both want motion vectors; that is a renderer feature in
+   its own right (M-sized) and only frame interpolation, on iOS 26, would
+   turn 60 real frames into a 120 Hz feel — the one MetalFX feature that
+   actually matches what this app does.
+3. **Do not add the iPhone 120 Hz plist key yet.** Until a frame fits in
+   8 ms it would only halve battery life for nothing. When it does fit,
+   it is one line.
 
 ## Definition of done for the demo
 
