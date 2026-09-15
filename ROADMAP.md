@@ -259,29 +259,52 @@ macOS 26. `MTLFXFrameInterpolator` and the Metal 4 `MTL4FX*` family:
 iOS 26 / macOS 26 only, needing colour, depth and per-pixel motion
 vectors — which this renderer does not produce.
 
+**Second measurement, on the iPad itself** — the owner plugged it in the
+same afternoon. iPad Pro 13" (M5), Release build, standing at the Altar
+Stone at 04:52 BST on 21 June 2026 (the definition-of-done moment),
+Metal System Trace attached for 15–20 s per run, frame cadence read from
+CoreAnimation's `ClientDrawable` signposts (one per presented frame),
+each variant a temporary patch reverted after its build:
+
+| Variant | Median frame | Rate |
+|---|---|---|
+| As shipped | 29–33 ms | 30–34 fps, GPU 85 % busy |
+| Light shafts off | 29 ms | 34 fps — no change: at first flash the sun is below the shafts' 0.2° gate, so they were not running |
+| Grass blades off | 21 ms | 48 fps |
+| Render scale 0.7× (1926×1445, confirmed in the trace) | 21 ms | 48 fps |
+| Shadow cascades 1024² instead of 2048² | 29 ms | 34 fps against a 33 ms baseline in the same warm state |
+
+The device warms across back-to-back runs — two identical baselines gave
+29 and 33 ms — so read differences of a few milliseconds as indicative.
+The shape is unambiguous: **the sunrise is a 30 fps frame on the best
+iPad there is; grass and pixel count are each worth about 10 ms of it;
+the shadow cascades about 4 ms.** The Mac estimate above was right to
+within its own caveats.
+
 **Recommendation, in order.**
 
-1. **Profile on the iPad itself first** (it is paired; it was not plugged
-   in today): Instruments' Metal System Trace over a sustained loop, for
-   a true per-pass split. The suspicion to test is the shadow pass —
-   three 2048² cascades of the whole monument and terrain, every frame,
-   whether or not the sun or the camera moved. Caching the cascades until
-   either moves, and 1024² on iPhone, are the cheap wins if so.
-2. **Render scale with MetalFX spatial upscaling** is the right lever for
-   a fill-rate-bound frame, and it fits every device we ship to: draw
-   sky, scene and shafts at 0.6–0.7× into an offscreen target, upscale to
-   the drawable. Expect the golden hour near 60 fps on M-class iPads.
-   Two costs to design for: star point sprites are sized in pixels and
-   must be scaled by the inverse render scale or they shrink and soften;
-   and `renderOffscreen` — the shadow-agreement oracle's eye — must stay
-   at native scale so no measurement moves. Temporal upscaling and frame
-   interpolation both want motion vectors; that is a renderer feature in
-   its own right (M-sized) and only frame interpolation, on iOS 26, would
-   turn 60 real frames into a 120 Hz feel — the one MetalFX feature that
-   actually matches what this app does.
-3. **Do not add the iPhone 120 Hz plist key yet.** Until a frame fits in
-   8 ms it would only halve battery life for nothing. When it does fit,
-   it is one line.
+1. **Render scale with MetalFX spatial upscaling** — the measured lever.
+   Draw sky, scene and shafts at 0.7× into an offscreen target and let
+   `MTLFXSpatialScaler` (iOS 16 / macOS 13, every device we ship to) put
+   it on the drawable; the bare 0.7× already reached 48 fps. Two costs to
+   design for: star point sprites are sized in pixels and must be scaled
+   by the inverse render scale or they shrink and soften; and
+   `renderOffscreen` — the shadow-agreement oracle's eye — stays at native
+   scale so no measurement moves.
+2. **Grass at half the cost.** Ten milliseconds is more than the blades
+   are worth at a sunrise. Fewer blades beyond ten metres, or blades that
+   fade by screen size rather than by distance alone, keep the foreground
+   turf and drop the part nobody sees.
+3. **Shadow cascades: 1024² on iPhone, and refit only when the sun or the
+   camera moved** — three or four milliseconds, cheap to take.
+4. With all three the golden hour should sit at 60 fps on M-class iPads.
+   120 Hz stays out of reach at native quality; frame interpolation
+   (iOS 26, needs motion vectors we do not produce) is the only MetalFX
+   feature that would give the 120 Hz *feel*, and it is an M-sized
+   renderer feature of its own.
+5. **Do not add the iPhone 120 Hz plist key.** Until a frame fits in 8 ms
+   it would only halve battery life for nothing. When it does fit, it is
+   one line.
 
 ## Definition of done for the demo
 
