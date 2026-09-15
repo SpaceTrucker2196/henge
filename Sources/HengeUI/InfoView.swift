@@ -71,7 +71,7 @@ struct InfoView: View {
     private static let people: [Credit] = [
         Credit(id: "benton",
                what: "info.thanks.benton",
-               source: "Simon Benton — sent the landscape below and asked "
+               source: "Simon Banton — sent the landscape below and asked "
                    + "what the sun actually clears. Its skyline matches the "
                    + "bare-earth LiDAR to 0.03° and retired the SRTM bake."),
         Credit(id: "hoyle",

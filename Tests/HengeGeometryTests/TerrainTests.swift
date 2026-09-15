@@ -59,7 +59,7 @@ final class TerrainTests: XCTestCase {
     /// The skyline toward midsummer sunrise computes to 0.60° from the
     /// Environment Agency's bare-earth LiDAR. Two independent checks: a
     /// calibrated photographic panorama from inside the circle (David Hoyle's
-    /// Stellarium landscape, sent by Simon Benton) reads 0.57–0.60° across
+    /// Stellarium landscape, sent by Simon Banton) reads 0.57–0.60° across
     /// 48–50° and tracks the LiDAR skyline all the way round at r = 0.96; and
     /// the 0.6° the literature had long assumed. The SRTM bake this replaced
     /// said 0.71° — radar sees the Larkhill tree tops as ground — and that
