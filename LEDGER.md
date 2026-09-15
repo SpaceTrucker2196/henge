@@ -77,3 +77,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 97dd765 | 2026-08-27T20:35:00Z | claude-opus-5 | 650 | 295078 | 43012019 | 1018726 | 39.0735 | Give a dragged view mass, so the camera can make a crane move |
 | e37622e | 2026-08-27T20:35:32Z | claude-opus-5 | 8 | 1947 | 887065 | 2188 | 0.5141 | Give every control a name the accessibility tree can read |
 | 990babf | 2026-08-28T01:59:23Z | claude-opus-5 | 62 | 15968 | 5986331 | 1150281 | 14.8955 | Cut 0.2.0, and let fastlane read the version instead of repeating it |
+| f7c31dc | 2026-09-15T18:09:24Z | claude-fable-5-1,claude-opus-5 | 2336 | 442236 | 180150052 | 4471074 | 149.7165 | Price the full unlock at $19.99, and point the sites at the store |
