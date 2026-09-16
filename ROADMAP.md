@@ -150,12 +150,19 @@ Forward direction as sized milestones. Sizes: S ≤ 1 session, M = 1–2, L = 2�
       tags a GitHub release and stages the download at www.river.io/henge.
       Only **v0.1.0 (early build)** has gone out that way, 2026-08-03; the
       download page states how it is signed.
-      **Left:** (1) **0.2.1** — the 0.2.0 on sale carries the refraction
-      and skyline errors fixed 2026-09-15, half a degree in the bearing the
-      app exists to state, and lacks the Milky Way; iOS through fastlane,
-      the Mac image refreshed to match. (2) The app icon's store-quality
-      pass, on nobody's list but ours. (3) A Developer ID for the Mac
-      image, so the download stops admitting to ad hoc signing.
+      **0.2.1 submitted 2026-09-15** (23:29 UTC): the refraction and
+      skyline corrections, the Milky Way, the zodiac-only sky, the credits
+      and the measured frame budget. Build 0.2.1 (2) went up by `fastlane
+      ios beta`; the version record, What's New in nine languages, the
+      build attachment and the review submission were all done through the
+      API (`scripts/asc.py` plus a POST/PATCH helper) — for an update, with
+      the purchase already approved, nothing needed the console. State:
+      *Waiting for Review*. The Mac image `Henge-0.2.1.dmg` is published
+      at the v0.2.1 GitHub release and committed into the river-io-site
+      checkout, not pushed.
+      **Left:** (1) The app icon's store-quality pass, on nobody's list but
+      ours. (2) A Developer ID for the Mac image, so the download stops
+      admitting to ad hoc signing.
 
 - [x] **M7 — The Ground Plan (M).** *Owner requests, 2026-07-31; landed the
       same day.* (1) The year bar's moon lights jump to the *moonrise* of
@@ -213,9 +220,10 @@ circle showed the radar bake a quarter of a degree high.)
 
 ## Next, in order
 
-1. **Ship 0.2.1** (M6). The store build states a bearing half a degree off.
-2. **Ambient sound**, synthesized (M5).
-3. **Icon store-quality pass** and a Developer ID Mac image (M6).
+1. **Ambient sound**, synthesized (M5).
+2. **Icon store-quality pass** and a Developer ID Mac image (M6).
+3. **Frame budget, second pass** (M5): the scene pass itself is what
+   stands between 52 and 60 fps at the sunrise on M-class iPads.
 
 ## MetalFX and 120 Hz — research note, 2026-09-15
 
