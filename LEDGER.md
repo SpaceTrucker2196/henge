@@ -87,3 +87,4 @@ the whole ledger: `ledger.py --energy-total`.
 | f42a18f | 2026-09-16T00:11:48Z | claude-fable-5-1 | 2118 | 175596 | 34737881 | 259719 | 22.6798 | Spend the frame where the iPad said to: MetalFX, thinner far grass, cached casca |
 | 2c9cbe5 | 2026-09-16T00:25:07Z | claude-fable-5-1 | 230 | 32860 | 5483867 | 29789 | 3.6120 | Cut 0.2.1 |
 | ade0d39 | 2026-09-16T00:30:11Z | claude-fable-5-1 | 590 | 23218 | 13105994 | 61004 | 5.6634 | Record that 0.2.1 is submitted, and what is left of M6 |
+| e7cca60 | 2026-09-16T00:30:30Z | claude-fable-5-1 | 128 | 1294 | 2315732 | 7743 | 0.7998 | Stamp the Mac download as 0.2.1 on the landing page |
