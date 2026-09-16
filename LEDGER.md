@@ -86,3 +86,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 18cb6a7 | 2026-09-15T23:41:11Z | claude-fable-5-1 | 1350 | 90947 | 18146036 | 1261220 | 34.3218 | Measure the sunrise on the iPad itself |
 | f42a18f | 2026-09-16T00:11:48Z | claude-fable-5-1 | 2118 | 175596 | 34737881 | 259719 | 22.6798 | Spend the frame where the iPad said to: MetalFX, thinner far grass, cached casca |
 | 2c9cbe5 | 2026-09-16T00:25:07Z | claude-fable-5-1 | 230 | 32860 | 5483867 | 29789 | 3.6120 | Cut 0.2.1 |
+| ade0d39 | 2026-09-16T00:30:11Z | claude-fable-5-1 | 590 | 23218 | 13105994 | 61004 | 5.6634 | Record that 0.2.1 is submitted, and what is left of M6 |
