@@ -86,6 +86,36 @@ public enum GrassField {
     /// is about right; shorter and the edge finds you when you turn.
     public static let fade: Float = 10
 
+    /// Out to here the sward is planted at full density. Beyond it the
+    /// density falls as the inverse square of the distance from the
+    /// centre — which is how the *ground* recedes from an eye standing in
+    /// the circle, so blades per screen pixel stay about constant instead
+    /// of piling up sub-pixel at the far edge. Measured on the iPad at the
+    /// midsummer sunrise, the full field cost ten milliseconds a frame;
+    /// this keeps under a third of the blades and nearly all of the look,
+    /// because the blades it drops were each narrower than a pixel.
+    public static let fullDensityRadius: Float = 8
+
+    /// Blades per square metre at a distance from the centre.
+    public static func density(atDistance distance: Float,
+                               base: Float = GrassField.density) -> Float {
+        guard distance > fullDensityRadius else { return base }
+        let ratio = fullDensityRadius / distance
+        return base * ratio * ratio
+    }
+
+    /// The narrowest blade worth drawing at a distance: about one pixel of
+    /// ground from an eye in the circle — 0.28 mm per metre, which is 2 mm
+    /// at 7 m and 8 mm at the field's edge. A blade thinner than that is
+    /// not a blade on screen, it is aliasing. Near the viewer the floor is
+    /// below real grass and changes nothing; far out it lets a thinner
+    /// field keep its cover. True scale still governs everything within
+    /// arm's reach, which is where the eye can judge a blade against a
+    /// sarsen.
+    public static func minimumWidth(atDistance distance: Float) -> Float {
+        distance * 0.00028
+    }
+
     // ── the blade ───────────────────────────────────────────────────────────
 
     /// Segments along a blade. Four is enough for a curve that reads as a
@@ -153,6 +183,12 @@ public enum GrassField {
 
                 let distance = sqrt(x * x + z * z)
                 if distance > radius { continue }
+                // Thin the field with distance: keep a blade with the
+                // probability that the local density asks for. The random
+                // draw is taken whether or not the blade is kept, so the
+                // near field is laid out exactly as it always was.
+                let keep = random.nextFloat()
+                if keep > Self.density(atDistance: distance, base: density) / density { continue }
 
                 let ground = terrain.map {
                     Float($0.groundHeight(east: Double(x), south: Double(z)))
@@ -178,7 +214,8 @@ public enum GrassField {
                     // 2–5 mm; the upper half of that range reads better at a
                     // distance where a 2 mm blade is under a pixel wide and
                     // simply disappears.
-                    width: 0.0025 + random.nextFloat() * 0.0025,
+                    width: max(0.0025 + random.nextFloat() * 0.0025,
+                               Self.minimumWidth(atDistance: distance)),
                     stiffness: 0.6 + random.nextFloat() * 0.8,
                     phase: random.nextFloat() * 2 * .pi,
                     tint: 0.82 + random.nextFloat() * 0.36))

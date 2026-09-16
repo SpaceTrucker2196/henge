@@ -79,6 +79,10 @@ public struct FrameUniforms {
     /// the band's calibrated brightness, zero when the sky's lights are off.
     /// w: 1 when the map is bound; an unbound texture samples as zero.
     public var milkyWay: SIMD4<Float>
+    /// x: the render scale — the fraction of native the scene is drawn at
+    /// before MetalFX lifts it. Point sprites are sized in pixels of the
+    /// *drawn* target, so the star pass scales by it. yzw spare.
+    public var viewport: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -103,7 +107,8 @@ public struct FrameUniforms {
                 torch: SIMD4<Float> = .zero,
                 weatherState: SIMD4<Float> = .zero,
                 worldToJ2000: float4x4 = matrix_identity_float4x4,
-                milkyWay: SIMD4<Float> = .zero) {
+                milkyWay: SIMD4<Float> = .zero,
+                viewport: SIMD4<Float> = SIMD4(1, 0, 0, 0)) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -127,6 +132,7 @@ public struct FrameUniforms {
         self.weatherState = weatherState
         self.worldToJ2000 = worldToJ2000
         self.milkyWay = milkyWay
+        self.viewport = viewport
     }
 }
 

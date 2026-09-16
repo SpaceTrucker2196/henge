@@ -1,6 +1,19 @@
 import Foundation
 import Metal
 import MetalKit
+#if canImport(MetalFX)
+import MetalFX
+typealias SpatialUpscaler = MTLFXSpatialScaler
+#else
+/// The iOS simulator SDK ships no MetalFX. The upscaling path compiles
+/// against this stand-in and is never taken: `upscalingAvailable` is false
+/// there, and every frame draws native as before.
+final class SpatialUpscaler {
+    var colorTexture: MTLTexture?
+    var outputTexture: MTLTexture?
+    func encode(commandBuffer: MTLCommandBuffer) {}
+}
+#endif
 import simd
 import HengeAstro
 import HengeGeometry
@@ -516,6 +529,37 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// switch can swap them without rebuilding eighty stones.
     private var overlayItems: [DrawItem] = []
     private var aspectRatio: Float = 16.0 / 9.0
+    /// The drawable's size in pixels, from the view; what the budget is
+    /// resolved against and what the upscaler writes.
+    private var drawablePixelSize = (width: 0, height: 0)
+    /// Set by the bridge: a phone gets the smaller cascades.
+    public var isPhone = false
+    /// The scale the current frame is drawn at, for the uniforms.
+    private var renderScaleInUse: Float = 1
+    /// MetalFX spatial upscaling, when the device has it. Rebuilt whenever
+    /// the input or output size changes.
+    private var upscaler: SpatialUpscaler?
+    private var scaledColour: MTLTexture?
+    private var scaledDepth: MTLTexture?
+    private lazy var upscalingAvailable: Bool = {
+        #if canImport(MetalFX)
+        return MTLFXSpatialScalerDescriptor.supportsDevice(device)
+        #else
+        return false
+        #endif
+    }()
+
+    /// The cascades as last fitted, and what they were fitted to.
+    private var shadowFit: (matrices: (float4x4, float4x4, float4x4),
+                            radii: SIMD4<Float>, key: ShadowKey)?
+    /// Whether this frame's uniforms carry a fresh fit that the shadow
+    /// pass must render, or the cached one the maps already hold.
+    private var shadowPassNeeded = true
+    /// The oracle path refits every time, so no measurement depends on
+    /// what the previous frame happened to be.
+    private var forceShadowRefit = false
+    /// Bumped when the geometry the cascades see changes.
+    private var sceneStamp = 0
 
     /// Everything held while the animated state switch plays: the scene
     /// being left, the scene being entered, the cue for every stone that
@@ -838,6 +882,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
     public func load(scene: MonumentScene, subdivisions: Int = 18,
                      roughness: Double = 0.06, rounding: Double = 0.13) throws {
+        sceneStamp += 1
         let prepared = Self.prepare(scene: scene, terrain: terrain,
                                     soilBanks: state.soilBanks,
                                     subdivisions: subdivisions,
@@ -1211,6 +1256,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
         items.append(morphItem(erosion: frame.erosion, run: run))
         frameItems = items
+        // The stones are moving; the cascades must follow them every frame.
+        sceneStamp += 1
     }
 
     /// A copy of the item sunk `sink` metres below its resting place. The
@@ -1479,6 +1526,24 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             radii = SIMD4(m0.radius, m1.radius, m2.radius, Self.shadowDepthSpan)
         }
 
+        // Refit only when something the cascades see has moved enough to
+        // see — the rule and its thresholds live in `ShadowRefit`, where a
+        // test holds them. When nothing has, the uniforms carry the fit the
+        // maps were drawn with, and the shadow pass is skipped.
+        let key = ShadowKey(light: shadowDirection,
+                            cameraPosition: state.camera.position,
+                            cameraForward: simd_normalize(state.camera.target - state.camera.position),
+                            aspect: aspect, fieldOfView: state.camera.fieldOfView,
+                            sceneStamp: sceneStamp)
+        if forceShadowRefit || ShadowRefit.needed(from: shadowFit?.key, to: key) {
+            shadowFit = (matrices, radii, key)
+            shadowPassNeeded = true
+        } else if let fit = shadowFit {
+            matrices = fit.matrices
+            radii = fit.radii
+            shadowPassNeeded = false
+        }
+
         // The weather takes its cut of the sun before anything downstream
         // sees it: direct light, shadow contrast, the drawn disc and the
         // golden-hour beams all dim by the same factor, because they all
@@ -1578,7 +1643,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 let radiance = MilkyWay.visibility(sunAltitude: state.sun.altitude)
                     * Self.milkyWayRadiance
                 return SIMD4(Float(radiance), 0, 0, milkyWayTexture == nil ? 0 : 1)
-            }()
+            }(),
+            viewport: SIMD4(renderScaleInUse, 0, 0, 0)
         )
     }
 
@@ -1862,6 +1928,57 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         aspectRatio = size.height > 0 ? Float(size.width / size.height) : 1
+        drawablePixelSize = (Int(size.width), Int(size.height))
+    }
+
+    /// The scaled targets and the upscaler for this drawable size, made
+    /// once and kept until the size changes. Nil when the device lacks
+    /// MetalFX or the drawable cannot take the scaler's output.
+    private func prepareUpscaling(scale: Float, drawable: MTLTexture) -> SpatialUpscaler? {
+        #if !canImport(MetalFX)
+        return nil
+        #else
+        let inW = max(1, Int((Float(drawable.width) * scale).rounded()))
+        let inH = max(1, Int((Float(drawable.height) * scale).rounded()))
+        if let existing = upscaler, existing.inputWidth == inW, existing.inputHeight == inH,
+           existing.outputWidth == drawable.width, existing.outputHeight == drawable.height,
+           drawable.usage.isSuperset(of: existing.outputTextureUsage) {
+            return existing
+        }
+        let descriptor = MTLFXSpatialScalerDescriptor()
+        descriptor.inputWidth = inW
+        descriptor.inputHeight = inH
+        descriptor.outputWidth = drawable.width
+        descriptor.outputHeight = drawable.height
+        descriptor.colorTextureFormat = Self.colourFormat
+        descriptor.outputTextureFormat = drawable.pixelFormat
+        // The scene pass writes tonemapped, display-referred colour.
+        descriptor.colorProcessingMode = .perceptual
+        guard let scaler = descriptor.makeSpatialScaler(device: device),
+              drawable.usage.isSuperset(of: scaler.outputTextureUsage) else {
+            upscaler = nil
+            return nil
+        }
+        let colourDescriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: Self.colourFormat, width: inW, height: inH, mipmapped: false)
+        colourDescriptor.usage = MTLTextureUsage([.renderTarget, .shaderRead]).union(scaler.colorTextureUsage)
+        colourDescriptor.storageMode = .private
+        let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: Self.depthFormat, width: inW, height: inH, mipmapped: false)
+        depthDescriptor.usage = [.renderTarget, .shaderRead]
+        depthDescriptor.storageMode = .private
+        guard let colour = device.makeTexture(descriptor: colourDescriptor),
+              let depth = device.makeTexture(descriptor: depthDescriptor) else {
+            upscaler = nil
+            return nil
+        }
+        colour.label = "scaled scene colour"
+        depth.label = "scaled scene depth"
+        scaledColour = colour
+        scaledDepth = depth
+        upscaler = scaler
+        return scaler
+        #endif
     }
 
     public func draw(in view: MTKView) {
@@ -1877,30 +1994,74 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         let uniformBuffer = frameUniformBuffers[frameIndex]
         refreshFrameItems()
         refreshStarsIfNeeded()
+
+        // The budget for this drawable: draw at a fraction of native and
+        // let MetalFX lift it, when the device has MetalFX and the drawable
+        // is large enough to be worth it. The scene pass then renders into
+        // the renderer's own scaled targets instead of the view's.
+        let budget = RenderBudget.resolve(
+            drawablePixels: drawable.texture.width * drawable.texture.height,
+            isPhone: isPhone, upscalingAvailable: upscalingAvailable)
+        let scaler = budget.renderScale < 1
+            ? prepareUpscaling(scale: budget.renderScale, drawable: drawable.texture)
+            : nil
+        renderScaleInUse = scaler == nil ? 1 : budget.renderScale
+
         var uniforms = buildFrameUniforms(aspect: aspectRatio)
         uniformBuffer.contents().copyMemory(from: &uniforms,
                                             byteCount: MemoryLayout<FrameUniforms>.stride)
 
-        encodeShadowPass(commandBuffer, uniforms: uniforms)
+        if shadowPassNeeded {
+            encodeShadowPass(commandBuffer, uniforms: uniforms)
+        }
 
         // The light shafts need the finished depth buffer, so when they are
         // due the scene's depth is kept rather than discarded. The view's
         // depth texture must have been made sampleable by the bridge; when a
         // host has not done that, the beams are skipped rather than crashed.
-        let depthTexture = descriptor.depthAttachment.texture
+        let colourTarget: MTLTexture
+        let depthTexture: MTLTexture?
+        let scenePass: MTLRenderPassDescriptor
+        if let scaler, let colour = scaledColour, let depth = scaledDepth {
+            scenePass = MTLRenderPassDescriptor()
+            scenePass.colorAttachments[0].texture = colour
+            scenePass.colorAttachments[0].loadAction = .clear
+            scenePass.colorAttachments[0].storeAction = .store
+            scenePass.colorAttachments[0].clearColor = descriptor.colorAttachments[0].clearColor
+            scenePass.depthAttachment.texture = depth
+            scenePass.depthAttachment.loadAction = .clear
+            scenePass.depthAttachment.clearDepth = 0    // reverse-Z
+            scenePass.depthAttachment.storeAction = .dontCare
+            colourTarget = colour
+            depthTexture = depth
+            _ = scaler
+        } else {
+            scenePass = descriptor
+            colourTarget = drawable.texture
+            depthTexture = descriptor.depthAttachment.texture
+        }
         let wantsHaze = uniforms.haze.x > 0
             && depthTexture?.usage.contains(.shaderRead) == true
-        if wantsHaze { descriptor.depthAttachment.storeAction = .store }
+        if wantsHaze { scenePass.depthAttachment.storeAction = .store }
 
-        if let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor) {
+        if let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: scenePass) {
             encoder.label = "scene"
             encodeScenePass(encoder, uniformBuffer: uniformBuffer)
             encoder.endEncoding()
         }
 
         if wantsHaze, let depthTexture {
-            encodeHazePass(commandBuffer, colour: drawable.texture,
+            encodeHazePass(commandBuffer, colour: colourTarget,
                            depth: depthTexture, uniformBuffer: uniformBuffer)
+        }
+
+        // Lift the scaled frame to the drawable. Spatial only — no history,
+        // no motion vectors — so a frame is exactly what it was drawn as,
+        // just larger, and the oracle's offscreen path never comes here.
+        if let scaler, let colour = scaledColour {
+            scaler.colorTexture = colour
+            scaler.outputTexture = drawable.texture
+            scaler.encode(commandBuffer: commandBuffer)
         }
 
         commandBuffer.present(drawable)
@@ -1971,9 +2132,14 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         let aspect = Float(width) / Float(height)
         // The offscreen path never passes through `draw(in:)`, so it must
         // resolve the frame's item list itself — the oracle renders with an
-        // empty list otherwise, and every shadow test goes blind.
+        // empty list otherwise, and every shadow test goes blind. It draws
+        // native and refits the cascades every time (`RenderBudget.oracle`):
+        // a measurement must not depend on the previous frame or the budget.
         refreshFrameItems()
         refreshStarsIfNeeded()
+        renderScaleInUse = RenderBudget.oracle.renderScale
+        forceShadowRefit = true
+        defer { forceShadowRefit = false }
         var uniforms = buildFrameUniforms(aspect: aspect)
         let uniformBuffer = frameUniformBuffers[0]
         uniformBuffer.contents().copyMemory(from: &uniforms,

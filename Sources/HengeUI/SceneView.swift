@@ -44,6 +44,9 @@ public struct HengeSceneView: PlatformViewRepresentable {
         // beams, which is exactly the wrong kind of graceful.
         view.depthStencilAttachmentTextureUsage = [.renderTarget, .shaderRead]
         view.preferredFramesPerSecond = 120     // ProMotion where it exists
+        // MetalFX writes the upscaled frame straight into the drawable, and
+        // a framebuffer-only drawable refuses anything but a render pass.
+        view.framebufferOnly = false
         view.isPaused = false
         view.enableSetNeedsDisplay = false
         // The launch screen's pre-dawn slate, held until the first frame
@@ -59,7 +62,18 @@ public struct HengeSceneView: PlatformViewRepresentable {
         #endif
 
         do {
-            let renderer = try HengeRenderer(state: model.sceneState)
+            // Cascade size is a per-device budget decided in `RenderBudget`;
+            // only "is this a phone" is the bridge's to know.
+            #if os(iOS)
+            let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+            #else
+            let isPhone = false
+            #endif
+            let budget = RenderBudget.resolve(drawablePixels: 0, isPhone: isPhone,
+                                              upscalingAvailable: false)
+            let renderer = try HengeRenderer(state: model.sceneState,
+                                             shadowResolution: budget.shadowResolution)
+            renderer.isPhone = isPhone
             renderer.terrain = SkyModel.terrain
             // Launch opens on the plain, not on a blank frame: the terrain
             // and sky load here (quick), and `loadedState` is left nil so

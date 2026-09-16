@@ -39,9 +39,14 @@ final class GrassLayoutTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(heights.min() ?? 0, 0.03, "shorter than a lawn")
         XCTAssertLessThanOrEqual(heights.max() ?? 0, 0.20, "that is a hayfield")
 
-        let widths = blades.map(\.width)
-        XCTAssertGreaterThanOrEqual(widths.min() ?? 0, 0.0015)
-        XCTAssertLessThanOrEqual(widths.max() ?? 0, 0.006, "that is a leek")
+        // Real grass within reach; beyond the full-density radius a blade
+        // may be widened to about one pixel of ground, and no further than
+        // 8 mm at the field's edge — still grass, never a leek.
+        func distance(_ b: GrassBlade) -> Float { (b.root.x * b.root.x + b.root.z * b.root.z).squareRoot() }
+        let near = blades.filter { distance($0) <= GrassField.fullDensityRadius }.map(\.width)
+        XCTAssertGreaterThanOrEqual(near.min() ?? 0, 0.0015)
+        XCTAssertLessThanOrEqual(near.max() ?? 0, 0.006, "that is a leek")
+        XCTAssertLessThanOrEqual(blades.map(\.width).max() ?? 0, 0.0081, "that is a leek")
 
         // Most of the sward is short; the tall ones are the exception.
         let median = heights.sorted()[heights.count / 2]
@@ -69,6 +74,34 @@ final class GrassLayoutTests: XCTestCase {
                 .squareRoot()
             XCTAssertLessThanOrEqual(distance, GrassField.radius + 0.01)
         }
+    }
+
+    /// The field thins with distance from the centre — full density to
+    /// 8 m, then as the inverse square — so blades per screen pixel stay
+    /// about even instead of piling up sub-pixel at the edge. Measured
+    /// against the areas of the rings, not against the function that
+    /// planted them.
+    func testTheFieldThinsWithDistance() {
+        let blades = GrassField.scatter(terrain: nil)
+        func count(_ inner: Float, _ outer: Float) -> Float {
+            Float(blades.filter {
+                let d = ($0.root.x * $0.root.x + $0.root.z * $0.root.z).squareRoot()
+                return d > inner && d <= outer
+            }.count)
+        }
+        func ringArea(_ inner: Float, _ outer: Float) -> Float { .pi * (outer * outer - inner * inner) }
+        let nearDensity = count(0, 8) / ringArea(0, 8)
+        let midDensity = count(12, 16) / ringArea(12, 16)
+        let farDensity = count(22, 28) / ringArea(22, 28)
+        XCTAssertEqual(nearDensity, GrassField.density, accuracy: GrassField.density * 0.1)
+        // (8/14)² ≈ 0.33 of full at the middle ring's centre.
+        XCTAssertEqual(midDensity / GrassField.density, 0.33, accuracy: 0.08)
+        // (8/25)² ≈ 0.10 at the outer ring's.
+        XCTAssertEqual(farDensity / GrassField.density, 0.10, accuracy: 0.04)
+        // And the whole field is under a third of what it was.
+        let fullField = GrassField.density * .pi * GrassField.radius * GrassField.radius
+        XCTAssertLessThan(Float(blades.count), fullField / 3)
+        XCTAssertGreaterThan(Float(blades.count), fullField / 6)
     }
 
     /// The shared blade mesh is a closed strip ending in a point.

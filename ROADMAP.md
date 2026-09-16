@@ -260,11 +260,16 @@ iOS 26 / macOS 26 only, needing colour, depth and per-pixel motion
 vectors — which this renderer does not produce.
 
 **Second measurement, on the iPad itself** — the owner plugged it in the
-same afternoon. iPad Pro 13" (M5), Release build, standing at the Altar
-Stone at 04:52 BST on 21 June 2026 (the definition-of-done moment),
-Metal System Trace attached for 15–20 s per run, frame cadence read from
-CoreAnimation's `ClientDrawable` signposts (one per presented frame),
-each variant a temporary patch reverted after its build:
+same afternoon. iPad Pro 13" (M5), Release build, Metal System Trace
+attached for 15–20 s per run, frame cadence read from CoreAnimation's
+`ClientDrawable` signposts (one per presented frame), each variant a
+temporary patch reverted after its build. **A correction, recorded rather
+than tidied away:** these runs were meant to stand at the Altar Stone at
+the midsummer sunrise, but the app opens on the device's own location and
+the patch left it there — so the scene was Arizona at civil dusk, sun
+4.5° down, a first-quarter moon casting the shadows. Full monument, full
+grass, same passes; the *relative* costs below hold, the label did not.
+The true sunrise is measured in the third table.
 
 | Variant | Median frame | Rate |
 |---|---|---|
@@ -281,7 +286,29 @@ iPad there is; grass and pixel count are each worth about 10 ms of it;
 the shadow cascades about 4 ms.** The Mac estimate above was right to
 within its own caveats.
 
-**Recommendation, in order.**
+**Third measurement — the true sunrise, before and after.** Viewpoint
+Wiltshire, standing at the Altar Stone, 04:00 UT on 21 June 2026 with the
+sun 0.7° up and the light shafts running, time playing at 1×, frame times
+printed by the app itself over the device console (Instruments had lost
+the device by then; `devicectl` had not). iPad Pro 13" (M5), Release:
+
+| | Median frame | Rate | Shadow pass |
+|---|---|---|---|
+| As shipped in 0.2.0 | 30.8 ms | 32.5 fps | every frame |
+| With the three changes below | 19.1 ms | 52 fps | once in 120 frames |
+
+The three changes landed together on 2026-09-15 (the commit after this
+note): the scene drawn at 0.7× and lifted to the drawable by
+`MTLFXSpatialScaler` wherever a device has it; the grass field thinned
+as the inverse square of distance beyond 8 m, its far blades widened to
+about a pixel of ground (a third of the blades, the same turf); and the
+shadow cascades refitted only when the light, the camera or the stones
+have moved enough to see (`ShadowRefit`), at 1024² on iPhone
+(`RenderBudget`). Screenshots of the two frames are indistinguishable at
+arm's length. What remains between 52 and 60 is the scene pass itself.
+
+**Recommendation, in order** — as written before the work, kept for the
+record; items 1–3 are done.
 
 1. **Render scale with MetalFX spatial upscaling** — the measured lever.
    Draw sky, scene and shafts at 0.7× into an offscreen target and let

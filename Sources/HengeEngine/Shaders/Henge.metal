@@ -40,6 +40,7 @@ struct FrameUniforms {
                              // — all zero under the default clear sky
     float4x4 worldToJ2000;   // view ray -> J2000 equatorial, for the star map
     float4   milkyWay;       // x: band radiance this frame, w: map bound
+    float4   viewport;       // x: render scale (1 = native), yzw spare
 };
 
 struct DrawUniforms {
@@ -1614,7 +1615,12 @@ vertex StarInOut star_vertex(uint vertexID [[vertex_id]],
     // Doubled from the first calibration at the owner's eye: at true scale
     // the field read as dust. The hierarchy survives doubling; the ratios
     // are what carry it.
-    out.pointSize = clamp(10.0 - 1.2 * magnitude, 2.6, 13.0);
+    // Sized for the target actually drawn: under MetalFX the scene is
+    // rendered at viewport.x of native and lifted afterwards, and a point
+    // sprite that kept its native pixel size would come out that much
+    // larger. The floor stays — a star smaller than that upscales to grit.
+    out.pointSize = clamp((10.0 - 1.2 * magnitude) * frame.viewport.x,
+                          2.6, 13.0 * frame.viewport.x);
     out.colour = star.colour.rgb;
     // Pogson's ratio against magnitude 0, scaled into the sky pass's range.
     out.intensity = pow(10.0, -0.4 * magnitude) * visibility * 3.2;
