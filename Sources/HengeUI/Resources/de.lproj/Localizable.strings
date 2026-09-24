@@ -65,6 +65,7 @@
 "info.blurb" = "Ein fotorealistisches Stonehenge, das zugleich ein funktionierender astronomischer Kalender ist. Alles, was das Bild behauptet – wo die Sonne aufgeht, was der Mond tut, welcher Stern den Pol hält –, ist berechnet, gegen veröffentlichte Werte geprüft und aus derselben Rechnung gezogen, die auch die Anzeige druckt.";
 "info.close" = "Schließen";
 "info.credit.algorithms" = "Die Rechnung für Sonne, Mond und Kalender";
+"info.credit.heights" = "Wie hoch jeder Stein steht";
 "info.credit.hipparcos" = "Die Sterne – 8.870 mit bloßem Auge sichtbare Positionen, Helligkeiten, Farben und Eigenbewegungen";
 "info.credit.milkyway" = "Die Milchstraße";
 "info.credit.moon" = "Das Gesicht des Mondes";

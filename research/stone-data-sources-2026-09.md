@@ -109,8 +109,8 @@ permission for commercial use, stays out of the repository. Full record in
 | Source | Verdict | State |
 |---|---|---|
 | B1 Daw `locked_poses` (CC BY-SA 4.0) | In; derived CSV published under the same licence | Vendored, issue #5 shipped |
-| A2 Cleal 1995 Appendix 5 (ADS terms, commercial-sector research use with credit) | In | 18 rows carried through Daw's height column; printed-page transcription blocked from here (ADS returns 403 to scripted fetches) |
-| A3 Petrie 1880 (public domain) | In | Not yet transcribed; Google Books and HathiTrust both refuse scripted access |
+| A2 Cleal 1995 Appendix 5 (ADS terms, commercial-sector research use with credit) | In | Transcribed in full from pp 547–548 (the ADS PDF downloads directly once a Referer is sent; its OCR layer is unusable, the page images were read by eye). Feet and metres disagree in print for 9A, 58 C and 64; 22, 57 and 58 are recorded as they lay before the 1958 re-erection |
+| A3 Petrie 1880 (public domain) | In | Transcribed from pp 9–12 through the Google Books reader in a real browser (its plain-text mode drops the table; the page images were read zoomed). Agrees with Cleal to 0.30 m at worst on the stones nothing moved between; stone 22's 153 in is the only standing height of 22 in print |
 | A1 HE RR 32/2012 Appendix 1 (© English Heritage, permission needed for commercial use) | Out until written permission | Request drafted in `docs/outreach/13-historic-england-data-request.txt` |
 | B5 stonesofstonehenge.org.uk (no licence) | Out | Transcription only; ask Simon Banton if ever needed |
 

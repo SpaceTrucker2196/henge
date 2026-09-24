@@ -70,6 +70,11 @@ struct InfoView: View {
                source: "Stone positions after Tim Daw, stonehenge-block-3d "
                    + "(CC BY-SA 4.0), digitised from the M J Rees & Co 1989/90 "
                    + "survey of Stonehenge, Historic England Archive MP/STO0861."),
+        Credit(id: "heights",
+               what: "info.credit.heights",
+               source: "Cleal, Walker & Montague, Stonehenge in its Landscape "
+                   + "(English Heritage Archaeological Report 10, 1995), Appendix 5, "
+                   + "via the Archaeology Data Service."),
         Credit(id: "survey",
                what: "info.credit.survey",
                source: "Surveyed figures after Petrie's numbering; tiers and "

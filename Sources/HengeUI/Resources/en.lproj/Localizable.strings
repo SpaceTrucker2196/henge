@@ -65,6 +65,7 @@
 "info.blurb" = "A photoreal Stonehenge that is also a working astronomical calendar. Everything the picture claims — where the sun rises, what the moon is doing, which star holds the pole — is computed, tested against published values, and drawn from the same arithmetic the readout prints.";
 "info.close" = "Close";
 "info.credit.algorithms" = "The sun, moon and calendar arithmetic";
+"info.credit.heights" = "How tall each stone stands";
 "info.credit.hipparcos" = "The stars — 8,870 naked-eye positions, magnitudes, colours and proper motions";
 "info.credit.milkyway" = "The Milky Way";
 "info.credit.moon" = "The Moon's face";

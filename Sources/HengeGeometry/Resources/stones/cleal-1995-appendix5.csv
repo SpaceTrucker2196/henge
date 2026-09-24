@@ -1,0 +1,158 @@
+# Heights of stones, transcribed from Cleal, Walker & Montague, Stonehenge in its Landscape:
+# Twentieth-century Excavations (English Heritage Archaeological Report 10, 1995), Appendix 5,
+# "Heights of Stones", printed pages 547-548 (ADS PDF pages 573-574), read from the page images
+# on 23 September 2026. Published on the Archaeology Data Service (eh_monographs_2014, mono 1089007)
+# under the ADS Terms of Use and Access: reuse for historic-environment research including the
+# commercial sector, with acknowledgement. Credit is given in the app's info view and SECURITY.md.
+#
+# The appendix's own header: "Information from the records of Professor Atkinson unless otherwise
+# stated. Chief Architects Report of 1919 gives the height of the Stone 'above ground level'."
+# A single figure is a standing stone's height above ground. Lettered parts (A, B, C ...) are the
+# separate measurements the appendix gives for a fallen or broken stone, as printed; they are not
+# standing heights. The metres column is what the app reads; the feet column is kept as printed and
+# a note marks the three rows where the two columns disagree in the printed book.
+# EPOCH: the figures are 1919 or Atkinson's (1950s-60s). Stones re-erected after the record was
+# made (22, 57, 58 in 1958) are listed here as they lay; their standing height is not in this table.
+petrie,part,feet_as_printed,metres,source,page,note
+1,,13ft 0in,3.96,Chief Architects Report 1919,547,
+2,,14ft 0in,4.27,Chief Architects Report 1919,547,
+3,,13ft 8in,4.16,Chief Architects Report 1919,547,
+4,,14ft 0in,4.27,Chief Architects Report 1919,547,
+5,,14ft 0in,4.27,Chief Architects Report 1919,547,
+6,,13ft 9in,4.19,Chief Architects Report 1919,547,
+7,,13ft,3.96,Chief Architects Report 1919,547,
+8,A,2ft 2in,0.66,Atkinson,547,
+8,B,1ft 10in,0.56,Atkinson,547,
+9A,A,2ft 0in,0.76,Atkinson,547,feet and metres disagree as printed; 0.76 m is 2ft 6in
+9A,B,1ft 6in,0.46,Atkinson,547,
+9B,A,2ft 6in,0.76,Atkinson,547,
+9B,B,1ft 5in,0.43,Atkinson,547,
+9B,C,1ft 9in,0.53,Atkinson,547,
+10,,13ft 0in,3.96,Chief Architects Report 1919,547,
+11,,9ft,2.74,Chief Architects Report 1919,547,
+12,A,1ft 9in,0.53,Atkinson,547,
+12,B,1ft 7in,0.48,Atkinson,547,
+14,A,0ft 6in,0.15,Atkinson,547,
+14,B,1ft 4in,0.41,Atkinson,547,
+14,C,3ft 6in,1.06,Atkinson,547,
+15,A,2ft 10in,0.86,Atkinson,547,
+15,B,2ft 2in,0.66,Atkinson,547,
+16,,14ft 0in,4.27,Chief Architects Report,547,
+19,A,1ft 4in,0.41,Atkinson,547,
+19,B,1ft 0in,0.30,Atkinson,547,
+21,,13ft 0in,3.96,Chief Architects Report 1919,547,
+22,A,4ft 6in,1.37,Atkinson,547,as it lay before re-erection in 1958
+22,B,5ft 0in,1.52,Atkinson,547,as it lay before re-erection in 1958
+23,,12ft 6in,3.81,Chief Architects Report 1919,547,
+25,A,1ft 9in,0.53,Atkinson,547,
+25,B,2ft 3in,0.69,Atkinson,547,
+25,C,2ft 8in,0.81,Atkinson,547,
+25,D,2ft 0in,0.61,Atkinson,547,
+26,A,1ft 3in,0.38,Atkinson,547,
+26,B,1ft 4in,0.41,Atkinson,547,
+27,,13ft 0in,3.96,Chief Architects Report,547,
+28,,13ft 0in,3.96,Chief Architects Report,547,
+29,,13ft 0in,3.96,Chief Architects Report,547,
+30,,13ft 0in,3.96,Chief Architects Report,547,
+31,A,6ft 2in,1.88,Atkinson,547,
+32,A,2ft 1in,0.63,Atkinson,547,
+33,A,5ft 6in,1.68,Atkinson,547,
+34,A,3ft 2in,0.97,Atkinson,547,
+34,B,2ft 10in,0.86,Atkinson,547,
+35A,,0ft 5in,0.13,Atkinson,547,
+35B,A,0ft 4in,0.10,Atkinson,547,
+35B,B,0ft 7in,0.18,Atkinson,547,
+36,A,1ft 2in,0.36,Atkinson,547,
+37,A,4ft 2in,1.27,Atkinson,547,
+38,A,1ft 8in,0.51,Atkinson,547,
+39,A,2ft 0in,0.61,Atkinson,547,
+40,A,0ft 7in,0.18,Atkinson,547,
+41,A,1ft 8in,0.51,Atkinson,547,
+41,B,0ft 10in,0.25,Atkinson,547,
+42,A,0ft 9in,0.23,Atkinson,547,
+42,B,1ft 7in,0.48,Atkinson,547,
+43,A,0ft 7in,0.18,Atkinson,547,
+44,A,0ft 6in,0.15,Atkinson,547,
+45,A,0ft 10in,0.25,Atkinson,547,
+45,B,0ft 9in,0.23,Atkinson,547,
+46,A,3ft 2in,0.96,Atkinson,547,
+47,A,4ft 9in,1.45,Atkinson,547,
+48,A,1ft 2in,0.36,Atkinson,548,
+49,A,6ft 3in,1.90,Atkinson,548,
+49,B,5ft 3in,1.60,Atkinson,548,
+49,C,5ft 11in,1.80,Atkinson,548,
+49,D,5ft 4in,1.63,Atkinson,548,
+51,,16ft 4in,4.98,Chief Architects Report 1919,548,
+52,,16ft 8in,5.08,Chief Architects Report 1919,548,
+53,,17ft 0in,5.18,Chief Architects Report 1919,548,
+54,,17ft 0in,5.18,Atkinson,548,no source printed; the header's default applies
+55A,A,3ft 0in,0.91,Atkinson,548,
+55A,B,1ft 7in,0.48,Atkinson,548,
+55A,C,1ft 3in,0.38,Atkinson,548,
+55B,A,3ft 6in,1.07,Atkinson,548,
+55B,B,3ft 0in,0.91,Atkinson,548,
+55B,C,3ft 9in,1.14,Atkinson,548,
+56,,21ft 6in (dowel an extra 1ft 1in),6.55,Atkinson,548,plus 0.33 m for the tenon
+57,A,2ft 1in,0.63,Atkinson,548,as it lay before re-erection in 1958
+57,B,0ft 7in,0.18,Atkinson,548,as it lay before re-erection in 1958
+58,A,3ft 0in,0.91,Atkinson,548,as it lay before re-erection in 1958
+58,B,1ft 9in,0.53,Atkinson,548,as it lay before re-erection in 1958
+58,C,1ft 1in,0.63,Atkinson,548,as it lay before re-erection in 1958; feet and metres disagree as printed
+58,D,2ft 7in,0.79,Atkinson,548,as it lay before re-erection in 1958
+59A,A,4ft 0in,1.22,Atkinson,548,
+59A,B,2ft 0in,0.61,Atkinson,548,
+59B,A,2ft 9in,0.84,Atkinson,548,
+59B,B,1ft 8in,0.51,Atkinson,548,
+59B,C,1ft 2in,0.36,Atkinson,548,
+59B,D,2ft 5in,0.74,Atkinson,548,
+59C,A,2ft 9in,0.84,Atkinson,548,
+59C,B,1ft 0in,0.30,Atkinson,548,
+59C,C,2ft 7in,0.79,Atkinson,548,
+59C,D,2ft 6in,0.76,Atkinson,548,
+60,,16ft 6in,5.03,Chief Architects Report 1919,548,
+61,A,5ft 9in,1.75,Atkinson,548,
+62,A,6ft 8in,2.03,Atkinson,548,
+63,A,6ft 11in,2.11,Atkinson,548,
+64,A,0ft 3in,0.76,Atkinson,548,feet and metres disagree as printed; 0.76 m is 2ft 6in
+65,A,0ft 11in,0.28,Atkinson,548,
+65,B,0ft 6in,0.15,Atkinson,548,
+67,A,1ft 4in,0.41,Atkinson,548,
+68,A,8ft 2in,2.49,Atkinson,548,
+69,A,8ft 6in,2.59,Atkinson,548,
+70,A,7ft 8in,2.34,Atkinson,548,
+71,,,,Atkinson,548,row printed with no figure
+72,A,0ft 6in,0.15,Atkinson,548,
+80,A,0ft 4in,0.10,Atkinson,548,
+91,A,3ft 2in,0.97,Atkinson,548,
+91,B,2ft 7in,0.79,Atkinson,548,
+91,C,1ft 10in,0.56,Atkinson,548,
+93,A,4ft 0in,1.22,Atkinson,548,
+95,A,0ft 7in,0.18,Atkinson,548,
+95,B,1ft 2in,0.36,Atkinson,548,
+95,C,1ft 2in,0.36,Atkinson,548,
+95,D,0ft 8in,0.20,Atkinson,548,
+95,E,1ft 1in,0.33,Atkinson,548,
+96,,15ft 0in,4.57,Chief Architects Report 1919,548,
+120,A,1ft 3in,0.38,Atkinson,548,
+120,B,1ft 6in,0.46,Atkinson,548,
+122,A,2ft 10in,0.86,Atkinson,548,above the upper face of Stone 58
+122,B,2ft 2in,0.66,Atkinson,548,above the upper face of Stone 58
+127,A,0ft 9in,0.23,Atkinson,548,
+127,B,0ft 9in,0.23,Atkinson,548,
+127,C,0ft 10in,0.25,Atkinson,548,
+150,A,0ft 4in,0.10,Atkinson,548,
+156,A,4ft 4in,1.32,Atkinson,548,
+156,B,3ft 11in,1.19,Atkinson,548,
+158,A,3ft 7in,1.09,Atkinson,548,
+158,B,2ft 6in,0.76,Atkinson,548,
+160A,A,1ft 7in,0.48,Atkinson,548,
+160B,A,1ft 10in,0.56,Atkinson,548,
+160C,A,1ft 7in,0.48,Atkinson,548,
+160C,B,0ft 6in,0.15,Atkinson,548,
+102,lintel,2ft 3in high,0.69,Chief Architects Report,548,lintel thickness
+105,lintel,2ft 3in high,0.69,Chief Architects Report,548,lintel thickness
+107,lintel,2ft 2in high,0.66,Chief Architects Report,548,lintel thickness
+130,lintel,2ft 5in high,0.74,Chief Architects Report,548,lintel thickness
+100,lintel,2ft 6in high,0.76,Chief Architects Report,548,lintel thickness; printed as "Lintel 100"
+152,lintel,3ft 6in high,1.07,Chief Architects Report,548,lintel thickness
+154,lintel,3ft 8in high,1.12,Chief Architects Report,548,lintel thickness

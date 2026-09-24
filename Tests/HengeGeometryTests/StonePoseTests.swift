@@ -271,7 +271,9 @@ final class StonePoseTests: XCTestCase {
         let s55 = stones.first { $0.id == "stone-55" }!
         let s56 = stones.first { $0.id == "stone-56" }!
         XCTAssertTrue(s56.provenance.position.isFromPlan)
-        XCTAssertEqual(s55.provenance, .reconstruction)
+        XCTAssertEqual(s55.provenance.position, .reconstruction)
+        XCTAssertEqual(s55.provenance.footprint, .reconstruction)
+        XCTAssertEqual(s55.provenance.height, s56.provenance.height, "the twin is the witness")
         XCTAssertEqual(s55.height, s56.height)
         XCTAssertEqual(s55.bearing.degrees, s56.bearing.degrees, accuracy: 1e-9)
         let gap = simd_distance(s55.position, s56.position) - (s55.width + s56.width) / 2

@@ -78,12 +78,25 @@ public struct MonumentScene: Sendable {
                                                  height: height == nil ? heightSource(pose) : .reconstruction))
     }
 
-    /// Where a row's height comes from: Cleal's appendix when Daw says so,
-    /// else Daw's own placeholder, else nothing.
+    /// The transcribed appendix of heights, when the resource is present.
+    static let survey: StoneSurvey? = StoneSurvey.cleal
+
+    /// Rows whose status column says "standing" and which lie: the plan is
+    /// wrong about these two, the appendix records them as pieces on the
+    /// ground, and the scene draws them recumbent.
+    static let liesDespiteRow: Set<String> = ["91", "95"]
+
+    /// Cleal's height above ground for a stone that stands, or nil.
+    private static func measuredHeight(_ pose: StonePose) -> Double? {
+        guard pose.status == .standing, !liesDespiteRow.contains(pose.petrie) else { return nil }
+        return survey?.standingHeight(of: pose.petrie)
+    }
+
+    /// Where a row's own height column comes from — a fallen block's rise
+    /// in the ruin is drawn from it. Daw's labels are his own; none is a
+    /// measurement the app cites, so the block's height ships provisional.
     private static func heightSource(_ pose: StonePose) -> StoneSource {
-        pose.clealHeight != nil
-            ? .surveyed(StonePoseTable.clealCitation, accuracyClass: pose.heightSource ?? "")
-            : .provisional(StonePoseTable.citation, accuracyClass: pose.heightSource ?? "placeholder")
+        .provisional(StonePoseTable.citation, accuracyClass: pose.heightSource ?? "placeholder")
     }
 
     /// A stone placed and turned by its row, with the fallback footprint,
@@ -96,22 +109,24 @@ public struct MonumentScene: Sendable {
     /// the cross-sections measured from volume and height (issue #4), so a
     /// standing stone's section stays the fallback until the per-stone
     /// cross-check in #3 can be run against the laser-scan volumes. Height
-    /// is different: where Daw's row says the height is Cleal's, it is used
-    /// and cited; a standing stone whose row is a placeholder keeps the
-    /// fallback height and says so.
+    /// is different: where Cleal's appendix records the standing stone, that
+    /// figure is used and cited; a standing stone the appendix does not
+    /// record keeps the fallback height and says so.
     private static func raised(_ pose: StonePose, id: String? = nil,
                                height fallbackHeight: Double, width: Double, thickness: Double,
                                material: StoneMaterial, lean: Angle = .zero) -> Stone {
         let plan = plan!
-        let measured = pose.status == .standing ? pose.clealHeight : nil
+        let measured = measuredHeight(pose)
         return Stone(id: id ?? "stone-\(pose.petrie)",
                      position: plan.position(of: pose),
                      height: measured ?? fallbackHeight, width: width, thickness: thickness,
                      bearing: plan.bearing(of: pose), lean: lean,
                      material: material,
-                     provenance: StoneProvenance(position: source(pose),
-                                                 footprint: .reconstruction,
-                                                 height: measured == nil ? .reconstruction : heightSource(pose)))
+                     provenance: StoneProvenance(
+                        position: source(pose),
+                        footprint: .reconstruction,
+                        height: measured == nil ? .reconstruction
+                            : .surveyed(StoneSurvey.citation, accuracyClass: "Appendix 5")))
     }
 
     /// Petrie's number without a fragment suffix: `55a` → 55.
@@ -629,13 +644,17 @@ public struct MonumentScene: Sendable {
             let raw = plan.bearing(of: pose)
             let outward = raw.separation(to: Monument.axisAzimuth).degrees < 90
                 ? raw : (raw + Angle(degrees: 180)).normalized
+            // 15 ft in the Chief Architect's Report of 1919 (Cleal App. 5).
+            let measured = survey?.standingHeight(of: "96")
             return Stone(id: "stone-96", position: plan.position(of: pose),
-                         height: Monument.heelStoneHeight,
+                         height: measured ?? Monument.heelStoneHeight,
                          width: 2.4, thickness: 2.1,
                          bearing: outward, lean: lean, material: .sarsen,
-                         provenance: StoneProvenance(position: source(pose),
-                                                     footprint: .reconstruction,
-                                                     height: .reconstruction))
+                         provenance: StoneProvenance(
+                            position: source(pose),
+                            footprint: .reconstruction,
+                            height: measured == nil ? .reconstruction
+                                : .surveyed(StoneSurvey.citation, accuracyClass: "Appendix 5")))
         }
         return Stone(id: "stone-96",
                      position: WorldAxes.direction(azimuth: Monument.axisAzimuth)

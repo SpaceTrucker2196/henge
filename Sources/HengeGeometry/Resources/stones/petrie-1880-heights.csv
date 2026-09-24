@@ -1,0 +1,105 @@
+# Petrie, W. M. Flinders, Stonehenge: Plans, Description, and Theories (London: Edward Stanford,
+# 1880), section 2 "Details of the Stones", pp 9-12, read from the Google Books full-view scan
+# (id rUUIAQAAMAAJ) on 23 September 2026. Public domain.
+#
+# Petrie's own words: "The levels are in inches above the Ordnance bench-mark on the Friar's Heel,
+# No. 96. The heights are above the ground at the spot in question." Surveyed 1874-77, so this is
+# the monument BEFORE the re-erections of 1901 (56), 1919-20 (6, 7, 29, 30), 1958 (22, 57, 58) and
+# 1963-64 (23). It is the independent 1877 check on Cleal's 1919/Atkinson heights, never a
+# replacement: stone 22 was standing in 1877 and fell in 1900, so Petrie's 153 in is the only
+# standing height of 22 in print.
+#
+# Columns are Petrie's: Hoare's letter, height above ground (inches), level of top (inches above
+# the bench-mark), difference of the top level from the mean of the group (sarsen circle 213.3,
+# trilithons as noted, bluestone horseshoe 148.8). Blank means Petrie printed ".." (not measured).
+# The remarks are abridged; the trilithon estimates at the foot of p 12 are in the last rows.
+petrie,hoare,height_in,top_level_in,diff_from_group_mean_in,remarks,page
+1,A',159,208.1,-5.2,,9
+2,,170,211.9,-1.4,,9
+3,,171,209.3,-4.0,,9
+4,,170,211.9,-1.4,,9
+5,,174,215.0,1.7,,10
+6,,165,215.9,2.6,,10
+7,,162,211.3,-2.0,,10
+8,,,,,Sides worked.,10
+9,,,,,9b sides worked; end very flat with tenon.,10
+10,,160,220.0,6.7,,10
+11,,96,,,,10
+12,,,,,Two tenons on end.,10
+14,,,,,31 to 36 thick.,10
+15,,,,,Two tenons on end.,10
+16,,165,215.5,2.2,Bench-mark at 78.3 level.,10
+19,,,,,End and north side worked. Top 13 out of ground.,10
+21,,152,212.7,-0.6,,10
+22,,153,209.2,-4.1,standing in 1877; fell 1900,10
+23,,153,209.4,-3.9,,10
+25,,,,,Fallen westwards.,10
+26,,,,,No worked faces.,10
+27,,167,214.2,0.9,,10
+28,,165,214.4,1.1,,10
+29,,156,212.3,-1.0,,10
+30,A',153,207.6,-5.7,,10
+31,1,,127.5,,Rounded top broken.,10
+32,3,,,,Foot buried; 17.5 thick.,10
+33,4,,,,,10
+34,5,38,,,Upright.,10
+35,6,,,,Only a stump widely cracked like two stones.,10
+36,7,,,,North end buried; a square stone lying with edge up.,10
+37,8,,,,Schistose.,10
+39,10,,,,Schistose.,10
+40,11,,,,Overthrown before 1747.,10
+41,12,,,,No flat faces.,11
+42,13,,,,Fallen in 1747 before trilithon fell.,11
+43,14,,,,On edge. Rises 50 deg to east.,11
+44,15,,,,,11
+45,16,,,,Flat sides and top.,11
+46,17,,,,Hornstone.,11
+47,18,,,,Leaning in.,11
+48,19,,,,Hornstone as 46.,11
+49,20,,132.9,,Broken rounded at top.,11
+51,B',201,252.4,,,11
+52,B'',,255.7,,,11
+53,C',212,265.2,,height and level printed once for the pair 53 and 54,11
+54,C'',212,265.2,,height and level printed once for the pair 53 and 54,11
+55,D',,,,fallen; at south end a large projecting foot,11
+56,D'',,,,The leaning stone; straightened 1901,11
+57,E',,,,fell 3 January 1797,11
+58,E'',,,,fell 3 January 1797,11
+59,F',,,,Fallen before 1575,11
+60,F'',198,247.8,,,11
+61,21,,125.0,,Broken top.,11
+62,22,,143.0,-5.8,,11
+63,23,,147.0,-1.8,,11
+64,24,,,,Only a stump 3 inches high.,11
+65,25,,,,Broken near ground.,11
+66,omitted,,,,Only a stump.,11
+67,27,,,,Larger stone different in style to others.,11
+68,26,,153.1,4.3,Worked groove down north side.,11
+69,28,,157.0,8.2,,11
+70,29,,144.1,-4.7,Tipped out by foot of 58 in falling.,11
+71,30,,,,,11
+72,31,,,,,11
+80,Altar stone,,60.0,,mid; rises east at a slope of 7.3 on whole length,12
+91,,,,,Leans outward.,12
+92,,,,,Mound with central pit.,12
+93,,,,,Upright stone. A patch on each side and on outer face wrought.,12
+94,,,,,Mound with central pit ditch and ridge around.,12
+95,,,,,Lying quite flat upper face at ground level.,12
+96,Friar's heel,,,,Leaning west unwrought.,12
+101,,,237.6,,top; across entrance,12
+102,,,237.3,,lintel in situ,12
+105,,,241.6,,lintel in situ,12
+107,,,239.9,,lintel in situ,12
+120,,,,,Portion of lintel top 16 inches out of ground.,12
+122,,,239.5,,in situ,12
+127,,,,,Sides worked ends broken.,12
+130,,,240.5,,in situ,12
+150,,,,,Bluestone impost unsuited for any existing pair.,12
+152,,,252.7,,mid underside; 252.2 at north end; in situ,12
+154,,,265.2,,in situ,12
+156,D'',,,,Lintel overthrown 1620.,12
+158,E'',,,,Lintel fell in 1797.,12
+160,F'',,,,Fragments of lintel.,12
+# Petrie's estimates of the original height of the trilithons out of the ground, p 12:
+# "Nos. 51, 52: 201 top of upright; 241 top of impost. 53, 54: 212; 256. 55, 56: 263 +/- 2; 288 +/- 2.
+# 57, 58: 214 +/- 3; 258?. 59, 60: 198; 238?"

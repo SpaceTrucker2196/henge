@@ -65,6 +65,7 @@
 "info.blurb" = "Un Stonehenge photoréaliste qui est aussi un calendrier astronomique en état de marche. Tout ce que l’image affirme — où le soleil se lève, ce que fait la lune, quelle étoile tient le pôle — est calculé, vérifié contre des valeurs publiées et tiré de la même arithmétique que celle qu’affiche le relevé.";
 "info.close" = "Fermer";
 "info.credit.algorithms" = "L’arithmétique du soleil, de la lune et du calendrier";
+"info.credit.heights" = "La hauteur de chaque pierre";
 "info.credit.hipparcos" = "Les étoiles — 8 870 positions à l’œil nu, magnitudes, couleurs et mouvements propres";
 "info.credit.milkyway" = "La Voie lactée";
 "info.credit.moon" = "La face de la Lune";

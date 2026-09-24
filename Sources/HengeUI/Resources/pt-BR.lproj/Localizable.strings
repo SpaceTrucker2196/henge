@@ -65,6 +65,7 @@
 "info.blurb" = "Uma Stonehenge fotorrealista que é também um calendário astronômico em funcionamento. Tudo o que a imagem afirma — onde o sol nasce, o que a lua está fazendo, qual estrela ocupa o polo — é calculado, testado contra valores publicados e extraído da mesma aritmética que imprime a leitura.";
 "info.close" = "Fechar";
 "info.credit.algorithms" = "A aritmética do sol, da lua e do calendário";
+"info.credit.heights" = "A altura de cada pedra";
 "info.credit.hipparcos" = "As estrelas — 8.870 posições a olho nu, magnitudes, cores e movimentos próprios";
 "info.credit.milkyway" = "A Via Láctea";
 "info.credit.moon" = "A face da Lua";
