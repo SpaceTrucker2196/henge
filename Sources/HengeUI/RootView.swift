@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 import HengeAstro
 import HengeEngine
@@ -61,6 +62,10 @@ public struct RootView: View {
     /// than by disabling the feature: the calendar still runs, it just does
     /// not spin.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The system rating sheet. Apple shows it or not; the decision of
+    /// *when to ask* is `ReviewPrompt`'s, in HengeStore where a test holds
+    /// it. This view only counts the launch and makes the call.
+    @Environment(\.requestReview) private var requestReview
 
     public init() {}
 
@@ -289,6 +294,7 @@ public struct RootView: View {
         #endif
         .task { await runClock() }
         .task { await store.start() }
+        .task { await askForReviewIfDue() }
         .task {
             // The UI test's fixture (`BuildFlowUITests`): pin the rebuild
             // card open so the orientation inspection can read it at
@@ -1169,6 +1175,32 @@ public struct RootView: View {
 
     /// Drive the time-lapse from a clock rather than from frame callbacks, so
     /// the rate means the same thing whether the display runs at 60 or 120 Hz.
+    /// Count this launch and, on the one that qualifies, ask for a rating
+    /// after the stones have had a moment on screen.
+    private func askForReviewIfDue() async {
+        guard !ReviewPrompt.isSuppressed() else { return }
+        let defaults = UserDefaults.standard
+        var prompt = ReviewPrompt.load(from: defaults)
+        prompt.recordLaunch()
+        prompt.save(to: defaults)
+
+        let version = Bundle.main
+            .object(forInfoDictionaryKey: "CFBundleShortVersionString")
+            as? String ?? "0"
+        guard prompt.shouldAsk(policy: Self.policy, version: version) else {
+            return
+        }
+        // Marked before the wait, so a launch that is killed during the
+        // settle time still counts as asked: the alternative is re-asking
+        // on every quick relaunch, which is nagging with extra steps.
+        prompt.markAsked(version: version)
+        prompt.save(to: defaults)
+
+        try? await Task.sleep(for: .seconds(ReviewPrompt.settleSeconds))
+        guard !Task.isCancelled else { return }
+        requestReview()
+    }
+
     private func runClock() async {
         while !Task.isCancelled {
             try? await Task.sleep(for: .milliseconds(16))
