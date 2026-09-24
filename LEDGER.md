@@ -95,3 +95,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 7f0a328 | 2026-09-24T03:23:22Z | claude-fable-5-1 | 432 | 27855 | 11584990 | 40591 | 5.1051 | Stone 22 at Petrie's pre-fall height (#3) |
 | 9ab8d8d | 2026-09-24T18:29:00Z | claude-fable-5-1 | 848 | 20673 | 2953105 | 151497 | 4.8103 | Ask for an App Store rating on the third launch |
 | f18750a | 2026-09-24T18:32:52Z | claude-fable-5-1 | 324 | 4616 | 1066646 | 9538 | 0.6915 | Bump the version to 1.0 for the major release |
+| efc4931 | 2026-09-24T18:40:06Z | claude-fable-5-1 | 784 | 14724 | 3173113 | 35902 | 2.2554 | Raise the deployment target to iOS 26 and macOS 26 |
