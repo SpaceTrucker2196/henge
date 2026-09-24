@@ -189,7 +189,8 @@ final class StonePoseTests: XCTestCase {
         for state in Monument.State.allCases {
             let scene = MonumentScene.complete(state: state)
             for stone in scene.stones {
-                for source in [stone.provenance.position, stone.provenance.dimensions] {
+                for source in [stone.provenance.position, stone.provenance.footprint,
+                               stone.provenance.height] {
                     if let citation = source.citation {
                         XCTAssertFalse(citation.source.isEmpty, "\(stone.id) cites nothing")
                     }

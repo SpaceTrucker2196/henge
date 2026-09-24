@@ -539,8 +539,11 @@ public final class SkyModel {
         add(L10n.string("ground.axis"), "az \(Monument.axisAzimuth.degrees)°",
             east: 30 * sin(axis), south: -30 * cos(axis))
         add(L10n.string("ground.sarsenCircle"),
-            "\(Int(Monument.sarsenCircleDiameter)) m across",
-            east: 0, south: Monument.sarsenCircleDiameter / 2 + 2)
+            // To the outer faces, which is what a visitor's guidebook
+            // quotes: the ring the uprights' centres stand on, fitted from
+            // the surveyed plan, plus one stone's thickness.
+            "\(Int((MonumentScene.sarsenRingRadius * 2 + Monument.sarsenUprightThickness).rounded())) m across",
+            east: 0, south: MonumentScene.sarsenRingRadius + 2)
         add(L10n.string("ground.aubreyRing"),
             "\(Int(Monument.aubreyCircleDiameter)) m · 56 holes",
             east: -Monument.aubreyCircleDiameter / 2 * 0.7071,

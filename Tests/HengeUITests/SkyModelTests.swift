@@ -136,7 +136,12 @@ final class SkyModelTests: XCTestCase {
         XCTAssertFalse(names.intersection(["N", "E", "S", "W"]).isEmpty)
         XCTAssertTrue(names.contains("Sarsen circle"))
         let sarsen = labels.first { $0.id == "Sarsen circle" }
-        XCTAssertEqual(sarsen?.detail, "33 m across",
+        // Outer-face diameter: the fitted ring the uprights' centres stand
+        // on (30.9 m, from the surveyed plan) plus one 1.1 m thickness, so
+        // 32 m. The literature quotes 30 m to 33 m depending on whether the
+        // inner or outer faces are meant (Cleal et al. 1995 give 29.6 m
+        // inside); this is the outer figure the plan supports.
+        XCTAssertEqual(sarsen?.detail, "32 m across",
                        "the label must carry the surveyed figure")
         for label in labels {
             XCTAssertTrue((-0.2...1.2).contains(label.x))

@@ -23,8 +23,13 @@ final class StoneDimensionTests: XCTestCase {
                                         "\(stone.id) is thinner than any measured bluestone")
             XCTAssertLessThanOrEqual(section, 0.37,
                                      "\(stone.id) is fatter than any measured bluestone")
-            XCTAssertGreaterThan(stone.height / max(stone.width, stone.thickness), 2.0,
-                                 "\(stone.id) should read as a pillar, not a block")
+            // A stone on a fallback height reads as a pillar. One with a
+            // cited height is whatever height Cleal recorded, and 34 and 46
+            // stand under a metre.
+            if stone.provenance.height == .reconstruction {
+                XCTAssertGreaterThan(stone.height / max(stone.width, stone.thickness), 2.0,
+                                     "\(stone.id) should read as a pillar, not a block")
+            }
         }
     }
 }

@@ -70,6 +70,21 @@ public struct StonePose: Sendable, Hashable {
     public var positionIsSurveyed: Bool {
         accuracyClass != "seed_only" && accuracyClass != "plan_digitised"
     }
+
+    /// The row's height where Daw says outright that it is Cleal's: Cleal,
+    /// Walker & Montague 1995, Appendix 5, height above ground, compiled
+    /// from the 1919 Chief Architect's report and Atkinson's records. His
+    /// other labels — a scene default, a placeholder, "pink", or the hedged
+    /// `cleal_app5_or_scene` — are not a citation and are not used. The
+    /// ADS terms under which the monograph is published allow this reuse
+    /// with credit; the row-by-row transcription against the printed page
+    /// is issue #3's remaining work, and until then the citation says
+    /// where the number came through.
+    public var clealHeight: Double? {
+        guard let source = heightSource else { return nil }
+        let cited = source == "cleal_app5_banton" || source.hasPrefix("Cleal App.5")
+        return cited ? height : nil
+    }
 }
 
 /// The whole plan, in the engine's frame.
@@ -86,6 +101,11 @@ public struct StonePoseTable: Sendable {
     public static let citation = Citation(
         "Tim Daw, stonehenge-block-3d, locked_poses (CC BY-SA 4.0)",
         "digitised from the M J Rees & Co 1989/90 survey, Historic England Archive MP/STO0861")
+
+    /// For the heights `StonePose.clealHeight` passes through.
+    public static let clealCitation = Citation(
+        "Cleal, Walker & Montague, Stonehenge in its Landscape (EH Archaeological Report 10, 1995)",
+        "Appendix 5, height above ground, as carried in Daw's locked_poses")
 
     /// The vendored plan, or nil if the resource is missing — in which case
     /// every generator falls back to its ring formula and every stone is a
@@ -261,15 +281,24 @@ public enum StoneSource: Sendable, Hashable {
     public var isFromPlan: Bool { citation != nil }
 }
 
+/// Three things a stone can be right or wrong about, each with its own
+/// source: where it stands, how big its footprint is, and how tall it is.
+/// They come from different places — position from the plan, height from
+/// Cleal's appendix, footprint from nowhere yet for a standing stone — so
+/// they are recorded separately rather than as one "surveyed" flag that
+/// would be true of the position and false of the section.
 public struct StoneProvenance: Sendable, Hashable {
     public let position: StoneSource
-    public let dimensions: StoneSource
+    public let footprint: StoneSource
+    public let height: StoneSource
 
-    public init(position: StoneSource, dimensions: StoneSource) {
+    public init(position: StoneSource, footprint: StoneSource, height: StoneSource) {
         self.position = position
-        self.dimensions = dimensions
+        self.footprint = footprint
+        self.height = height
     }
 
     public static let reconstruction = StoneProvenance(position: .reconstruction,
-                                                      dimensions: .reconstruction)
+                                                      footprint: .reconstruction,
+                                                      height: .reconstruction)
 }

@@ -97,3 +97,26 @@ These were looked for and are not there.
 Four parallel searches on 23 September 2026: primary archaeology (Petrie to Field 2015), open geodata and 3D models, community and GitHub datasets, academic papers 2018 to 2026. Highest-value claims then checked directly: RR 32/2012 downloaded and Appendix 1 extracted; Petrie 1880 opened on Google Books and the table format confirmed on page 11; Daw's `locked_poses.js` fetched and inspected; Cox's 2019 post read for the Historic England data-sharing precedent; Banton's site read for provenance and 8 heights.
 
 Not reachable from here: Overpass API, HathiTrust page views, Sketchfab, archaeologydataservice.ac.uk record pages, GitHub search. Those items are marked Blocked or Reported above.
+
+---
+
+## Licence verdicts and what was done, 23 September 2026
+
+Owner's rule: any source that is non-commercial, or that needs written
+permission for commercial use, stays out of the repository. Full record in
+`docs/decisions/2026-09-23-stone-data-licences.md`.
+
+| Source | Verdict | State |
+|---|---|---|
+| B1 Daw `locked_poses` (CC BY-SA 4.0) | In; derived CSV published under the same licence | Vendored, issue #5 shipped |
+| A2 Cleal 1995 Appendix 5 (ADS terms, commercial-sector research use with credit) | In | 18 rows carried through Daw's height column; printed-page transcription blocked from here (ADS returns 403 to scripted fetches) |
+| A3 Petrie 1880 (public domain) | In | Not yet transcribed; Google Books and HathiTrust both refuse scripted access |
+| A1 HE RR 32/2012 Appendix 1 (© English Heritage, permission needed for commercial use) | Out until written permission | Request drafted in `docs/outreach/13-historic-england-data-request.txt` |
+| B5 stonesofstonehenge.org.uk (no licence) | Out | Transcription only; ask Simon Banton if ever needed |
+
+Cross-check that fell out of #5: Daw's bluestone-circle footprints (`width_m ×
+thickness_m`) are two to three times the `V/h` sections from A1 and A2 —
+stone 31 is 0.75 m² in the plan against 0.36 m² measured, stone 32 is
+1.17 m². The horseshoe pillars agree (62: 0.24, 69: 0.19, 70: 0.23 m²). So
+the plan's outlines are not a section for a standing stone, and the app does
+not use them as one.

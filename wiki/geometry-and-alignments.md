@@ -4,12 +4,16 @@
 
 The figures the app computes with, as encoded in
 `HengeGeometry/Monument.swift` (Cleal et al. 1995; Petrie's and later
-surveys):
+surveys). Since September 2026 the stones themselves are placed by row from
+the 1989–90 Rees plan (`HengeGeometry/StonePoses.swift`, Daw's
+digitisation, CC BY-SA 4.0); the ring figures below are the fallback slots
+for the stones the plan has lost, and the fitted ring the surveyed uprights
+stand on.
 
 | Feature | Figure |
 |---|---|
 | Monument axis | azimuth **49.9°** (NE, to the midsummer sunrise quarter) |
-| Sarsen circle | **33.0 m** diameter, 30 uprights |
+| Sarsen circle | **30.9 m** diameter to the uprights' centres (fitted through 13 locked uprights; the customary 33 m is to the outer faces), 30 uprights |
 | Aubrey ring | **87.0 m** diameter, 56 holes |
 | Enclosure earthwork | ~**110 m** across (ditch centreline) |
 | Heel Stone | **77 m** out along the axis, 4.7 m tall |

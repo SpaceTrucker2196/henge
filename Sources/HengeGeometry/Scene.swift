@@ -74,30 +74,44 @@ public struct MonumentScene: Sendable {
                      width: pose.width, thickness: pose.thickness,
                      bearing: plan.bearing(of: pose), lean: lean,
                      material: material,
-                     provenance: StoneProvenance(position: source, dimensions: source))
+                     provenance: StoneProvenance(position: source, footprint: source,
+                                                 height: height == nil ? heightSource(pose) : .reconstruction))
     }
 
-    /// A stone placed and turned by its row but sized by the fallback.
+    /// Where a row's height comes from: Cleal's appendix when Daw says so,
+    /// else Daw's own placeholder, else nothing.
+    private static func heightSource(_ pose: StonePose) -> StoneSource {
+        pose.clealHeight != nil
+            ? .surveyed(StonePoseTable.clealCitation, accuracyClass: pose.heightSource ?? "")
+            : .provisional(StonePoseTable.citation, accuracyClass: pose.heightSource ?? "placeholder")
+    }
+
+    /// A stone placed and turned by its row, with the fallback footprint,
+    /// and Cleal's height where the row carries one.
     ///
     /// This is every standing stone, in both states, and every stone the
     /// complete monument raises on a row that is a stump, a fallen block or
     /// an empty socket. The plan's footprints are a digitised hatch at
     /// ground level, and for the bluestones they come out two to three times
-    /// the cross-sections measured from volume and height (issue #4); which
-    /// to believe, stone by stone, is issue #3's cross-check and not this
-    /// order's. So this order takes where a stone is and which way it faces,
-    /// and leaves how big it is where it was.
+    /// the cross-sections measured from volume and height (issue #4), so a
+    /// standing stone's section stays the fallback until the per-stone
+    /// cross-check in #3 can be run against the laser-scan volumes. Height
+    /// is different: where Daw's row says the height is Cleal's, it is used
+    /// and cited; a standing stone whose row is a placeholder keeps the
+    /// fallback height and says so.
     private static func raised(_ pose: StonePose, id: String? = nil,
-                               height: Double, width: Double, thickness: Double,
+                               height fallbackHeight: Double, width: Double, thickness: Double,
                                material: StoneMaterial, lean: Angle = .zero) -> Stone {
         let plan = plan!
+        let measured = pose.status == .standing ? pose.clealHeight : nil
         return Stone(id: id ?? "stone-\(pose.petrie)",
                      position: plan.position(of: pose),
-                     height: height, width: width, thickness: thickness,
+                     height: measured ?? fallbackHeight, width: width, thickness: thickness,
                      bearing: plan.bearing(of: pose), lean: lean,
                      material: material,
                      provenance: StoneProvenance(position: source(pose),
-                                                 dimensions: .reconstruction))
+                                                 footprint: .reconstruction,
+                                                 height: measured == nil ? .reconstruction : heightSource(pose)))
     }
 
     /// Petrie's number without a fragment suffix: `55a` → 55.
@@ -134,7 +148,7 @@ public struct MonumentScene: Sendable {
                         position: fromPlan
                             ? .surveyed(StonePoseTable.citation, accuracyClass: "spans surveyed uprights")
                             : .reconstruction,
-                        dimensions: .reconstruction))
+                        footprint: .reconstruction, height: .reconstruction))
     }
 
     // ── the whole monument ──────────────────────────────────────────────────
@@ -293,14 +307,17 @@ public struct MonumentScene: Sendable {
 
     /// Angular offset from the apex, and the radius each trilithon stands at,
     /// for the fallback with no plan. The horseshoe opens along the axis, so
-    /// these are symmetric about it.
+    /// these are symmetric about it. Clockwise from the south-west apex is
+    /// toward the north-west, so the north-west pairs carry the positive
+    /// offsets — the earlier signs had the two sides swapped, which nothing
+    /// caught because the plan-less fallback has no test of its own.
     private static func placement(_ which: Monument.Trilithon) -> (offset: Double, radius: Double) {
         switch which {
         case .great: (0, 8.2)
-        case .northWestInner: (-46, 8.9)
-        case .southEastInner: (46, 8.9)
-        case .northWestOuter: (-88, 9.9)
-        case .southEastOuter: (88, 9.9)
+        case .northWestInner: (46, 8.9)
+        case .southEastInner: (-46, 8.9)
+        case .northWestOuter: (88, 9.9)
+        case .southEastOuter: (-88, 9.9)
         }
     }
 
@@ -339,8 +356,11 @@ public struct MonumentScene: Sendable {
                          height: stone.height, width: which.uprightWidth,
                          thickness: which.uprightThickness, bearing: stone.bearing,
                          material: .sarsen,
+                         // The height is its twin's, which may be Cleal's;
+                         // the twin's row is the witness, so it is cited.
                          provenance: StoneProvenance(position: .reconstruction,
-                                                     dimensions: .reconstruction))
+                                                     footprint: .reconstruction,
+                                                     height: stone.provenance.height))
         }
 
         func formulaPair() -> (Stone, Stone) {
@@ -614,7 +634,8 @@ public struct MonumentScene: Sendable {
                          width: 2.4, thickness: 2.1,
                          bearing: outward, lean: lean, material: .sarsen,
                          provenance: StoneProvenance(position: source(pose),
-                                                     dimensions: .reconstruction))
+                                                     footprint: .reconstruction,
+                                                     height: .reconstruction))
         }
         return Stone(id: "stone-96",
                      position: WorldAxes.direction(azimuth: Monument.axisAzimuth)
@@ -646,7 +667,8 @@ public struct MonumentScene: Sendable {
                           height: 0.9, width: pose?.width ?? 6.4, thickness: pose?.thickness ?? 2.1,
                           bearing: lyingBearing, material: .sarsen,
                           provenance: StoneProvenance(position: positionSource,
-                                                      dimensions: pose == nil ? .reconstruction : positionSource))]
+                                                      footprint: pose == nil ? .reconstruction : positionSource,
+                                                      height: .reconstruction))]
         case .asItWas:
             // 95 raised where it lies; its lost partner E mirrored across the
             // axis, since the pair framed the entrance.
@@ -655,7 +677,8 @@ public struct MonumentScene: Sendable {
                 Stone(id: "stone-95", position: lying,
                       height: 4.3, width: 2.1, thickness: 1.1,
                       bearing: axis, material: .sarsen,
-                      provenance: StoneProvenance(position: positionSource, dimensions: .reconstruction)),
+                      provenance: StoneProvenance(position: positionSource, footprint: .reconstruction,
+                                                  height: .reconstruction)),
                 Stone(id: "stone-E", position: mirrored,
                       height: 4.3, width: 2.1, thickness: 1.1,
                       bearing: axis, material: .sarsen)

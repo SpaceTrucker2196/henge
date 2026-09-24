@@ -1,0 +1,66 @@
+To: Historic England Archive Services <archive@historicengland.org.uk>
+Cc: (Research Reports team, if a separate address is known)
+Subject: Two requests on Stonehenge stone data: reuse of RR 32/2012 Appendix 1, and the laser-scan CAD model
+
+Dear Archive Services,
+
+I am the author of Henge, a native iOS and macOS application that renders
+Stonehenge as a working astronomical calendar. Sun, moon and star positions
+are computed from published theory, the terrain is the Environment Agency's
+LiDAR under the Open Government Licence, and every claim about the monument
+carries a citation in the app. The remaining gap is the stones themselves,
+and I would like to close it with Historic England's data rather than with
+guesswork. Two requests, either of which can be answered on its own.
+
+1. Permission to reuse Appendix 1 of Research Report 32/2012
+
+Abbott and Anderson-Whymark, Stonehenge Laser Scan: Archaeological Analysis
+(RR 32/2012), Appendix 1, Tables 1 and 2, gives the above-ground surface
+area, volume and estimated weight of 74 stones. I would like to vendor those
+two tables as a data file inside the app, cite the report by page in the
+app's information view and in the repository's data-provenance register,
+and use the figures for one purpose: to derive a mean cross-sectional area
+per stone (volume over height) so that each stone is drawn at something
+close to its real section rather than a shared constant.
+
+The app is sold on the App Store, so this is commercial use. The PDF is
+marked © English Heritage without an open licence, and your re-use terms
+ask for written permission before commercial exploitation; this is that
+request. I would be glad to carry any attribution wording you prefer, and
+to send you the derived table for checking before it ships. If the report
+is in fact already released under the Open Government Licence, a line
+saying so would settle it.
+
+2. Access to the per-stone CAD model from the 2011 laser scan
+
+Bryan, Abbott and Dodson (ISPRS Archives XL-5/W2, 2013) list the 2011
+Greenhatch scan deliverables held at Swindon, and I understand a
+157-stone solid model derived from it has been shared with researchers:
+Trevor Cox at Salford built his acoustic scale model from it (2019), and
+Cox, Fazenda and Greaney (Journal of Archaeological Science 122, 2020)
+ran their bluestone statistics on the same model. I would like to request
+access on the same footing.
+
+What I would do with it: measure per-stone width and thickness at ground
+level, which no published table gives, and place each stone by its own
+outline. What I would not do: redistribute the model, or any mesh derived
+from it. Only the measurements (a table of numbers per Petrie stone
+number) would enter the app, cited to Historic England as the source, and
+I will accept whatever terms you attach to that table. If a research
+agreement or a fee schedule applies, please send it.
+
+Interim state, so you know where the app stands today: positions come
+from a published digitisation (CC BY-SA) of the 1989/90 Rees survey sheet
+MP/STO0861, credited to Rees and to the Historic England Archive; heights
+are taken from Cleal, Walker and Montague 1995, Appendix 5, via the
+Archaeology Data Service under its terms of use; and every stone carries
+a label saying whether it is surveyed, provisional, or a reconstruction.
+
+Thank you for considering both. I am happy to provide a build of the app,
+the repository, or anything else that helps.
+
+Yours sincerely,
+
+Jeff Kunzelman
+River.io LLC
+jeff@river.io
