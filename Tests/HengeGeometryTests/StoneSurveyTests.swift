@@ -69,6 +69,11 @@ final class StoneSurveyTests: XCTestCase {
                     XCTAssertEqual(stone.height, height, accuracy: 1e-9, "\(state) stone \(pose.petrie)")
                     XCTAssertEqual(stone.provenance.height.citation, StoneSurvey.citation, "stone \(pose.petrie)")
                     cited += 1
+                } else if pose.petrie == "22" {
+                    // Recorded by Cleal only as it lay; Petrie measured it
+                    // standing in 1877: 153 in.
+                    XCTAssertEqual(stone.height, 153 * 0.0254, accuracy: 1e-9)
+                    XCTAssertEqual(stone.provenance.height.citation, StoneSurvey.petrieCitation)
                 } else {
                     XCTAssertEqual(stone.provenance.height, .reconstruction,
                                    "stone \(pose.petrie) has no recorded height and must not claim one")

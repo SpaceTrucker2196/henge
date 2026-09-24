@@ -86,10 +86,23 @@ public struct MonumentScene: Sendable {
     /// ground, and the scene draws them recumbent.
     static let liesDespiteRow: Set<String> = ["91", "95"]
 
-    /// Cleal's height above ground for a stone that stands, or nil.
-    private static func measuredHeight(_ pose: StonePose) -> Double? {
+    /// A recorded height above ground for a stone that stands, with its
+    /// source, or nil. Cleal's appendix first. Where the appendix records a
+    /// stone only as it lay before a re-erection, Petrie's 1877 figure is
+    /// taken instead — the owner's call of 23 Sep 2026: for stone 22, which
+    /// stood in 1877, fell in 1900 and was re-erected in 1958, the
+    /// pre-fall measurement is the only one there is.
+    private static func measuredHeight(_ pose: StonePose) -> (height: Double, source: StoneSource)? {
         guard pose.status == .standing, !liesDespiteRow.contains(pose.petrie) else { return nil }
-        return survey?.standingHeight(of: pose.petrie)
+        if let cleal = survey?.standingHeight(of: pose.petrie) {
+            return (cleal, .surveyed(StoneSurvey.citation, accuracyClass: "Appendix 5"))
+        }
+        let recordedAsItLay = survey?.rows(for: pose.petrie).contains { $0.note.contains("re-erection") } ?? false
+        if recordedAsItLay,
+           let petrie = StoneSurvey.petrie?.first(where: { $0.petrie == pose.petrie })?.height {
+            return (petrie, .surveyed(StoneSurvey.petrieCitation, accuracyClass: "1877, before its fall"))
+        }
+        return nil
     }
 
     /// Where a row's own height column comes from — a fallen block's rise
@@ -119,14 +132,13 @@ public struct MonumentScene: Sendable {
         let measured = measuredHeight(pose)
         return Stone(id: id ?? "stone-\(pose.petrie)",
                      position: plan.position(of: pose),
-                     height: measured ?? fallbackHeight, width: width, thickness: thickness,
+                     height: measured?.height ?? fallbackHeight, width: width, thickness: thickness,
                      bearing: plan.bearing(of: pose), lean: lean,
                      material: material,
                      provenance: StoneProvenance(
                         position: source(pose),
                         footprint: .reconstruction,
-                        height: measured == nil ? .reconstruction
-                            : .surveyed(StoneSurvey.citation, accuracyClass: "Appendix 5")))
+                        height: measured?.source ?? .reconstruction))
     }
 
     /// Petrie's number without a fragment suffix: `55a` → 55.
