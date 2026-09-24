@@ -224,7 +224,14 @@ public struct MonumentScene: Sendable {
             id: i < 19 ? "stone-\(31 + i)" : "bluestone-circle-\(i)",
                          position: WorldAxes.direction(azimuth: bearing) * radius,
                          height: 1.9 + Double(i % 5) * 0.16,
-                         width: 0.95, thickness: 0.62,
+                         // One section for every stone, but one that is about
+                         // right: the four bluestones with a published volume
+                         // and height (31, 49, 62, 68) average 0.26 m² in
+                         // section, and 0.60 × 0.43 is that area at a plausible
+                         // pillar proportion. The earlier 0.95 × 0.62 was 2.3×
+                         // too large and read as a squat block. Per-stone
+                         // sections are issue #3; this constant is issue #4.
+                         width: 0.60, thickness: 0.43,
                          bearing: bearing,
                          lean: Angle(degrees: Double((i * 7) % 9) - 4),
                          material: .bluestone)
@@ -246,7 +253,8 @@ public struct MonumentScene: Sendable {
             return Stone(id: i < 12 ? "stone-\(61 + i)" : "bluestone-horseshoe-\(i)",
                          position: WorldAxes.direction(azimuth: bearing) * radius,
                          height: 2.5 - abs(offset) / 135.0 * 0.8,
-                         width: 0.9, thickness: 0.6,
+                         // Same interim section as the circle (issue #4).
+                         width: 0.60, thickness: 0.43,
                          bearing: (bearing + Angle(degrees: 180)).normalized,
                          material: .bluestone)
         }
