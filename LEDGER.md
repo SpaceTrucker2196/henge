@@ -89,3 +89,4 @@ the whole ledger: `ledger.py --energy-total`.
 | ade0d39 | 2026-09-16T00:30:11Z | claude-fable-5-1 | 590 | 23218 | 13105994 | 61004 | 5.6634 | Record that 0.2.1 is submitted, and what is left of M6 |
 | e7cca60 | 2026-09-16T00:30:30Z | claude-fable-5-1 | 128 | 1294 | 2315732 | 7743 | 0.7998 | Stamp the Mac download as 0.2.1 on the landing page |
 | 6485481 | 2026-09-24T01:17:19Z | claude-fable-5-1,claude-opus-5-5 | 2694 | 190828 | 12992216 | 1259837 | 35.2468 | Bluestone cross-section quick fix (#4) |
+| 6218502 | 2026-09-24T01:42:13Z | claude-fable-5-1 | 2386 | 333247 | 24973743 | 419850 | 31.3266 | Surveyed stone positions from Daw/Rees plan (#5) |
