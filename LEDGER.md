@@ -92,3 +92,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 6218502 | 2026-09-24T01:42:13Z | claude-fable-5-1 | 2386 | 333247 | 24973743 | 419850 | 31.3266 | Surveyed stone positions from Daw/Rees plan (#5) |
 | 4b8c1cd | 2026-09-24T01:57:00Z | claude-fable-5-1 | 1512 | 109912 | 19706010 | 166988 | 13.7770 | Per-stone heights from Cleal via the plan; provenance split; HE data request dra |
 | dd8c8f1 | 2026-09-24T03:11:35Z | claude-fable-5-1 | 4312 | 224879 | 67094744 | 2086373 | 69.7882 | Cleal and Petrie height tables transcribed and wired in (#3) |
+| 7f0a328 | 2026-09-24T03:23:22Z | claude-fable-5-1 | 432 | 27855 | 11584990 | 40591 | 5.1051 | Stone 22 at Petrie's pre-fall height (#3) |
