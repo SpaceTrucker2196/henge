@@ -65,6 +65,11 @@ struct InfoView: View {
                what: "info.credit.textures",
                source: "ambientCG (Rock030, Grass004), CC0 — no attribution "
                    + "required, credited anyway."),
+        Credit(id: "plan",
+               what: "info.credit.plan",
+               source: "Stone positions after Tim Daw, stonehenge-block-3d "
+                   + "(CC BY-SA 4.0), digitised from the M J Rees & Co 1989/90 "
+                   + "survey of Stonehenge, Historic England Archive MP/STO0861."),
         Credit(id: "survey",
                what: "info.credit.survey",
                source: "Surveyed figures after Petrie's numbering; tiers and "

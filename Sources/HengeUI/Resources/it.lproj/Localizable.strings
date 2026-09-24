@@ -69,6 +69,7 @@
 "info.credit.milkyway" = "La Via Lattea";
 "info.credit.moon" = "Il volto della Luna";
 "info.credit.names" = "I nomi delle stelle";
+"info.credit.plan" = "Dove sta ogni pietra";
 "info.credit.sky" = "Il cielo diurno";
 "info.credit.survey" = "Le dimensioni del monumento e l’archeologia";
 "info.credit.terrain" = "La piana di Salisbury — il terreno su cui cadono le ombre";
@@ -90,6 +91,8 @@
 "lore.monument.druids.title" = "I druidi";
 "lore.monument.overlay.body" = "La sovrapposizione disegna sull’erba la geometria studiata del monumento. I tratti cardinali, l’asse solstiziale e l’Avenue sono rilievo accertato. I lati lunghi lunari del rettangolo delle Station Stones sono una lettura seria e contestata. I segnalini dorati mettono in scena la macchina delle eclissi delle buche di Aubrey proposta da Hoyle nel 1966 — collocati qui alle posizioni realmente calcolate di sole, luna e nodi, perché lo spostamento dei gettoni è la parte che nulla di scavato sostiene: le buche contenevano resti umani cremati. Dorato significa mobile, e mobile significa ipotesi.";
 "lore.monument.overlay.title" = "Le linee tracciate e i segnalini dorati";
+"lore.monument.plan.body" = "Ogni pietra superstite sta dove la colloca un rilievo misurato: la digitalizzazione di Tim Daw del rilievo Rees del 1989–90, la pianta post-restauro conservata da Historic England. La sua classificazione accompagna ogni riga, così la Heel Stone, le Station Stones e la Slaughter Stone — i suoi segnaposto — risultano provvisorie, non rilevate. Le pietre perdute sono innalzate in posizioni calcolate fra le vicine rilevate e indicate come ricostruzioni. Le dimensioni non sono ancora per singola pietra; è un lavoro separato, ancora aperto.";
+"lore.monument.plan.title" = "Dove stanno le pietre";
 "lore.monument.sarsen.body" = "Le grandi pietre sono sarsen, un silcrete che ricopre il gesso cretaceo. Nel 2020 l’analisi delle impronte geochimiche ha ricondotto cinquanta dei cinquantadue sarsen superstiti a West Woods, presso Marlborough — circa 25 km a nord, e per la prima volta la fonte è stata determinata anziché ipotizzata.";
 "lore.monument.sarsen.title" = "I sarsen";
 "lore.monument.slaughterStone.body" = "Il sarsen caduto all’ingresso nord-orientale deve il proprio nome all’immaginazione antiquaria, non alle prove: i primi osservatori lessero la macchia ferrosa rossastra sulla sua superficie come sangue antico e lo nominarono di conseguenza. Nulla di quanto scavato qui sostiene sacrifici di alcun genere — animali o umani — presso questa pietra né altrove nel sito. Una diffusa infografica che circola come immagine d’archivio la etichetta «Pietra del sacrificio»; quella formulazione ripete proprio la lettura errata ottocentesca che questa nota esiste per correggere.";

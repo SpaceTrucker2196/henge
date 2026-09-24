@@ -69,6 +69,7 @@
 "info.credit.milkyway" = "Die Milchstraße";
 "info.credit.moon" = "Das Gesicht des Mondes";
 "info.credit.names" = "Die Namen der Sterne";
+"info.credit.plan" = "Wo jeder Stein steht";
 "info.credit.sky" = "Der Taghimmel";
 "info.credit.survey" = "Die Maße des Monuments und die Archäologie";
 "info.credit.terrain" = "Salisbury Plain – der Boden, auf den die Schatten fallen";
@@ -90,6 +91,8 @@
 "lore.monument.druids.title" = "Die Druiden";
 "lore.monument.overlay.body" = "Die Überlagerung zeichnet die erforschte Geometrie des Monuments auf den Rasen. Die Himmelsrichtungslinien, die Solstitialachse und die Avenue sind gesicherte Vermessung. Die lunaren Längsseiten des Station-Stone-Rechtecks sind eine ernsthafte, umstrittene Lesart. Die goldenen Marker führen die von Hoyle 1966 vorgeschlagene Finsternismaschine der Aubrey Holes vor – hier an den wirklich berechneten Positionen von Sonne, Mond und Knoten platziert, denn das Verschieben der Steine ist der Teil, den nichts Ausgegrabenes stützt: Die Gruben enthielten verbrannte menschliche Überreste. Gold heißt beweglich, und beweglich heißt Hypothese.";
 "lore.monument.overlay.title" = "Die gezeichneten Linien und die goldenen Marker";
+"lore.monument.plan.body" = "Jeder erhaltene Stein steht dort, wo ein vermessener Plan ihn setzt: Tim Daws Digitalisierung der Rees-Vermessung von 1989–90, des von Historic England verwahrten Plans nach der Restaurierung. Seine Einstufung begleitet jede Zeile, daher gelten der Heel Stone, die Station Stones und der Slaughter Stone – seine Platzhalter – als vorläufig, nicht als vermessen. Verlorene Steine werden an berechneten Plätzen zwischen ihren vermessenen Nachbarn aufgerichtet und als Rekonstruktionen gekennzeichnet. Die Maße sind noch nicht je Stein erfasst; das ist eigene, offene Arbeit.";
+"lore.monument.plan.title" = "Wo die Steine stehen";
 "lore.monument.sarsen.body" = "Die großen Steine sind Sarsen, ein Silkret, das die Kreide überdeckt. Eine geochemische Signaturanalyse ordnete 2020 fünfzig der zweiundfünfzig erhaltenen Sarsensteine West Woods bei Marlborough zu – etwa 25 km nördlich, und zum ersten Mal war die Quelle bestimmt statt vermutet.";
 "lore.monument.sarsen.title" = "Die Sarsensteine";
 "lore.monument.slaughterStone.body" = "Der umgestürzte Sarsenstein am nordöstlichen Eingang verdankt seinen Namen antiquarischer Fantasie, nicht Belegen: Frühe Beobachter deuteten die rostrote Eisenverfärbung auf seiner Oberfläche als altes Blut und benannten ihn danach. Nichts hier Ausgegrabenes stützt Opferhandlungen irgendeiner Art – tierisch oder menschlich – an diesem Stein oder sonst irgendwo auf dem Gelände. Eine als Stockmaterial kursierende, populäre Infografik bezeichnet ihn als „Stein des Opfers“; diese Formulierung wiederholt genau die Fehldeutung des neunzehnten Jahrhunderts, die dieser Hinweis richtigstellen soll.";

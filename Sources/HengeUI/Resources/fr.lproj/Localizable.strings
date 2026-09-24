@@ -69,6 +69,7 @@
 "info.credit.milkyway" = "La Voie lactée";
 "info.credit.moon" = "La face de la Lune";
 "info.credit.names" = "Les noms des étoiles";
+"info.credit.plan" = "Où se dresse chaque pierre";
 "info.credit.sky" = "Le ciel diurne";
 "info.credit.survey" = "Les dimensions du monument et l’archéologie";
 "info.credit.terrain" = "La plaine de Salisbury — le sol sur lequel tombent les ombres";
@@ -90,6 +91,8 @@
 "lore.monument.druids.title" = "Les druides";
 "lore.monument.overlay.body" = "La surimpression dessine sur l’herbe la géométrie étudiée du monument. Les traits cardinaux, l’axe solsticial et l’Avenue relèvent d’un relevé établi. Les grands côtés lunaires du rectangle des Station Stones sont une lecture sérieuse et contestée. Les marqueurs dorés jouent la machine à éclipses des trous d’Aubrey proposée par Hoyle en 1966 — placés ici aux positions réellement calculées du soleil, de la lune et des nœuds, car le déplacement des jetons est la part que rien de fouillé n’étaye : les fosses contenaient des restes humains incinérés. L’or signifie mobile, et mobile signifie hypothèse.";
 "lore.monument.overlay.title" = "Les lignes tracées et les marqueurs dorés";
+"lore.monument.plan.body" = "Chaque pierre conservée se dresse là où la place un plan mesuré : la numérisation par Tim Daw du relevé Rees de 1989–90, le plan post-restauration conservé par Historic England. Sa notation accompagne chaque ligne ; la Heel Stone, les Station Stones et la Slaughter Stone — ses valeurs provisoires — sont donc présentées comme provisoires, non comme relevées. Les pierres perdues sont relevées à des emplacements calculés entre leurs voisines relevées et signalées comme reconstitutions. Les dimensions ne sont pas encore propres à chaque pierre ; c'est un travail distinct, encore ouvert.";
+"lore.monument.plan.title" = "Où se dressent les pierres";
 "lore.monument.sarsen.body" = "Les grandes pierres sont des sarsens, un silcrète qui coiffe la craie. En 2020, une analyse d’empreintes géochimiques a rattaché cinquante des cinquante-deux sarsens subsistants à West Woods, près de Marlborough — à environ 25 km au nord, et pour la première fois la source était établie plutôt que supposée.";
 "lore.monument.sarsen.title" = "Les sarsens";
 "lore.monument.slaughterStone.body" = "Le sarsen tombé à l’entrée nord-est doit son nom à l’imagination des antiquaires, non à des preuves : les premiers observateurs ont lu la coloration ferrugineuse rouille de sa surface comme du sang ancien et l’ont nommé en conséquence. Rien de ce qui a été fouillé ici n’étaye un sacrifice d’aucune sorte — animal ou humain — sur cette pierre ni ailleurs sur le site. Une infographie populaire circulant comme image de banque l’étiquette « Pierre du sacrifice » ; cette formule répète la méprise même du dix-neuvième siècle que cette note existe pour corriger.";

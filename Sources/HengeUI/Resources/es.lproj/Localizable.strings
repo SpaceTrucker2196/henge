@@ -69,6 +69,7 @@
 "info.credit.milkyway" = "La Vía Láctea";
 "info.credit.moon" = "La faz de la Luna";
 "info.credit.names" = "Los nombres de las estrellas";
+"info.credit.plan" = "Dónde está cada piedra";
 "info.credit.sky" = "El cielo diurno";
 "info.credit.survey" = "Las dimensiones del monumento y la arqueología";
 "info.credit.terrain" = "La llanura de Salisbury: el suelo sobre el que caen las sombras";
@@ -90,6 +91,8 @@
 "lore.monument.druids.title" = "Los druidas";
 "lore.monument.overlay.body" = "La superposición dibuja sobre el césped la geometría investigada del monumento. Los trazos cardinales, el eje solsticial y la Avenue son levantamiento establecido. Los lados largos lunares del rectángulo de las Piedras Estación son una lectura seria y discutida. Los marcadores dorados representan la máquina de eclipses de los Agujeros de Aubrey propuesta por Hoyle en 1966, colocados aquí en las posiciones realmente calculadas del sol, la luna y los nodos, porque el desplazamiento de fichas es la parte que nada excavado respalda: las fosas contenían restos humanos cremados. Dorado significa móvil, y móvil significa hipótesis.";
 "lore.monument.overlay.title" = "Las líneas trazadas y los marcadores dorados";
+"lore.monument.plan.body" = "Cada piedra conservada está donde la sitúa un plano medido: la digitalización de Tim Daw del levantamiento Rees de 1989–90, el plano posterior a la restauración que custodia Historic England. Su calificación acompaña a cada fila, así que la Piedra Talón, las Piedras Estación y la Piedra del Sacrificio —sus marcadores provisionales— se muestran como provisionales, no como medidas. Las piedras perdidas se alzan en posiciones calculadas entre sus vecinas medidas y se etiquetan como reconstrucciones. Las dimensiones aún no son por piedra; ese es un trabajo aparte, todavía abierto.";
+"lore.monument.plan.title" = "Dónde están las piedras";
 "lore.monument.sarsen.body" = "Las grandes piedras son sarsen, un silcreto que corona la creta. En 2020, el análisis de huellas geoquímicas vinculó cincuenta de las cincuenta y dos sarsen conservadas con West Woods, cerca de Marlborough, unos 25 km al norte: la primera vez que la fuente se determinó en lugar de conjeturarse.";
 "lore.monument.sarsen.title" = "Las sarsen";
 "lore.monument.slaughterStone.body" = "El sarsen caído en la entrada nororiental debe su nombre a la imaginación anticuaria, no a la evidencia: los primeros observadores interpretaron la mancha de hierro rojiza de su superficie como sangre antigua y lo nombraron en consecuencia. Nada de lo excavado aquí respalda sacrificio alguno —animal o humano— en esta piedra ni en ningún otro punto del yacimiento. Una infografía popular que circula como imagen de archivo la rotula «Piedra del sacrificio»; esa formulación repite la misma lectura errónea decimonónica que esta nota existe para corregir.";

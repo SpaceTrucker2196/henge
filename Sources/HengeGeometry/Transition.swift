@@ -94,10 +94,20 @@ public enum MonumentTransition {
         // The stone that defines the cue's depth and ordering is whichever
         // version exists in the *target* scene, falling back to the departing
         // one for stones that vanish outright.
+        //
+        // Whether a stone is a lintel is read from whichever version of it
+        // is seated: a circle lintel that has fallen lies on the ground in
+        // the ruin, and judged by that alone it would fall *after* the
+        // uprights it came off.
         let ordered = changed
-            .compactMap { toByID[$0] ?? fromByID[$0] }
-            .sorted { order($0, raising: to.state == .asItWas)
-                    < order($1, raising: to.state == .asItWas) }
+            .compactMap { id -> (stone: Stone, seated: Bool)? in
+                guard let stone = toByID[id] ?? fromByID[id] else { return nil }
+                let seated = max(toByID[id]?.position.y ?? 0, fromByID[id]?.position.y ?? 0) > 2
+                return (stone, seated)
+            }
+            .sorted { order($0.stone, raising: to.state == .asItWas, isLintel: $0.seated)
+                    < order($1.stone, raising: to.state == .asItWas, isLintel: $1.seated) }
+            .map(\.stone)
 
         // Spread the windows evenly through the middle of the animation so
         // stones arrive at a steady rhythm; the width of each window is what
@@ -131,10 +141,9 @@ public enum MonumentTransition {
     /// does. Ruin runs the same order backwards with the lintels first,
     /// which is how gravity actually took them: a lintel falls before its
     /// uprights lean.
-    static func order(_ stone: Stone, raising: Bool) -> (Int, Int, Double) {
+    static func order(_ stone: Stone, raising: Bool, isLintel: Bool) -> (Int, Int, Double) {
         let radius = (stone.position.x * stone.position.x
                       + stone.position.z * stone.position.z).squareRoot()
-        let isLintel = stone.position.y > 2
         let azimuth = WorldAxes.azimuth(
             of: SIMD3(stone.position.x, 0, stone.position.z)).degrees
 

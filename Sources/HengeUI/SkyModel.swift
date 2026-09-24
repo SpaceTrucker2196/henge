@@ -380,8 +380,8 @@ public final class SkyModel {
         case .altarStone:
             // The view the monument is about: from the Altar Stone, out
             // through the Great Trilithon and down the Avenue to the north-east.
-            let apex = WorldAxes.direction(azimuth: (axis + HengeAstro.Angle(degrees: 180)).normalized)
-            return standing(at: apex * 5.4, looking: axis)
+            let altar = MonumentScene.altarStone().position
+            return standing(at: SIMD3(altar.x, 0, altar.z), looking: axis)
 
         case .heelStone:
             // Beyond the Heel Stone, looking back down the axis at the

@@ -69,6 +69,7 @@
 "info.credit.milkyway" = "A Via Láctea";
 "info.credit.moon" = "A face da Lua";
 "info.credit.names" = "Os nomes das estrelas";
+"info.credit.plan" = "Onde cada pedra está";
 "info.credit.sky" = "O céu diurno";
 "info.credit.survey" = "As dimensões do monumento e a arqueologia";
 "info.credit.terrain" = "A planície de Salisbury — o chão sobre o qual as sombras caem";
@@ -90,6 +91,8 @@
 "lore.monument.druids.title" = "Os druidas";
 "lore.monument.overlay.body" = "A sobreposição desenha na grama a geometria pesquisada do monumento. Os traços cardeais, o eixo solsticial e a Avenue são levantamento estabelecido. Os lados longos lunares do retângulo das Pedras Estação são uma leitura séria e contestada. Os marcadores dourados encenam a máquina de eclipses dos Buracos de Aubrey proposta por Hoyle em 1966 — colocados aqui nas posições realmente calculadas do sol, da lua e dos nodos, porque o deslocamento das peças é a parte que nada escavado sustenta: as covas continham restos humanos cremados. Dourado significa móvel, e móvel significa hipótese.";
 "lore.monument.overlay.title" = "As linhas traçadas e os marcadores dourados";
+"lore.monument.plan.body" = "Cada pedra sobrevivente está onde um plano medido a coloca: a digitalização de Tim Daw do levantamento Rees de 1989–90, o plano pós-restauração guardado pela Historic England. A classificação dele acompanha cada linha, por isso a Pedra do Calcanhar, as Pedras Estação e a Pedra do Sacrifício — seus marcadores provisórios — aparecem como provisórias, não como medidas. As pedras perdidas são erguidas em posições calculadas entre as vizinhas medidas e rotuladas como reconstruções. As dimensões ainda não são por pedra; esse é um trabalho separado, em aberto.";
+"lore.monument.plan.title" = "Onde as pedras estão";
 "lore.monument.sarsen.body" = "As grandes pedras são sarsen, um silcrete que recobre o giz. Em 2020, a análise de impressões geoquímicas associou cinquenta das cinquenta e duas sarsens remanescentes a West Woods, perto de Marlborough — cerca de 25 km ao norte, e a primeira vez que a origem foi determinada em vez de suposta.";
 "lore.monument.sarsen.title" = "As sarsens";
 "lore.monument.slaughterStone.body" = "O sarsen tombado na entrada nordeste deve seu nome à imaginação anticária, não a evidências: os primeiros observadores leram a mancha ferruginosa avermelhada de sua superfície como sangue antigo e o nomearam de acordo. Nada escavado aqui sustenta sacrifício de qualquer tipo — animal ou humano — nesta pedra ou em qualquer outro ponto do sítio. Um infográfico popular que circula como imagem de banco a rotula «Pedra do sacrifício»; essa formulação repete a mesma leitura equivocada oitocentista que esta nota existe para corrigir.";

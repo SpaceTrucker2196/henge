@@ -224,6 +224,25 @@ public enum Lore {
                         Citation("Thom, Thom & Thom, 'Stonehenge as a possible lunar observatory'", "JHA 6, 1975")]),
 
         LoreNote(
+            id: "monument.plan",
+            title: "Where the stones stand",
+            body: """
+                Every stone that survives stands where a measured plan puts \
+                it: Tim Daw's digitisation of the Rees survey of 1989–90, the \
+                post-restoration plan held by Historic England. His grade \
+                travels with each row, so the Heel Stone, the Station Stones \
+                and the Slaughter Stone — his placeholders — ship as \
+                provisional, not surveyed. The stones that are lost are raised \
+                at computed slots between their surveyed neighbours and \
+                labelled as reconstructions. Sizes are not yet per stone; \
+                that is separate, open work.
+                """,
+            tier: .established,
+            citations: [Citation("Tim Daw, stonehenge-block-3d, locked_poses (CC BY-SA 4.0)", "2026"),
+                        Citation("M J Rees & Co survey of Stonehenge, 1989/90", "Historic England Archive MP/STO0861"),
+                        Citation("Field et al., 'Analytical surveys of Stonehenge and its environs, 2009–2013: part 2'", "PPS 81, 2015")]),
+
+        LoreNote(
             id: "monument.altarStone",
             title: "The Altar Stone",
             body: """

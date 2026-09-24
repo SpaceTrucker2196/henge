@@ -34,8 +34,14 @@ public enum Monument {
     /// in 2500 BC and less exactly today, because the obliquity has changed.
     public static let axisAzimuth = Angle(degrees: 49.9)
 
-    /// Sarsen circle: 30 uprights on a ring of this diameter.
-    public static let sarsenCircleDiameter = 33.0
+    /// Sarsen circle: 30 uprights, whose centres stand on a ring of about
+    /// this diameter. The customary 33 m is to the outer faces and Cleal's
+    /// 29.6 m to the inner; the ring the *centres* sit on is what a fallback
+    /// slot needs, and the best-fit circle through the surveyed uprights
+    /// (`StonePoseTable.sarsenRingRadius`) gives 30.9 m. This constant is
+    /// the fallback for a build with no plan resource; with the plan loaded
+    /// the fitted value is used.
+    public static let sarsenCircleDiameter = 30.9
     public static let sarsenUprightCount = 30
     public static let sarsenUprightHeight = 4.1
     public static let sarsenUprightWidth = 2.1
@@ -154,11 +160,16 @@ public struct Stone: Sendable, Hashable {
     /// Seed for the displacement noise that gives this stone its surface.
     public let seed: UInt64
     public let material: StoneMaterial
+    /// Where the position and the size came from. Defaults to a
+    /// reconstruction, so a stone built by hand in a test is honest by
+    /// default and only the generators that read the plan say otherwise.
+    public let provenance: StoneProvenance
 
     public init(id: String, position: SIMD3<Double>, height: Double, width: Double,
                 thickness: Double, bearing: Angle = .zero, lean: Angle = .zero,
                 material: StoneMaterial = .sarsen,
-                seed: UInt64? = nil) {
+                seed: UInt64? = nil,
+                provenance: StoneProvenance = .reconstruction) {
         self.id = id
         self.position = position
         self.height = height
@@ -168,6 +179,7 @@ public struct Stone: Sendable, Hashable {
         self.lean = lean
         self.material = material
         self.seed = seed ?? Stone.deterministicSeed(for: id)
+        self.provenance = provenance
     }
 
     /// Stable across runs and machines — `hashValue` is not.

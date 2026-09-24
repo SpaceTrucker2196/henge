@@ -69,6 +69,7 @@
 "info.credit.milkyway" = "The Milky Way";
 "info.credit.moon" = "The Moon's face";
 "info.credit.names" = "The stars' names";
+"info.credit.plan" = "Where each stone stands";
 "info.credit.sky" = "The daylight sky";
 "info.credit.survey" = "The monument's dimensions and the archaeology";
 "info.credit.terrain" = "Salisbury Plain — the ground the shadows fall on";
@@ -90,6 +91,8 @@
 "lore.monument.druids.title" = "The druids";
 "lore.monument.overlay.body" = "The overlay draws the monument's researched geometry on the turf. The cardinal strokes, the solstice axis and the Avenue are established survey. The Station-Stone rectangle's lunar long sides are a serious, contested reading. The gold markers act out the Aubrey-hole eclipse machine proposed by Hoyle in 1966 — placed here at the real computed positions of sun, moon and nodes, because the shuffling of counters is the part nothing excavated supports: the holes held cremated human remains. Gold means moving, and moving means hypothesis.";
 "lore.monument.overlay.title" = "The drawn lines and the gold markers";
+"lore.monument.plan.body" = "Every stone that survives stands where a measured plan puts it: Tim Daw's digitisation of the Rees survey of 1989–90, the post-restoration plan held by Historic England. His grade travels with each row, so the Heel Stone, the Station Stones and the Slaughter Stone — his placeholders — ship as provisional, not surveyed. The stones that are lost are raised at computed slots between their surveyed neighbours and labelled as reconstructions. Sizes are not yet per stone; that is separate, open work.";
+"lore.monument.plan.title" = "Where the stones stand";
 "lore.monument.sarsen.body" = "The great stones are sarsen, a silcrete that caps the chalk. Geochemical fingerprinting in 2020 matched fifty of the fifty-two surviving sarsens to West Woods, near Marlborough — about 25 km north, and the first time the source was pinned rather than guessed.";
 "lore.monument.sarsen.title" = "The sarsens";
 "lore.monument.slaughterStone.body" = "The fallen sarsen at the north-east entrance owes its name to antiquarian imagination, not evidence: early observers read the rust-red iron staining on its surface as old blood and named it accordingly. Nothing excavated here supports sacrifice of any kind — animal or human — at this stone or anywhere else on site. A popular infographic circulating as stock imagery labels it the \"Stone of the sacrifice\"; that phrasing repeats the same nineteenth-century misreading this note exists to correct.";
