@@ -94,3 +94,4 @@ the whole ledger: `ledger.py --energy-total`.
 | dd8c8f1 | 2026-09-24T03:11:35Z | claude-fable-5-1 | 4312 | 224879 | 67094744 | 2086373 | 69.7882 | Cleal and Petrie height tables transcribed and wired in (#3) |
 | 7f0a328 | 2026-09-24T03:23:22Z | claude-fable-5-1 | 432 | 27855 | 11584990 | 40591 | 5.1051 | Stone 22 at Petrie's pre-fall height (#3) |
 | 9ab8d8d | 2026-09-24T18:29:00Z | claude-fable-5-1 | 848 | 20673 | 2953105 | 151497 | 4.8103 | Ask for an App Store rating on the third launch |
+| f18750a | 2026-09-24T18:32:52Z | claude-fable-5-1 | 324 | 4616 | 1066646 | 9538 | 0.6915 | Bump the version to 1.0 for the major release |
