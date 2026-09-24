@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
 import PackageDescription
 
 // The shared engine. Both app targets in project.yml link these products as a
@@ -15,8 +15,8 @@ let package = Package(
     // Store.
     defaultLocalization: "en",
     platforms: [
-        .iOS(.v17),
-        .macOS(.v14)
+        .iOS(.v26),
+        .macOS(.v26)
     ],
     products: [
         .library(name: "HengeAstro", targets: ["HengeAstro"]),

@@ -94,7 +94,7 @@ if [[ "${1:-}" == "--release" ]]; then
     if ! gh release view "$TAG" >/dev/null 2>&1; then
         gh release create "$TAG" --prerelease \
             --title "Henge $VERSION (early build)" \
-            --notes "Early macOS build. Universal (Apple silicon + Intel), macOS 14 or later. Not yet notarized: right-click the app and choose Open on first launch."
+            --notes "Early macOS build. Universal (Apple silicon + Intel), macOS 26 or later. Not yet notarized: right-click the app and choose Open on first launch."
     fi
     gh release upload "$TAG" "$DMG" "$DIST/Henge.dmg" --clobber
 

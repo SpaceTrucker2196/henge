@@ -39,7 +39,7 @@ Four modules over two thin app targets, and the layering is load-bearing:
   RealityKit, no game engine.
 - **`HengeUI`** — SwiftUI chrome and the one place SwiftUI and Metal meet.
 
-iOS 17+, macOS 14+, Swift 6 language mode, **no third-party dependencies** — a
+iOS 26+, macOS 26+, Swift 6 language mode, **no third-party dependencies** — a
 cold clone builds offline.
 
 ## The claim, and how it is kept

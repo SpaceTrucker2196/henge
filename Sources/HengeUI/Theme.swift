@@ -144,9 +144,10 @@ public extension View {
 
     /// A glass panel.
     ///
-    /// Liquid Glass where the OS has it, `.ultraThinMaterial` everywhere else.
-    /// The fallback is not a consolation prize — the material already takes its
-    /// colour from the sky behind it, which is the property that matters here.
+    /// Liquid Glass. The deployment target is OS 26 (GitHub issue #9), so
+    /// the `.ultraThinMaterial` fallback the panels wore below it is gone;
+    /// `hengeCard` still uses that material, by choice rather than by
+    /// version.
     @ViewBuilder
     func hengePanel(cornerRadius: CGFloat = Henge.Radius.panel) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -158,16 +159,9 @@ public extension View {
         // The claim is lowest-priority by construction — every child
         // control, scroll and scrub wins over it — so it swallows only what
         // nothing else wanted.
-        if #available(iOS 26.0, macOS 26.0, *) {
-            self.glassEffect(.regular, in: shape)
-                .contentShape(shape)
-                .gesture(DragGesture(minimumDistance: 0).onChanged { _ in })
-        } else {
-            self.background(.ultraThinMaterial, in: shape)
-                .overlay(shape.strokeBorder(Henge.stone.opacity(0.18), lineWidth: 1))
-                .contentShape(shape)
-                .gesture(DragGesture(minimumDistance: 0).onChanged { _ in })
-        }
+        self.glassEffect(.regular, in: shape)
+            .contentShape(shape)
+            .gesture(DragGesture(minimumDistance: 0).onChanged { _ in })
     }
 
     /// The dress for a panel that floats alone over the scene: the same
@@ -180,8 +174,8 @@ public extension View {
     /// its text rotated 180° from every other panel, and moving it *into*
     /// a container displaced it off screen instead. A card that lives for
     /// a second while the meshes rebuild needs legibility, not lensing;
-    /// `.ultraThinMaterial` is the dress the panels already wear below
-    /// OS 26, and it obeys the window transform in every orientation.
+    /// `.ultraThinMaterial` is the dress the panels wore before OS 26 was
+    /// the floor, and it obeys the window transform in every orientation.
     /// `BuildFlowUITests` reads the card off the pixels to hold this.
     @ViewBuilder
     func hengeCard(cornerRadius: CGFloat = Henge.Radius.panel) -> some View {
@@ -201,16 +195,9 @@ public extension View {
     @ViewBuilder
     func hengeControl(isSelected: Bool = false) -> some View {
         let shape = Capsule(style: .continuous)
-        if #available(iOS 26.0, macOS 26.0, *) {
-            self.glassEffect(isSelected ? .regular.tint(Henge.bronze.opacity(0.45))
-                                        : .regular,
-                             in: shape)
-        } else {
-            self.background(isSelected ? AnyShapeStyle(Henge.bronze.opacity(0.35))
-                                       : AnyShapeStyle(.ultraThinMaterial),
-                            in: shape)
-                .overlay(shape.strokeBorder(Henge.stone.opacity(0.14), lineWidth: 1))
-        }
+        self.glassEffect(isSelected ? .regular.tint(Henge.bronze.opacity(0.45))
+                                    : .regular,
+                         in: shape)
     }
 }
 
@@ -222,9 +209,6 @@ public extension View {
 /// plates of frosted plastic rather than one piece of glass, and costs more to
 /// draw besides. Everything else about the panels was already right; this is
 /// what makes them look like the material they are asking for.
-///
-/// Below the OS versions that have it, this is a plain passthrough and the
-/// `.ultraThinMaterial` fallback in `hengePanel` does the work.
 public struct HengeGlass<Content: View>: View {
 
     private let spacing: CGFloat
@@ -236,11 +220,7 @@ public struct HengeGlass<Content: View>: View {
     }
 
     public var body: some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            GlassEffectContainer(spacing: spacing) { content }
-        } else {
-            content
-        }
+        GlassEffectContainer(spacing: spacing) { content }
     }
 }
 
