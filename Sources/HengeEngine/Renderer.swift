@@ -448,7 +448,12 @@ public enum RendererError: Error, CustomStringConvertible {
 @MainActor
 public final class HengeRenderer: NSObject, MTKViewDelegate {
 
+    /// The drawable's format — what the post pass writes and the tests read.
     public static let colourFormat: MTLPixelFormat = .bgra8Unorm
+    /// The frame's working format: linear, scene-referred, 16-bit float.
+    /// Every pass renders into this and `post_fragment` turns it into the
+    /// drawable's picture once.
+    public static let hdrFormat: MTLPixelFormat = .rgba16Float
     public static let depthFormat: MTLPixelFormat = .depth32Float
     public static let cascadeCount = 3
     public static let framesInFlight = 3
@@ -472,6 +477,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     private var grassOpaqueCount = 0
     private let shadowPipeline: MTLRenderPipelineState
     private let skyPipeline: MTLRenderPipelineState
+    private let postPipeline: MTLRenderPipelineState
     private let hazePipeline: MTLRenderPipelineState
     private let starPipeline: MTLRenderPipelineState
     /// The Hipparcos naked-eye sky. Nil degrades to a starless night — the
@@ -560,6 +566,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     private var upscaler: SpatialUpscaler?
     private var scaledColour: MTLTexture?
     private var scaledDepth: MTLTexture?
+    /// The linear HDR frame at the drawable's size: what the scene pass
+    /// renders into at native scale, or what the upscaler lifts the scaled
+    /// frame into, and what the post pass reads.
+    private var nativeHDR: MTLTexture?
     private lazy var upscalingAvailable: Bool = {
         #if canImport(MetalFX)
         return MTLFXSpatialScalerDescriptor.supportsDevice(device)
@@ -650,7 +660,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
         self.scenePipeline = try pipeline("scene", vertex: "scene_vertex",
                                           fragment: "scene_fragment",
-                                          colour: Self.colourFormat,
+                                          colour: Self.hdrFormat,
                                           depth: Self.depthFormat,
                                           useVertexDescriptor: true)
         // Two grass pipelines from one pair of shaders. The inner field is
@@ -665,7 +675,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         grassDescriptor.label = "grass opaque"
         grassDescriptor.vertexFunction = library.makeFunction(name: "grass_vertex")
         grassDescriptor.fragmentFunction = library.makeFunction(name: "grass_fragment")
-        grassDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        grassDescriptor.colorAttachments[0].pixelFormat = Self.hdrFormat
         grassDescriptor.depthAttachmentPixelFormat = Self.depthFormat
         do {
             self.grassOpaquePipeline = try device.makeRenderPipelineState(descriptor: grassDescriptor)
@@ -676,6 +686,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         grassDescriptor.colorAttachments[0].isBlendingEnabled = true
         grassDescriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
         grassDescriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+        // Alpha is the post pass's pass-through flag, not coverage: the
+        // fading ring must leave the frame's alpha alone.
+        grassDescriptor.colorAttachments[0].sourceAlphaBlendFactor = .zero
+        grassDescriptor.colorAttachments[0].destinationAlphaBlendFactor = .one
         do {
             self.grassPipeline = try device.makeRenderPipelineState(descriptor: grassDescriptor)
         } catch {
@@ -688,9 +702,16 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                            useVertexDescriptor: true)
         self.skyPipeline = try pipeline("sky", vertex: "sky_vertex",
                                         fragment: "sky_fragment",
-                                        colour: Self.colourFormat,
+                                        colour: Self.hdrFormat,
                                         depth: Self.depthFormat,
                                         useVertexDescriptor: false)
+        // The post pass: the HDR frame, exposed and tone-mapped once, onto
+        // the drawable. No depth, no blending — one fullscreen triangle.
+        self.postPipeline = try pipeline("post", vertex: "sky_vertex",
+                                         fragment: "post_fragment",
+                                         colour: Self.colourFormat,
+                                         depth: .invalid,
+                                         useVertexDescriptor: false)
 
         // The light-shaft pass draws over the finished frame with no depth
         // attachment of its own — it *samples* the scene's depth instead. The
@@ -700,7 +721,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         hazeDescriptor.label = "light shafts"
         hazeDescriptor.vertexFunction = library.makeFunction(name: "sky_vertex")
         hazeDescriptor.fragmentFunction = library.makeFunction(name: "haze_fragment")
-        hazeDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        hazeDescriptor.colorAttachments[0].pixelFormat = Self.hdrFormat
         hazeDescriptor.colorAttachments[0].isBlendingEnabled = true
         hazeDescriptor.colorAttachments[0].sourceRGBBlendFactor = .one
         hazeDescriptor.colorAttachments[0].destinationRGBBlendFactor = .sourceAlpha
@@ -718,7 +739,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         starDescriptor.label = "stars"
         starDescriptor.vertexFunction = library.makeFunction(name: "star_vertex")
         starDescriptor.fragmentFunction = library.makeFunction(name: "star_fragment")
-        starDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        starDescriptor.colorAttachments[0].pixelFormat = Self.hdrFormat
         starDescriptor.colorAttachments[0].isBlendingEnabled = true
         starDescriptor.colorAttachments[0].sourceRGBBlendFactor = .one
         starDescriptor.colorAttachments[0].destinationRGBBlendFactor = .one
@@ -737,7 +758,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             library.makeFunction(name: "constellation_vertex")
         constellationDescriptor.fragmentFunction =
             library.makeFunction(name: "constellation_fragment")
-        constellationDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        constellationDescriptor.colorAttachments[0].pixelFormat = Self.hdrFormat
         constellationDescriptor.colorAttachments[0].isBlendingEnabled = true
         constellationDescriptor.colorAttachments[0].sourceRGBBlendFactor = .one
         constellationDescriptor.colorAttachments[0].destinationRGBBlendFactor = .one
@@ -1988,6 +2009,46 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         drawablePixelSize = (Int(size.width), Int(size.height))
     }
 
+    /// The linear HDR frame at the drawable's size, remade when the size
+    /// changes. Nil only when the device cannot allocate it, in which case
+    /// the frame is skipped rather than drawn wrong.
+    private func prepareNativeHDR(width: Int, height: Int,
+                                  scalerOutputUsage: MTLTextureUsage) -> MTLTexture? {
+        let usage = MTLTextureUsage([.renderTarget, .shaderRead]).union(scalerOutputUsage)
+        if let existing = nativeHDR, existing.width == width, existing.height == height,
+           existing.usage.isSuperset(of: usage) {
+            return existing
+        }
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: Self.hdrFormat, width: width, height: height, mipmapped: false)
+        descriptor.usage = usage
+        descriptor.storageMode = .private
+        let texture = device.makeTexture(descriptor: descriptor)
+        texture?.label = "native HDR frame"
+        nativeHDR = texture
+        return texture
+    }
+
+    /// The post pass: the HDR frame exposed, tone-mapped and written to
+    /// `target` — the drawable in the app, the readable texture in the
+    /// oracle. One fullscreen triangle, no depth.
+    private func encodePostPass(_ commandBuffer: MTLCommandBuffer,
+                                from hdr: MTLTexture, to target: MTLTexture,
+                                uniformBuffer: MTLBuffer) {
+        let descriptor = MTLRenderPassDescriptor()
+        descriptor.colorAttachments[0].texture = target
+        descriptor.colorAttachments[0].loadAction = .dontCare
+        descriptor.colorAttachments[0].storeAction = .store
+        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
+        else { return }
+        encoder.label = "post"
+        encoder.setRenderPipelineState(postPipeline)
+        encoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 0)
+        encoder.setFragmentTexture(hdr, index: 0)
+        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        encoder.endEncoding()
+    }
+
     /// The scaled targets and the upscaler for this drawable size, made
     /// once and kept until the size changes. Nil when the device lacks
     /// MetalFX or the drawable cannot take the scaler's output.
@@ -1998,8 +2059,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         let inW = max(1, Int((Float(drawable.width) * scale).rounded()))
         let inH = max(1, Int((Float(drawable.height) * scale).rounded()))
         if let existing = upscaler, existing.inputWidth == inW, existing.inputHeight == inH,
-           existing.outputWidth == drawable.width, existing.outputHeight == drawable.height,
-           drawable.usage.isSuperset(of: existing.outputTextureUsage) {
+           existing.outputWidth == drawable.width, existing.outputHeight == drawable.height {
             return existing
         }
         let descriptor = MTLFXSpatialScalerDescriptor()
@@ -2007,17 +2067,17 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         descriptor.inputHeight = inH
         descriptor.outputWidth = drawable.width
         descriptor.outputHeight = drawable.height
-        descriptor.colorTextureFormat = Self.colourFormat
-        descriptor.outputTextureFormat = drawable.pixelFormat
-        // The scene pass writes tonemapped, display-referred colour.
-        descriptor.colorProcessingMode = .perceptual
-        guard let scaler = descriptor.makeSpatialScaler(device: device),
-              drawable.usage.isSuperset(of: scaler.outputTextureUsage) else {
+        descriptor.colorTextureFormat = Self.hdrFormat
+        descriptor.outputTextureFormat = Self.hdrFormat
+        // The scene pass writes linear, scene-referred radiance that can run
+        // well past 1; the tone curve comes after the lift, in the post pass.
+        descriptor.colorProcessingMode = .hdr
+        guard let scaler = descriptor.makeSpatialScaler(device: device) else {
             upscaler = nil
             return nil
         }
         let colourDescriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: Self.colourFormat, width: inW, height: inH, mipmapped: false)
+            pixelFormat: Self.hdrFormat, width: inW, height: inH, mipmapped: false)
         colourDescriptor.usage = MTLTextureUsage([.renderTarget, .shaderRead]).union(scaler.colorTextureUsage)
         colourDescriptor.storageMode = .private
         let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(
@@ -2063,6 +2123,17 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             ? prepareUpscaling(scale: budget.renderScale, drawable: drawable.texture)
             : nil
         renderScaleInUse = scaler == nil ? 1 : budget.renderScale
+        #if canImport(MetalFX)
+        let scalerOutputUsage = scaler?.outputTextureUsage ?? []
+        #else
+        let scalerOutputUsage: MTLTextureUsage = []
+        #endif
+        guard let nativeHDR = prepareNativeHDR(width: drawable.texture.width,
+                                               height: drawable.texture.height,
+                                               scalerOutputUsage: scalerOutputUsage) else {
+            semaphore.signal()
+            return
+        }
 
         var uniforms = buildFrameUniforms(aspect: aspectRatio)
         uniformBuffer.contents().copyMemory(from: &uniforms,
@@ -2076,27 +2147,28 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         // due the scene's depth is kept rather than discarded. The view's
         // depth texture must have been made sampleable by the bridge; when a
         // host has not done that, the beams are skipped rather than crashed.
+        // The scene renders into the renderer's own HDR target — the scaled
+        // one when MetalFX will lift it, the native one otherwise — never
+        // into the drawable; only the post pass touches that. Depth is the
+        // scaled target's own, or the view's at native.
         let colourTarget: MTLTexture
         let depthTexture: MTLTexture?
-        let scenePass: MTLRenderPassDescriptor
-        if let scaler, let colour = scaledColour, let depth = scaledDepth {
-            scenePass = MTLRenderPassDescriptor()
-            scenePass.colorAttachments[0].texture = colour
-            scenePass.colorAttachments[0].loadAction = .clear
-            scenePass.colorAttachments[0].storeAction = .store
-            scenePass.colorAttachments[0].clearColor = descriptor.colorAttachments[0].clearColor
-            scenePass.depthAttachment.texture = depth
-            scenePass.depthAttachment.loadAction = .clear
-            scenePass.depthAttachment.clearDepth = 0    // reverse-Z
-            scenePass.depthAttachment.storeAction = .dontCare
+        let scenePass = MTLRenderPassDescriptor()
+        if scaler != nil, let colour = scaledColour, let depth = scaledDepth {
             colourTarget = colour
             depthTexture = depth
-            _ = scaler
         } else {
-            scenePass = descriptor
-            colourTarget = drawable.texture
+            colourTarget = nativeHDR
             depthTexture = descriptor.depthAttachment.texture
         }
+        scenePass.colorAttachments[0].texture = colourTarget
+        scenePass.colorAttachments[0].loadAction = .clear
+        scenePass.colorAttachments[0].storeAction = .store
+        scenePass.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+        scenePass.depthAttachment.texture = depthTexture
+        scenePass.depthAttachment.loadAction = .clear
+        scenePass.depthAttachment.clearDepth = 0    // reverse-Z
+        scenePass.depthAttachment.storeAction = .dontCare
         let wantsHaze = uniforms.haze.x > 0
             && depthTexture?.usage.contains(.shaderRead) == true
         if wantsHaze { scenePass.depthAttachment.storeAction = .store }
@@ -2112,14 +2184,17 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                            depth: depthTexture, uniformBuffer: uniformBuffer)
         }
 
-        // Lift the scaled frame to the drawable. Spatial only — no history,
-        // no motion vectors — so a frame is exactly what it was drawn as,
-        // just larger, and the oracle's offscreen path never comes here.
+        // Lift the scaled frame to native. Spatial only — no history, no
+        // motion vectors — so a frame is exactly what it was drawn as, just
+        // larger, and the oracle's offscreen path never comes here.
         if let scaler, let colour = scaledColour {
             scaler.colorTexture = colour
-            scaler.outputTexture = drawable.texture
+            scaler.outputTexture = nativeHDR
             scaler.encode(commandBuffer: commandBuffer)
         }
+
+        encodePostPass(commandBuffer, from: nativeHDR, to: drawable.texture,
+                       uniformBuffer: uniformBuffer)
 
         commandBuffer.present(drawable)
         commandBuffer.commit()
@@ -2167,10 +2242,37 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     public func renderOffscreen(width: Int, height: Int,
                                 keepDepth: Bool) throws -> (colour: MTLTexture,
                                                             depth: MTLTexture?) {
+        let frame = try renderFrameOffscreen(width: width, height: height,
+                                             keepDepth: keepDepth, keepLinear: false)
+        return (frame.colour, frame.depth)
+    }
+
+    /// The linear, scene-referred frame — radiance before exposure and the
+    /// tone curve, in `hdrFormat` — readable by the CPU.
+    ///
+    /// For claims about *light* rather than about the picture: how much a
+    /// pass added, whether one region out-glows another. The tone curve's
+    /// shoulder turns a large radiance into a fraction of a display level
+    /// against a bright sky, so a test measuring bytes there measures the
+    /// curve, not the pass.
+    public func renderOffscreenLinear(width: Int, height: Int) throws -> MTLTexture {
+        try renderFrameOffscreen(width: width, height: height,
+                                 keepDepth: false, keepLinear: true).linear
+    }
+
+    private func renderFrameOffscreen(width: Int, height: Int,
+                                      keepDepth: Bool, keepLinear: Bool) throws
+        -> (colour: MTLTexture, linear: MTLTexture, depth: MTLTexture?) {
         let colourDescriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: Self.colourFormat, width: width, height: height, mipmapped: false)
         colourDescriptor.usage = [.renderTarget, .shaderRead]
         colourDescriptor.storageMode = .shared
+        // The linear frame the passes render into; the post pass turns it
+        // into the readable picture, exactly as the app's path does.
+        let hdrDescriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: Self.hdrFormat, width: width, height: height, mipmapped: false)
+        hdrDescriptor.usage = [.renderTarget, .shaderRead]
+        hdrDescriptor.storageMode = keepLinear ? .shared : .private
 
         let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: Self.depthFormat, width: width, height: height, mipmapped: false)
@@ -2181,6 +2283,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         depthDescriptor.storageMode = keepDepth ? .shared : .private
 
         guard let colour = device.makeTexture(descriptor: colourDescriptor),
+              let hdr = device.makeTexture(descriptor: hdrDescriptor),
               let depth = device.makeTexture(descriptor: depthDescriptor),
               let commandBuffer = commandQueue.makeCommandBuffer() else {
             throw RendererError.resourceCreationFailed("offscreen targets")
@@ -2205,7 +2308,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         encodeShadowPass(commandBuffer, uniforms: uniforms)
 
         let descriptor = MTLRenderPassDescriptor()
-        descriptor.colorAttachments[0].texture = colour
+        descriptor.colorAttachments[0].texture = hdr
         descriptor.colorAttachments[0].loadAction = .clear
         descriptor.colorAttachments[0].storeAction = .store
         descriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
@@ -2223,13 +2326,15 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         }
 
         if wantsHaze {
-            encodeHazePass(commandBuffer, colour: colour, depth: depth,
+            encodeHazePass(commandBuffer, colour: hdr, depth: depth,
                            uniformBuffer: uniformBuffer)
         }
 
+        encodePostPass(commandBuffer, from: hdr, to: colour, uniformBuffer: uniformBuffer)
+
         commandBuffer.commit()
         commandBuffer.waitUntilCompleted()
-        return (colour, keepDepth ? depth : nil)
+        return (colour, hdr, keepDepth ? depth : nil)
     }
 
     /// Recover view-space distance from a reverse-Z depth sample.

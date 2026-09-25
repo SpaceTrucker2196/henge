@@ -1033,8 +1033,10 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // Overlay geometry: a diagram drawn in the world, not a thing in the
     // light. Flat colour, no sun, no fog — legible at midnight, which is
     // when the moon lines matter most.
+    // Alpha zero is the flag `post_fragment` reads to pass the colour
+    // through untouched — display-referred, no exposure, no tone curve.
     if (draw.reflectance.w > 0.5) {
-        return float4(draw.albedo.rgb, 1.0);
+        return float4(draw.albedo.rgb, 0.0);
     }
 
     float3 geometricNormal = normalize(in.worldNormal);
@@ -1278,8 +1280,9 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     float3 fogColour = weatherGreyed(
         preethamSky(fogDirection, l, frame.skyParameters.x), cover);
 
+    // Linear, scene-referred. Exposure and the tone curve are applied once,
+    // in `post_fragment`, after every pass has composited in linear light.
     float3 colour = mix(direct + ambient, fogColour, clamp(fogAmount, 0.0, 0.85));
-    colour = acesToneMap(colour * frame.skyParameters.y);
     return float4(colour, 1.0);
 }
 
@@ -1506,8 +1509,7 @@ fragment float4 sky_fragment(SkyInOut in [[stage_in]],
              * (1.0 - cloudAmount(m, frame) * 0.92);
     }
 
-    sky = acesToneMap(sky * frame.skyParameters.y);
-    return float4(sky, 1.0);
+    return float4(sky, 1.0);          // linear; tone-mapped in post_fragment
 }
 
 // ── light shafts ────────────────────────────────────────────────────────────
@@ -1605,9 +1607,10 @@ fragment float4 haze_fragment(SkyInOut in [[stage_in]],
         transmittance *= exp(-extinction);
     }
 
-    // Tonemapped to match the frame it lands on. Approximate — the scene was
-    // tonemapped without knowing this glow was coming — but the error is a
-    // slight softness in the brightest beam, which is the right way round.
+    // Linear radiance, blended onto the linear frame; the one tone curve in
+    // `post_fragment` sees the sum. (It used to be tone-mapped here and
+    // added to an already tone-mapped frame, which softened the brightest
+    // beam — the right way round, but wrong.)
     //
     // Surfaces sit behind the marched haze, so they wear its transmittance as
     // a veil. The sky does not: it is not ninety metres away, it *is* the
@@ -1615,8 +1618,31 @@ fragment float4 haze_fragment(SkyInOut in [[stage_in]],
     // it here double-counts what the sky model already integrated, and the
     // first calibration run showed exactly that as a sunset dimmed by its own
     // golden hour. The background keeps its light; the beams are pure gain.
-    inscatter = acesToneMap(inscatter * frame.skyParameters.y);
     return float4(inscatter, hitsSurface ? transmittance : 1.0);
+}
+
+// ── the post pass ───────────────────────────────────────────────────────────
+//
+// The one place the frame stops being radiance and becomes a picture. Every
+// pass before this writes linear, scene-referred colour into a 16-bit float
+// target, and composites — the haze's inscatter, the stars' additive light,
+// the blades' fade — happen in that linear light, which is the only space
+// where adding two lights gives the light of both. Then, once: exposure,
+// the ACES curve, and out to the drawable.
+//
+// Alpha carries one bit. A scene-referred pixel has alpha 1; the geometry
+// overlay writes alpha 0 and its colour is a display value already — gold
+// lines legible at midnight, when the moon lines matter most — so it is
+// passed through untouched.
+fragment float4 post_fragment(SkyInOut in [[stage_in]],
+                              constant FrameUniforms &frame [[buffer(0)]],
+                              texture2d<float> scene [[texture(0)]])
+{
+    float4 hdr = scene.read(uint2(in.clipPosition.xy));
+    if (hdr.a < 0.5) {
+        return float4(hdr.rgb, 1.0);
+    }
+    return float4(acesToneMap(hdr.rgb * frame.skyParameters.y), 1.0);
 }
 
 // ── the stars ───────────────────────────────────────────────────────────────
@@ -1737,9 +1763,9 @@ fragment float4 star_fragment(StarInOut in [[stage_in]],
     float radius = length(pointCoord - 0.5) * 2.0;
     float falloff = clamp(1.0 - radius * radius, 0.0, 1.0);
     float3 colour = in.colour * in.intensity * falloff * falloff;
-    // Tonemapped like every other pass, then blended additively onto the
-    // finished sky — starlight only ever adds.
-    return float4(acesToneMap(colour * frame.skyParameters.y), 1.0);
+    // Linear radiance, added onto the linear sky — starlight only ever
+    // adds — and tone-mapped with it in `post_fragment`.
+    return float4(colour, 1.0);
 }
 
 // ── constellation figures ───────────────────────────────────────────────────
@@ -1785,7 +1811,7 @@ fragment float4 constellation_fragment(ConstellationInOut in [[stage_in]],
     // Starlight's own pale blue, far dimmer than any star, added onto the
     // sky like the rest of the night's light.
     float3 colour = float3(0.62, 0.68, 0.80) * in.intensity;
-    return float4(acesToneMap(colour * frame.skyParameters.y), 1.0);
+    return float4(colour, 1.0);       // linear; tone-mapped in post_fragment
 }
 
 // ── individual blades ───────────────────────────────────────────────────────
@@ -1984,6 +2010,5 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
     float3 fogColour = weatherGreyed(frame.skyHorizon.rgb, frame.weatherState.x);
 
     float3 colour = mix(direct + ambient, fogColour, clamp(fogAmount, 0.0, 0.85));
-    colour = acesToneMap(colour * frame.skyParameters.y);
-    return float4(colour, in.fade);
+    return float4(colour, in.fade);   // linear; tone-mapped in post_fragment
 }

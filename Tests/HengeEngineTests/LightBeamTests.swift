@@ -22,7 +22,14 @@ final class LightBeamTests: XCTestCase {
         return device
     }
 
-    /// Render toward a western sun and return per-pixel luminance, 0–255.
+    /// Render toward a western sun and return per-pixel *linear* luminance —
+    /// radiance in the scene's units, before exposure and the tone curve.
+    ///
+    /// In bytes the beams cannot be measured where these tests look: the
+    /// sky beside a setting sun sits on the tone curve's shoulder at 223 of
+    /// 255, and there the pass's whole contribution is under one level.
+    /// That is the curve doing its job, not the beams failing; the claims
+    /// here are about light added, so they are made in linear light.
     private func frame(sunAltitude: Double, lightShafts: Bool,
                        stones: [Stone], camera: Camera) throws -> [Double] {
         let device = try makeDevice()
@@ -35,20 +42,34 @@ final class LightBeamTests: XCTestCase {
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 1024)
         try renderer.load(scene: MonumentScene(stones: stones))
 
-        let texture = try renderer.renderOffscreen(width: Self.size, height: Self.size)
-        var pixels = [UInt8](repeating: 0, count: Self.size * Self.size * 4)
-        pixels.withUnsafeMutableBytes { raw in
-            texture.getBytes(raw.baseAddress!, bytesPerRow: Self.size * 4,
+        let texture = try renderer.renderOffscreenLinear(width: Self.size, height: Self.size)
+        // rgba16Float: four half floats per pixel.
+        var halves = [UInt16](repeating: 0, count: Self.size * Self.size * 4)
+        halves.withUnsafeMutableBytes { raw in
+            texture.getBytes(raw.baseAddress!, bytesPerRow: Self.size * 8,
                              from: MTLRegionMake2D(0, 0, Self.size, Self.size),
                              mipmapLevel: 0)
         }
         var luminances = [Double](repeating: 0, count: Self.size * Self.size)
         for i in 0..<(Self.size * Self.size) {
-            let b = Double(pixels[i * 4]), g = Double(pixels[i * 4 + 1])
-            let r = Double(pixels[i * 4 + 2])
+            let r = Self.half(halves[i * 4]), g = Self.half(halves[i * 4 + 1])
+            let b = Self.half(halves[i * 4 + 2])
             luminances[i] = 0.2126 * r + 0.7152 * g + 0.0722 * b
         }
         return luminances
+    }
+
+    /// IEEE 754 binary16 to Double, spelled out so the test does not depend
+    /// on `Float16` being available on the host.
+    static func half(_ bits: UInt16) -> Double {
+        let sign = (bits & 0x8000) != 0 ? -1.0 : 1.0
+        let exponent = Int((bits >> 10) & 0x1F)
+        let fraction = Double(bits & 0x3FF)
+        switch exponent {
+        case 0: return sign * fraction * pow(2.0, -24)          // subnormal
+        case 31: return fraction == 0 ? sign * .infinity : .nan
+        default: return sign * (1 + fraction / 1024) * pow(2.0, Double(exponent - 15))
+        }
     }
 
     private func mean(_ luminance: [Double], rows: Range<Int>, columns: Range<Int>) -> Double {
@@ -77,8 +98,16 @@ final class LightBeamTests: XCTestCase {
         let rows = (Self.size * 5 / 16)..<(Self.size * 7 / 16)
         let on = mean(sunsetOn, rows: rows, columns: 0..<Self.size)
         let off = mean(sunsetOff, rows: rows, columns: 0..<Self.size)
-        XCTAssertGreaterThan(on - off, 4,
-                             "sunset air gained only \(on - off) luminance levels "
+        // One per cent of the sky's own radiance. The arithmetic says more:
+        // the march integrates sun × phase × (1 − e^−τ) with τ ≈ 0.4 × the
+        // height fall-off, so about 0.27 of the sun's radiance, and toward
+        // the sun the Henyey–Greenstein phase is ~1 — a sun of 0.12 against
+        // a sky of 1.0 predicts three per cent, and 1.8 % is measured across
+        // the whole band. (In bytes this used to read as "> 4 levels", which
+        // was the tone curve's toe amplifying a small addition tenfold; the
+        // curve now runs once, after the haze is composited in linear light.)
+        XCTAssertGreaterThan(on - off, off * 0.01,
+                             "sunset air gained only \(on - off) of its \(off) radiance "
                              + "from the light shafts — the golden hour is not glowing")
 
         let morningOn = try frame(sunAltitude: 30, lightShafts: true, stones: [], camera: camera)
@@ -126,12 +155,17 @@ final class LightBeamTests: XCTestCase {
                        + mean(delta, rows: rows,
                               columns: (centre + 16)..<(centre + 40))) / 2
 
-        // Thresholds measured against the implementation at calibration, with
-        // headroom; the claim is the *ratio* — lit air behind the gap must far
-        // out-glow shadowed air behind the stones.
-        XCTAssertGreaterThan(gap, 4,
-                             "the gap gained only \(gap) levels — no beam")
-        XCTAssertGreaterThan(gap, stoneSide * 1.8 + 2,
+        // In linear light, as fractions of the sky seen through the gap: the
+        // lit air adds at least one per cent of it (the march predicts about
+        // two — see the sunset test), and the claim that matters is the
+        // *ratio*: lit air behind the gap must far out-glow shadowed air
+        // behind the stones, which gains nothing and loses a little to the
+        // haze's own veil.
+        let skyThroughGap = mean(off, rows: rows, columns: (centre - 10)..<(centre + 10))
+        XCTAssertGreaterThan(gap, skyThroughGap * 0.01,
+                             "the gap gained only \(gap) against a sky of "
+                             + "\(skyThroughGap) — no beam")
+        XCTAssertGreaterThan(gap, stoneSide * 1.8 + skyThroughGap * 0.005,
                              "gap gained \(gap), air behind the slabs gained "
                              + "\(stoneSide) — the shadow is not carving the beam")
     }
