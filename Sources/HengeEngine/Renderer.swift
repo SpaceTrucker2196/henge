@@ -445,12 +445,17 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     private let commandQueue: MTLCommandQueue
     private let scenePipeline: MTLRenderPipelineState
     private let grassPipeline: MTLRenderPipelineState
+    /// The same shaders without blending, for the blades whose alpha is one.
+    private let grassOpaquePipeline: MTLRenderPipelineState
     /// The one blade every instance shares, and the field of instances.
     private var grassShapeBuffer: MTLBuffer?
     private var grassIndexBuffer: MTLBuffer?
     private var grassInstanceBuffer: MTLBuffer?
     private var grassIndexCount = 0
     private var grassBladeCount = 0
+    /// How many instances at the front of the field are drawn opaque; the
+    /// rest are the fading ring. See `GrassField.opaquePartition`.
+    private var grassOpaqueCount = 0
     private let shadowPipeline: MTLRenderPipelineState
     private let skyPipeline: MTLRenderPipelineState
     private let hazePipeline: MTLRenderPipelineState
@@ -634,19 +639,29 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                                           colour: Self.colourFormat,
                                           depth: Self.depthFormat,
                                           useVertexDescriptor: true)
-        // Blended, because the outermost blades fade into the textured ground
-        // rather than ending the field at a visible circle. Depth writes stay
-        // on: a blade is opaque everywhere except that outer ring, and turning
-        // them off would let near blades draw behind far ones.
+        // Two grass pipelines from one pair of shaders. The inner field is
+        // opaque — every blade within `radius − fade` has an alpha of exactly
+        // one — and drawing it unblended lets the tile discard hidden blade
+        // fragments before shading them, which a blended pipeline forbids.
+        // Only the fading ring is blended, so the field can dissolve into
+        // the textured ground rather than ending at a visible circle. Depth
+        // writes stay on for both: turning them off for the ring would let
+        // near blades draw behind far ones.
         let grassDescriptor = MTLRenderPipelineDescriptor()
-        grassDescriptor.label = "grass"
+        grassDescriptor.label = "grass opaque"
         grassDescriptor.vertexFunction = library.makeFunction(name: "grass_vertex")
         grassDescriptor.fragmentFunction = library.makeFunction(name: "grass_fragment")
         grassDescriptor.colorAttachments[0].pixelFormat = Self.colourFormat
+        grassDescriptor.depthAttachmentPixelFormat = Self.depthFormat
+        do {
+            self.grassOpaquePipeline = try device.makeRenderPipelineState(descriptor: grassDescriptor)
+        } catch {
+            throw RendererError.pipelineCreationFailed("grass opaque: \(error)")
+        }
+        grassDescriptor.label = "grass fading"
         grassDescriptor.colorAttachments[0].isBlendingEnabled = true
         grassDescriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
         grassDescriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
-        grassDescriptor.depthAttachmentPixelFormat = Self.depthFormat
         do {
             self.grassPipeline = try device.makeRenderPipelineState(descriptor: grassDescriptor)
         } catch {
@@ -1014,7 +1029,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
             return
         }
         let shape = GrassField.bladeMesh()
-        let blades = GrassField.scatter(terrain: terrain)
+        let (blades, opaqueCount) = GrassField.opaquePartition(GrassField.scatter(terrain: terrain))
         guard !blades.isEmpty,
               let shapeBuffer = device.makeBuffer(
                 bytes: shape.vertices,
@@ -1038,6 +1053,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         grassInstanceBuffer = instanceBuffer
         grassIndexCount = shape.indices.count
         grassBladeCount = blades.count
+        grassOpaqueCount = opaqueCount
     }
 
     private func makeDrawItem(mesh: Mesh, albedo: SIMD4<Float>, label: String,
@@ -1887,18 +1903,34 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
            let shape = grassShapeBuffer,
            let indices = grassIndexBuffer,
            let instances = grassInstanceBuffer {
-            encoder.setRenderPipelineState(grassPipeline)
             encoder.setCullMode(.none)
             encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 0)
             encoder.setVertexBuffer(shape, offset: 0, index: 1)
             encoder.setVertexBuffer(instances, offset: 0, index: 2)
             encoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 0)
-            encoder.drawIndexedPrimitives(type: .triangle,
-                                          indexCount: grassIndexCount,
-                                          indexType: .uint16,
-                                          indexBuffer: indices,
-                                          indexBufferOffset: 0,
-                                          instanceCount: grassBladeCount)
+            // The opaque inner field first, then the fading ring over it.
+            // `instance_id` in the shader includes the base instance, so the
+            // ring's blades read their own slots of the one instance buffer.
+            if grassOpaqueCount > 0 {
+                encoder.setRenderPipelineState(grassOpaquePipeline)
+                encoder.drawIndexedPrimitives(type: .triangle,
+                                              indexCount: grassIndexCount,
+                                              indexType: .uint16,
+                                              indexBuffer: indices,
+                                              indexBufferOffset: 0,
+                                              instanceCount: grassOpaqueCount)
+            }
+            if grassBladeCount > grassOpaqueCount {
+                encoder.setRenderPipelineState(grassPipeline)
+                encoder.drawIndexedPrimitives(type: .triangle,
+                                              indexCount: grassIndexCount,
+                                              indexType: .uint16,
+                                              indexBuffer: indices,
+                                              indexBufferOffset: 0,
+                                              instanceCount: grassBladeCount - grassOpaqueCount,
+                                              baseVertex: 0,
+                                              baseInstance: grassOpaqueCount)
+            }
         }
     }
 

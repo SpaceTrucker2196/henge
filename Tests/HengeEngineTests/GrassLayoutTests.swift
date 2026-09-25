@@ -104,6 +104,30 @@ final class GrassLayoutTests: XCTestCase {
         XCTAssertGreaterThan(Float(blades.count), fullField / 6)
     }
 
+    /// The opaque partition puts every blade the shader draws at alpha one
+    /// before every blade in the fading ring — and only reorders, so the
+    /// seeded field keeps every blade it had.
+    func testTheOpaquePartitionSplitsTheFieldAtTheFade() {
+        let scattered = GrassField.scatter(terrain: nil)
+        let (blades, opaqueCount) = GrassField.opaquePartition(scattered)
+        func distance(_ b: GrassBlade) -> Float { (b.root.x * b.root.x + b.root.z * b.root.z).squareRoot() }
+        let opaqueRadius = GrassField.radius - GrassField.fade
+
+        XCTAssertEqual(blades.count, scattered.count)
+        XCTAssertGreaterThan(opaqueCount, 0)
+        XCTAssertLessThan(opaqueCount, blades.count)
+        for blade in blades[..<opaqueCount] {
+            XCTAssertLessThanOrEqual(distance(blade), opaqueRadius)
+        }
+        for blade in blades[opaqueCount...] {
+            XCTAssertGreaterThan(distance(blade), opaqueRadius)
+        }
+        // Same blades, same seed: the partition is a permutation.
+        let before = scattered.map { $0.root.x + $0.root.z * 1000 }.sorted()
+        let after = blades.map { $0.root.x + $0.root.z * 1000 }.sorted()
+        XCTAssertEqual(before, after)
+    }
+
     /// The shared blade mesh is a closed strip ending in a point.
     func testTheBladeMeshIsAStripWithATip() {
         let (vertices, indices) = GrassField.bladeMesh()

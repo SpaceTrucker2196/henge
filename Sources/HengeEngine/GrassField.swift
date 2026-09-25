@@ -223,6 +223,34 @@ public enum GrassField {
         }
         return blades
     }
+
+    /// The field reordered so every blade that is fully opaque comes before
+    /// every blade in the fading ring, with the count of the opaque ones.
+    ///
+    /// The shader's fade is `1 − smoothstep(radius − fade, radius, d)`, so a
+    /// blade whose root lies within `radius − fade` of the centre has an
+    /// alpha of exactly one, and there is nothing for a blend to do. Drawing
+    /// those through a blended pipeline still cost the whole inner field its
+    /// hidden-surface removal: a blended fragment cannot be discarded before
+    /// shading, so every overlapping blade fragment in the densest part of
+    /// the sward was shaded and then overwritten. Two draws — the first
+    /// `opaqueCount` instances through an opaque pipeline, the rest blended —
+    /// give the tile back its early-out where it matters. Order within each
+    /// half is preserved, so the seeded field is still the same field.
+    public static func opaquePartition(_ blades: [GrassBlade],
+                                       radius: Float = GrassField.radius,
+                                       fade: Float = GrassField.fade)
+        -> (blades: [GrassBlade], opaqueCount: Int) {
+        let opaqueRadius = radius - fade
+        var inner: [GrassBlade] = []
+        var outer: [GrassBlade] = []
+        inner.reserveCapacity(blades.count)
+        for blade in blades {
+            let d = (blade.root.x * blade.root.x + blade.root.z * blade.root.z).squareRoot()
+            if d <= opaqueRadius { inner.append(blade) } else { outer.append(blade) }
+        }
+        return (inner + outer, inner.count)
+    }
 }
 
 /// A small deterministic generator, so the sward is the same every launch.
