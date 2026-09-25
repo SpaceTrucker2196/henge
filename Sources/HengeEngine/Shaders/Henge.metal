@@ -629,7 +629,9 @@ static Surface sampleGround(float3 worldPosition, float3 n, float turf,
     // that answers the sun's direction instead of ignoring it.
     const float step = 0.6;             // metres between samples
     const float relief = 0.55;          // how strongly the field tilts
-    float hereMottle = fbm(float3(worldPosition.x * 0.22, 3.0, worldPosition.z * 0.22));
+    // `broadMottle` above is this same field at this same point; sampling it
+    // again cost a full fbm per ground fragment for an identical number.
+    float hereMottle = broadMottle;
     float eastMottle = fbm(float3((worldPosition.x + step) * 0.22, 3.0,
                                   worldPosition.z * 0.22));
     float southMottle = fbm(float3(worldPosition.x * 0.22, 3.0,
@@ -815,10 +817,11 @@ static Surface weatherStone(Surface surface, float3 worldPosition, float3 n,
 
     // Damp foot. Softened by noise so the line is not a bathtub ring.
     float damp = (1.0 - smoothstep(0.0, max(draw.weather.z, 0.05), height)) * aged;
-    damp *= 0.55 + 0.45 * fbm(p * 0.8);
+    float dampNoise = fbm(p * 0.8);
+    damp *= 0.55 + 0.45 * dampNoise;
     // Rain is the damp course all the way up: the same darkening and gloss
     // the foot always had, patchy with the same noise, covering the stone.
-    damp = max(damp, wet * (0.7 + 0.3 * fbm(p * 0.8)));
+    damp = max(damp, wet * (0.7 + 0.3 * dampNoise));
 
     // Shelter: upward-facing, and the north-east half. World +Z is south, so
     // north is -Z and east is +X — the sheltered quarter faces -Z and +X.
