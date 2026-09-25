@@ -104,3 +104,4 @@ the whole ledger: `ledger.py --energy-total`.
 | 826e422 | 2026-09-25T16:08:11Z | claude-fable-5-1 | 736 | 44231 | 5012961 | 77787 | 5.0279 | Fog a far surface with the sky the eye is looking at |
 | c40ec78 | 2026-09-25T16:19:29Z | claude-fable-5-1 | 1216 | 99786 | 10237006 | 126090 | 10.0825 | Model the sun's transmittance through the air |
 | c0ef7f7 | 2026-09-25T16:38:22Z | claude-fable-5-1 | 3516 | 161196 | 50890343 | 3131792 | 83.4534 | Composite the frame in linear light and tone-map it once |
+| 27d4700 | 2026-09-25T16:45:29Z | claude-fable-5-1 | 770 | 44222 | 16581361 | 96424 | 8.2926 | Heel Stone station from the surveyed stone (#11); window from the ask because tw |

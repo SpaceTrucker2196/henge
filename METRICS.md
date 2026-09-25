@@ -23,3 +23,4 @@ One row per production order run through the converge loop
 | 3 | 4b8c1cd | 2026-09-23 | 2 | 385 | partial | Cleal heights for 18 cited rows; provenance split position/footprint/height; HE request drafted; A1 half blocked on licence. Also fixes the UI label test left red by 6218502 |
 | 3 | dd8c8f1 | 2026-09-23 | 2 | 389 | partial | Cleal App. 5 (142 rows) and Petrie 1880 transcribed from page images via browser; Petrie–Cleal agree ≤0.30 m; A1 still blocked on HE permission |
 | 3 | 7f0a328 | 2026-09-23 | 1 | 389 | partial | Stone 22 takes Petrie 1877 pre-fall height (owner decision); HE request drafted in Mail for sending |
+| 11 | 27d4700 | 2026-09-25 | 1 | 389 | yes | Heel Stone station measured from the surveyed stone; geometry suite green on the survey |
