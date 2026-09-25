@@ -1,5 +1,6 @@
 import XCTest
 import Metal
+import simd
 @testable import HengeEngine
 import HengeAstro
 import HengeGeometry
@@ -43,7 +44,18 @@ final class LowSunTests: XCTestCase {
     /// caster too, looking at the receiver, so the caster itself is behind the
     /// camera and never enters the frame. Any change in the measurement is
     /// therefore a shadow and nothing else.
-    private func receiverBrightness(sunAltitude: Double, withCaster: Bool) throws -> Double {
+    ///
+    /// Direct light only, by default. With the atmosphere modelled, the sun
+    /// a third of a degree up delivers about 40 lux to a face that the
+    /// sunrise sky lights with kilolux — the shadow is real and a
+    /// thousandth of the face's brightness, which eight bits cannot hold.
+    /// The suite exists to catch the cascades not being fitted below 0.573°,
+    /// so it measures the sun's term alone, exposed so that the sun's own
+    /// luminance lands at one fixed display level whatever its altitude:
+    /// with the fit present the shadow is the whole of the light, and
+    /// without it there is no shadow at all, which is exactly 0.0 %.
+    private func receiverBrightness(sunAltitude: Double, withCaster: Bool,
+                                    skyLight: Bool = false) throws -> Double {
         let device = try makeDevice()
 
         let receiver = Stone(id: "receiver", position: SIMD3(-30, 0, 0),
@@ -58,9 +70,17 @@ final class LowSunTests: XCTestCase {
 
         let sun = HorizontalCoordinate(altitude: Angle(degrees: sunAltitude),
                                        azimuth: Angle(degrees: 90))
-        let state = SceneState(sun: sun, camera: camera, turbidity: 2.4, exposure: 1.6,
+        var state = SceneState(sun: sun, camera: camera, turbidity: 2.4, exposure: 1.6,
                                surfaceTexturing: false, weathering: false,
                                grassBlades: false)
+        state.skyLight = skyLight
+        if !skyLight {
+            // Sun luminance × exposure = 3.5 puts a sunlit face near the
+            // middle of the tone curve — about 115 of 255 — whether the sun
+            // is a third of a degree up or five.
+            let luminance = simd_dot(state.sunRadiance, SIMD3(0.2126, 0.7152, 0.0722))
+            state.exposure = 3.5 / max(luminance, 1e-6)
+        }
         let renderer = try HengeRenderer(device: device, state: state, shadowResolution: 2048)
         try renderer.load(scene: MonumentScene(stones: stones))
 
@@ -100,12 +120,13 @@ final class LowSunTests: XCTestCase {
     /// must darken another.
     func testAStoneShadowsAnotherAtSunrise() throws {
         let depth = try shadowDepth(sunAltitude: 0.3)
-        // Five percent, measured against an observed 8.7%. The number is
-        // modest for a reason worth keeping: at sunrise the direct sun is
-        // heavily attenuated by airmass and much of the light on that face is
-        // coming from the sky, so removing the sun removes less than intuition
-        // suggests. What the assertion is really separating is "a shadow" from
-        // "no shadow at all", and no shadow at all is exactly 0.0%.
+        // Five percent. The number was first set against an observed 8.7%
+        // with the sky's light included and a hand-tuned sun a hundred times
+        // brighter than the atmosphere allows on the horizon; with the sun
+        // computed and the sky switched off the measured depth is nearly
+        // the whole of the light. The threshold stays where it was: what the
+        // assertion separates is "a shadow" from "no shadow at all", and no
+        // shadow at all is exactly 0.0%.
         XCTAssertGreaterThan(depth, 0.05,
                              "the receiver darkened by only \(depth * 100)% at 0.3° — "
                              + "the sun is up and nothing is casting")
@@ -137,7 +158,10 @@ final class LowSunTests: XCTestCase {
     /// Below the horizon there is no sun, so there is nothing to shadow — the
     /// case the original threshold was reaching for, and still correct.
     func testNothingIsLitBelowTheHorizon() throws {
-        let brightness = try receiverBrightness(sunAltitude: -3, withCaster: false)
+        // The sky on and the app's exposure: this is a claim about the
+        // picture, not about the cascades.
+        let brightness = try receiverBrightness(sunAltitude: -3, withCaster: false,
+                                                skyLight: true)
         XCTAssertLessThan(brightness, 110, "the stone is sunlit with the sun down")
     }
 }

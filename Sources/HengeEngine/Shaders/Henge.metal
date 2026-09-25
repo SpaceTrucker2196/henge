@@ -31,7 +31,8 @@ struct FrameUniforms {
     float4   grass;          // x: blade radius in metres, y: fade width, zw spare
     float4   night;          // rgb night ambient, w: visibility floor
     float4   season;         // rgb vegetation tint, w: dryness
-    float4   shadowSource;   // x: 0 sun-cast shadows, 1 moon-cast
+    float4   shadowSource;   // x: 0 sun-cast shadows, 1 moon-cast;
+                             // z: 1 sky lights the scene, 0 direct only
     float4   haze;           // x: scatter per metre (0 skips the pass),
                              // y: march distance m, z: scale height m, w spare
     float4   torch;          // xyz: torch position, w: night-gated intensity
@@ -1241,11 +1242,16 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // well as the sun does. Kept gentler than the direct-light aperture —
     // ambient arrives from everywhere, so some of it always gets in.
     ambient *= mix(0.6, 1.0, surface.cavity);
+    // Everything above is the sky's light; a test may switch it off to see
+    // the sun's alone.
+    ambient *= frame.shadowSource.z;
 
     // Aerial perspective — distance haze keeps the barrows on the horizon from
     // reading as cardboard cut-outs.
     float distance = length(frame.cameraPosition.xyz - in.worldPosition);
-    float fogAmount = 1.0 - exp(-distance * 0.0016);
+    // The haze is sky light scattered into the line of sight, so it goes
+    // with the sky when a test switches the sky off.
+    float fogAmount = (1.0 - exp(-distance * 0.0016)) * frame.shadowSource.z;
     // Greyed with the deck, or the far plain would fade toward a blue haze
     // that meets a grey sky in a hard seam at the horizon.
     //
@@ -1967,13 +1973,14 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
     float3 ambient = albedo * skyColour * (0.16 + 0.34 * in.heightAlongBlade);
     float nightness = 1.0 - smoothstep(-0.10, 0.06, frame.sunDirection.y);
     ambient += albedo * (frame.night.rgb + frame.night.w) * nightness;
+    ambient *= frame.shadowSource.z;         // sky light off: sun alone
 
     // Aerial perspective on a blade: the field ends 28 m out, where the fog
     // is under 5 %, so the horizon constant the ambient already carries is
     // the fog colour to within a rounding — and it saves the last per-blade
     // Preetham evaluation.
     float distance = length(frame.cameraPosition.xyz - in.worldPosition);
-    float fogAmount = 1.0 - exp(-distance * 0.0016);
+    float fogAmount = (1.0 - exp(-distance * 0.0016)) * frame.shadowSource.z;
     float3 fogColour = weatherGreyed(frame.skyHorizon.rgb, frame.weatherState.x);
 
     float3 colour = mix(direct + ambient, fogColour, clamp(fogAmount, 0.0, 0.85));

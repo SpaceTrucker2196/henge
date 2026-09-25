@@ -52,6 +52,8 @@ public struct FrameUniforms {
     public var season: SIMD4<Float>
     /// x: 0 when the cascades were fitted to the sun, 1 when to the moon.
     /// A single shadow map serves whichever light is actually casting.
+    /// z: 1 when the sky lights the scene, 0 for direct light only — see
+    /// `SceneState.skyLight`.
     public var shadowSource: SIMD4<Float>
     /// The golden-hour haze the light shafts march through.
     /// x: scattering coefficient per metre — already scaled by

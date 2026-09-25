@@ -174,6 +174,14 @@ public struct SceneState: Sendable {
     /// darkness must be able to turn the sky's own lights off.
     public var stars: Bool
 
+    /// Whether the sky lights the scene at all — the hemispheric fill, the
+    /// night ambient, the reflected sky, the haze. On for every real frame. Off, the
+    /// stones are lit by the sun and the moon alone, which is the instrument
+    /// the low-sun shadow suite needs: with the disc on the horizon the direct
+    /// beam is a thousandth of the sky's light on a face, and an 8-bit render
+    /// cannot tell a faint shadow from none. With the sky off it can.
+    public var skyLight: Bool = true
+
     /// The hand-drawn constellation figures, joined star to star. Off by
     /// default: the bare sky is the honest one, and the figures are a
     /// reading aid a viewer asks for.
@@ -358,16 +366,22 @@ public struct SceneState: Sendable {
         return SIMD3(Float(v.x), Float(v.y), Float(v.z))
     }
 
-    /// Sun radiance, reddening and dimming as it nears the horizon. Crude
-    /// against a real transmittance model, but it is what makes the golden
-    /// hour read as golden; M5 replaces it when the atmosphere gains depth.
+    /// Sun radiance in the scene's units: the sun's illuminance above the
+    /// atmosphere, put through `Atmosphere.transmittance` for this altitude
+    /// and turbidity, and divided by the scene's radiometric scale.
+    ///
+    /// The reddening and dimming toward the horizon are therefore Rayleigh
+    /// and aerosol extinction along the real air mass, driven by the same
+    /// turbidity the sky is drawn with, rather than the hand-tuned curve
+    /// that preceded them. Below the horizon the disc is gone and the term
+    /// is zero; the sky carries the twilight.
     public var sunRadiance: SIMD3<Float> {
-        let altitude = Float(max(sun.altitude.radians, -0.1))
-        let airMass = 1.0 / max(sin(max(altitude, 0.01)), 0.05)
-        let extinction = exp(-0.12 * airMass)
-        let warm = SIMD3<Float>(1.0, 0.72 + 0.28 * min(1, altitude * 4),
-                                0.42 + 0.58 * min(1, altitude * 3))
-        return warm * extinction * 6.0
+        guard sun.altitude.radians > -sunAngularRadius else { return .zero }
+        let transmittance = Atmosphere.transmittance(apparentAltitude: sun.altitude,
+                                                     turbidity: Double(turbidity))
+        let scale = Atmosphere.solarIlluminanceAboveAtmosphere
+                  / Double(RadiometricScale.kilocandelaPerUnit)
+        return SIMD3<Float>(transmittance * scale)
     }
 }
 
@@ -1619,7 +1633,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                 let palette = SeasonPalette.colour(atSolarLongitude: state.solarLongitude)
                 return SIMD4(palette.tint, palette.dryness)
             }(),
-            shadowSource: SIMD4(moonCasts ? 1 : 0, 0, 0, 0),
+            shadowSource: SIMD4(moonCasts ? 1 : 0, 0, state.skyLight ? 1 : 0, 0),
             haze: {
                 // The boost is hard zero at 0.2° altitude — above both the
                 // cascade-fit threshold and the moon-cast handover at ~0.011°

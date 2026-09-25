@@ -16,6 +16,15 @@ import simd
 /// Preetham, Shirley & Smits, "A Practical Analytic Model for Daylight"
 /// (SIGGRAPH 1999). Chosen over Hosek–Wilkie because it is closed form and
 /// carries no coefficient table with its own licence.
+/// The one number that ties the scene's linear units to the world's:
+/// Preetham's zenith luminance is in kcd/m², and the shader has always
+/// scaled it by 0.05, so one scene unit is 20 kcd/m² of luminance — and,
+/// for irradiance, 20 klux. The sun's radiance is derived from the same
+/// constant, so sun and sky share one scale and cannot drift apart.
+public enum RadiometricScale {
+    public static let kilocandelaPerUnit: Float = 20
+}
+
 public enum SkyRadiance {
 
     /// The zenith luminance `Y_z` in kcd/m², before the app's radiometric
@@ -75,7 +84,8 @@ public enum SkyRadiance {
         )
 
         let dusk = smoothstep(0, 0.208, -sun.y)
-        return simd_max(rgb, .zero) * 0.05 * (1 + (0.16 - 1) * dusk)
+        return simd_max(rgb, .zero) / RadiometricScale.kilocandelaPerUnit
+             * (1 + (0.16 - 1) * dusk)
     }
 
     /// The two per-frame constants the fragment shaders read as uniforms:
