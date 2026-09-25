@@ -399,8 +399,17 @@ public final class SkyModel {
             // 30 m across, 95 m away — spans some 18°. The stone reads as a
             // silhouette with the monument standing open around it, which is
             // the view someone arriving up the Avenue actually gets.
-            let standoff = Monument.heelStoneDistance + 18
-            return standing(at: WorldAxes.direction(azimuth: axis) * standoff,
+            //
+            // Measured from the stone where the plan puts it — 78.9 m out and
+            // about a degree east of the axis since the surveyed positions
+            // landed — rather than from the constant, so the stone stays the
+            // foreground when the survey moves it. The eye still stands on
+            // the stone's own bearing and looks back along the axis, which
+            // is what puts the stone just right of the line, where it is.
+            let heel = MonumentScene.heelStone().position
+            let beyond = SIMD3(heel.x, 0, heel.z)
+                + WorldAxes.direction(azimuth: axis) * 18
+            return standing(at: beyond,
                             looking: (axis + HengeAstro.Angle(degrees: 180)).normalized)
 
         case .avenue:
