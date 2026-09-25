@@ -83,6 +83,13 @@ public struct FrameUniforms {
     /// before MetalFX lifts it. Point sprites are sized in pixels of the
     /// *drawn* target, so the star pass scales by it. yzw spare.
     public var viewport: SIMD4<Float>
+    /// The sky's radiance straight up, evaluated once per frame by
+    /// `SkyRadiance.ambientConstants` rather than once per fragment. Feeds
+    /// the hemispheric ambient on stone, ground and grass. w unused.
+    public var skyZenith: SIMD4<Float>
+    /// The sky's radiance at the horizon in the sun's azimuth — the other
+    /// end of the hemispheric ambient. w unused.
+    public var skyHorizon: SIMD4<Float>
 
     public init(viewProjection: float4x4 = matrix_identity_float4x4,
                 view: float4x4 = matrix_identity_float4x4,
@@ -108,7 +115,9 @@ public struct FrameUniforms {
                 weatherState: SIMD4<Float> = .zero,
                 worldToJ2000: float4x4 = matrix_identity_float4x4,
                 milkyWay: SIMD4<Float> = .zero,
-                viewport: SIMD4<Float> = SIMD4(1, 0, 0, 0)) {
+                viewport: SIMD4<Float> = SIMD4(1, 0, 0, 0),
+                skyZenith: SIMD4<Float> = .zero,
+                skyHorizon: SIMD4<Float> = .zero) {
         self.viewProjection = viewProjection
         self.view = view
         self.projection = projection
@@ -133,6 +142,8 @@ public struct FrameUniforms {
         self.worldToJ2000 = worldToJ2000
         self.milkyWay = milkyWay
         self.viewport = viewport
+        self.skyZenith = skyZenith
+        self.skyHorizon = skyHorizon
     }
 }
 

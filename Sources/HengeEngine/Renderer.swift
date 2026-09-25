@@ -1552,6 +1552,8 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         let radiance = state.sunRadiance * Float(state.weather.sunTransmission)
         let frost = Weather.frostAmount(condition: state.weather,
                                         sunAltitudeDegrees: state.sun.altitude.degrees)
+        let ambientSky = SkyRadiance.ambientConstants(sun: simd_normalize(sunDirection),
+                                                      turbidity: state.turbidity)
         return FrameUniforms(
             viewProjection: viewProjection,
             view: view,
@@ -1645,7 +1647,9 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                     * Self.milkyWayRadiance
                 return SIMD4(Float(radiance), 0, 0, milkyWayTexture == nil ? 0 : 1)
             }(),
-            viewport: SIMD4(renderScaleInUse, 0, 0, 0)
+            viewport: SIMD4(renderScaleInUse, 0, 0, 0),
+            skyZenith: SIMD4(ambientSky.zenith, 0),
+            skyHorizon: SIMD4(ambientSky.horizon, 0)
         )
     }
 

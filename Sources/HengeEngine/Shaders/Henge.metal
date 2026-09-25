@@ -41,6 +41,8 @@ struct FrameUniforms {
     float4x4 worldToJ2000;   // view ray -> J2000 equatorial, for the star map
     float4   milkyWay;       // x: band radiance this frame, w: map bound
     float4   viewport;       // x: render scale (1 = native), yzw spare
+    float4   skyZenith;      // Preetham straight up, once per frame (CPU)
+    float4   skyHorizon;     // Preetham at the horizon toward the sun, ditto
 };
 
 struct DrawUniforms {
@@ -1122,9 +1124,12 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     // a good deal of what strikes its underside has come off the ground. Giving
     // those two different colours and letting the normal choose between them is
     // what makes a solid look solid.
-    float3 skyColour = preethamSky(float3(0, 1, 0), l, frame.skyParameters.x);
-    float3 horizonColour = preethamSky(normalize(float3(l.x, 0.12, l.z)),
-                                       l, frame.skyParameters.x);
+    //
+    // Both ends of the hemisphere are the same for every fragment in the
+    // frame, so `SkyRadiance.ambientConstants` evaluates them once on the CPU
+    // — two fewer Preetham evaluations per fragment.
+    float3 skyColour = frame.skyZenith.rgb;
+    float3 horizonColour = frame.skyHorizon.rgb;
     // Chalk grassland: a dim, warm-green bounce carrying the sun's own colour.
     float3 groundBounce = float3(0.26, 0.28, 0.16) * frame.sunRadiance.rgb * 0.045;
 
@@ -1893,7 +1898,7 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
                 * abs(dot(n, torchDirection)) / torchDistanceSq;
     }
 
-    float3 skyColour = preethamSky(float3(0, 1, 0), l, frame.skyParameters.x);
+    float3 skyColour = frame.skyZenith.rgb;   // once per frame, on the CPU
     // Only the upper part of a blade sees much sky; deeper in the sward it is
     // enclosed. Same reasoning as the root darkening, and the two together are
     // what give a field depth rather than a uniform green.
