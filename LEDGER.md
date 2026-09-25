@@ -100,3 +100,4 @@ the whole ledger: `ledger.py --energy-total`.
 | d35dd9a | 2026-09-25T15:56:32Z | claude-fable-5-1 | 64 | 1538 | 329042 | 2022 | 0.2002 | Evaluate each noise field once |
 | d85dae8 | 2026-09-25T15:59:09Z | claude-fable-5-1 | 674 | 21176 | 3915147 | 63716 | 3.3186 | Draw the inner grass opaque and only the fading ring blended |
 | da6c028 | 2026-09-25T16:00:10Z | claude-fable-5-1 | 160 | 4197 | 975218 | 7662 | 0.6085 | Shadow the blades with four taps |
+| 3d4159a | 2026-09-25T16:02:20Z | claude-fable-5-1 | 256 | 4611 | 1607833 | 9780 | 0.8307 | Refit the cascades when a prepared scene lands |
