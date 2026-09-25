@@ -244,6 +244,45 @@ static float sampleShadow(depth2d_array<float> shadowMap,
     return sum / 16.0;
 }
 
+// The blades' shadow: four taps, no blocker search.
+//
+// A grass blade is three millimetres wide. The PCSS above sizes a penumbra
+// from the sun's angular width so that a stone's shadow tip lands where the
+// almanac says; on a blade that penumbra is wider than the blade, and the
+// thirty-two samples it costs buy a softness nothing can see. Four taps at
+// the texel corners give the blades a shadow edge a texel wide, which is
+// what a sward under a trilithon needs to read as shaded. Same cascade
+// choice, projection and bias as `sampleShadow`, so the blades agree with
+// the ground they stand in about where the shadow falls.
+static float sampleShadowBlade(depth2d_array<float> shadowMap,
+                               sampler shadowSampler,
+                               float3 worldPosition,
+                               constant FrameUniforms &frame,
+                               float viewDepth,
+                               float ndotl)
+{
+    uint cascade = 2;
+    if (viewDepth < frame.cascadeSplits.x)      cascade = 0;
+    else if (viewDepth < frame.cascadeSplits.y) cascade = 1;
+
+    float4 lightClip = frame.shadowMatrices[cascade] * float4(worldPosition, 1.0);
+    float3 projected = lightClip.xyz / lightClip.w;
+    float2 uv = projected.xy * float2(0.5, -0.5) + 0.5;
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || projected.z > 1.0) {
+        return 1.0;
+    }
+    float bias = mix(0.00035, 0.00004, clamp(ndotl, 0.0, 1.0));
+    float texel = frame.skyParameters.w;
+    float2 offsets[4] = { float2(-0.5, -0.5), float2(0.5, -0.5),
+                          float2(-0.5,  0.5), float2(0.5,  0.5) };
+    float sum = 0.0;
+    for (int i = 0; i < 4; ++i) {
+        float depth = shadowMap.sample(shadowSampler, uv + offsets[i] * texel, cascade);
+        sum += (projected.z - bias) <= depth ? 1.0 : 0.0;
+    }
+    return sum * 0.25;
+}
+
 // ── noise ───────────────────────────────────────────────────────────────────
 //
 // Shared by the weathering and the wind, and declared up here because MSL has
@@ -1875,8 +1914,8 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
     albedo = mix(albedo, float3(0.55, 0.58, 0.65),
                  frame.weatherState.z * in.heightAlongBlade * 0.5);
 
-    float shadow = sampleShadow(shadowMap, shadowSampler, in.worldPosition,
-                                frame, in.viewDepth, max(dot(n, l), 0.05));
+    float shadow = sampleShadowBlade(shadowMap, shadowSampler, in.worldPosition,
+                                     frame, in.viewDepth, max(dot(n, l), 0.05));
 
     // Translucency. A leaf held up to the sun glows, and in a field lit from
     // behind that is most of what you see — the low-sun hours this app is about
@@ -1909,11 +1948,13 @@ fragment float4 grass_fragment(GrassInOut in [[stage_in]],
     float nightness = 1.0 - smoothstep(-0.10, 0.06, frame.sunDirection.y);
     ambient += albedo * (frame.night.rgb + frame.night.w) * nightness;
 
+    // Aerial perspective on a blade: the field ends 28 m out, where the fog
+    // is under 5 %, so the horizon constant the ambient already carries is
+    // the fog colour to within a rounding — and it saves the last per-blade
+    // Preetham evaluation.
     float distance = length(frame.cameraPosition.xyz - in.worldPosition);
     float fogAmount = 1.0 - exp(-distance * 0.0016);
-    float3 fogColour = weatherGreyed(
-        preethamSky(normalize(float3(v.x, max(v.y, 0.02), v.z) * -1.0),
-                    l, frame.skyParameters.x), frame.weatherState.x);
+    float3 fogColour = weatherGreyed(frame.skyHorizon.rgb, frame.weatherState.x);
 
     float3 colour = mix(direct + ambient, fogColour, clamp(fogAmount, 0.0, 0.85));
     colour = acesToneMap(colour * frame.skyParameters.y);
