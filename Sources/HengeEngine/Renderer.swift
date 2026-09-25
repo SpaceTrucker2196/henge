@@ -559,7 +559,7 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
                             radii: SIMD4<Float>, key: ShadowKey)?
     /// Whether this frame's uniforms carry a fresh fit that the shadow
     /// pass must render, or the cached one the maps already hold.
-    private var shadowPassNeeded = true
+    private(set) var shadowPassNeeded = true
     /// The oracle path refits every time, so no measurement depends on
     /// what the previous frame happened to be.
     private var forceShadowRefit = false
@@ -898,7 +898,6 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
 
     public func load(scene: MonumentScene, subdivisions: Int = 18,
                      roughness: Double = 0.06, rounding: Double = 0.13) throws {
-        sceneStamp += 1
         let prepared = Self.prepare(scene: scene, terrain: terrain,
                                     soilBanks: state.soilBanks,
                                     subdivisions: subdivisions,
@@ -987,6 +986,13 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
     /// meshes already exist — so the frame the bar disappears on is the
     /// frame the new monument stands.
     public func load(prepared: PreparedScene) throws {
+        // The cascades were fitted to whatever stood here before — for the
+        // app, an empty plain while the monument was being built off the main
+        // actor. The bump used to live in `load(scene:)` only, so the app's
+        // prepare-then-load path kept the empty fit until the sun crept a
+        // hundredth of a degree or the camera moved two centimetres, and the
+        // new stones stood shadowless for as long as the viewer held still.
+        sceneStamp += 1
         var items: [DrawItem] = []
         for piece in prepared.items {
             if let item = try makeDrawItem(mesh: piece.mesh, albedo: piece.albedo,
