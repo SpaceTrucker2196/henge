@@ -98,3 +98,4 @@ the whole ledger: `ledger.py --energy-total`.
 | efc4931 | 2026-09-24T18:40:06Z | claude-fable-5-1 | 784 | 14724 | 3173113 | 35902 | 2.2554 | Raise the deployment target to iOS 26 and macOS 26 |
 | c617a46 | 2026-09-25T15:55:38Z | claude-fable-5-1,claude-opus-5-5 | 8752 | 459616 | 104346466 | 6646040 | 150.0638 | Move the sky's per-frame constants out of the fragment shaders |
 | d35dd9a | 2026-09-25T15:56:32Z | claude-fable-5-1 | 64 | 1538 | 329042 | 2022 | 0.2002 | Evaluate each noise field once |
+| d85dae8 | 2026-09-25T15:59:09Z | claude-fable-5-1 | 674 | 21176 | 3915147 | 63716 | 3.3186 | Draw the inner grass opaque and only the fading ring blended |
