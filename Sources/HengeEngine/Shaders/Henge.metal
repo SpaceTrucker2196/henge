@@ -1248,9 +1248,29 @@ fragment float4 scene_fragment(SceneInOut in [[stage_in]],
     float fogAmount = 1.0 - exp(-distance * 0.0016);
     // Greyed with the deck, or the far plain would fade toward a blue haze
     // that meets a grey sky in a hard seam at the horizon.
+    //
+    // The haze between the eye and the surface scatters the sky *along the
+    // line of sight*, so the colour is the sky's in the direction the eye
+    // is looking: `-v`, lifted to just above the horizon when the eye looks
+    // down at the ground. The first cut clamped `v.y` before negating it,
+    // which left the elevation at or below the horizon for every fragment
+    // — a barrow's crest and the plain at its foot fogged to the same
+    // colour, and only the azimuth was right.
+    //
+    // Below the horizon the old expression stands: the model floors the
+    // elevation itself, so a downward look reads the horizon in its own
+    // azimuth, and the direction stays continuous through the nadir. Two
+    // attempts to "lift" a downward look up to the horizon both broke the
+    // penumbra suite — clamping y sends a near-vertical look to the zenith,
+    // and clamping the elevation makes the azimuth swing through 360° in
+    // the few pixels round an overhead camera's nadir, where the horizon's
+    // colour changes fastest. Neither is a sky the eye is looking at.
+    float3 look = -v;
+    float3 fogDirection = look.y > 0.0
+        ? look
+        : normalize(float3(look.x, min(look.y, -0.02), look.z));
     float3 fogColour = weatherGreyed(
-        preethamSky(normalize(float3(v.x, max(v.y, 0.02), v.z) * -1.0),
-                    l, frame.skyParameters.x), cover);
+        preethamSky(fogDirection, l, frame.skyParameters.x), cover);
 
     float3 colour = mix(direct + ambient, fogColour, clamp(fogAmount, 0.0, 0.85));
     colour = acesToneMap(colour * frame.skyParameters.y);
