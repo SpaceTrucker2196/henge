@@ -81,11 +81,14 @@ inside `HengeUI`.
   waiting for one.
 - **Filtering on depth textures is `nearest`.** A linear sampler averages depths
   across the shadow edge before comparing, which drags the boundary toward the
-  caster by a third of a metre here. The 3×3 comparison in the shader is the
-  percentage-closer filter.
+  caster by a third of a metre here. The shader compares depths itself:
+  `sampleShadow` is PCSS, a 16-tap blocker search that sizes the penumbra from
+  the sun's angular width and a 16-tap Poisson filter.
 - **Shadow bias is a measurement cost, not a cosmetic knob.** It buys freedom
   from acne and pays in peter-panning, which in this app is error in a calendar.
-  Front-face culling in the shadow pass does most of the work instead.
+  The shadow pass culls back faces (front culling would delete the
+  single-sided terrain's self-shadowing at sunrise), so the slope-scaled bias
+  is small and the agreement test's 0.28 m tolerance was measured against it.
 - **Metal's clip space is z ∈ [0,1]**, not [−1,1]. The projections in
   `MetalMath` are built for that; a GL-style matrix produces a plausible picture
   over a useless depth buffer.

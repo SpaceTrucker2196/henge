@@ -753,9 +753,10 @@ public final class HengeRenderer: NSObject, MTKViewDelegate {
         // *depths* across the shadow edge and only then compares, which drags
         // the boundary toward the caster — a third of a metre on a ten-metre
         // shadow here, and immune to bias tuning because it is a filtering
-        // artefact rather than a depth one. The 3×3 comparison in the shader
-        // does the percentage-closer filtering instead, which is what PCF
-        // actually means.
+        // artefact rather than a depth one. The comparisons happen in the
+        // shader instead — `sampleShadow` is percentage-closer soft shadows: a
+        // 16-tap blocker search sizes the penumbra from the sun's angular
+        // width, then a 16-tap Poisson filter compares each depth separately.
         let samplerDescriptor = MTLSamplerDescriptor()
         samplerDescriptor.minFilter = .nearest
         samplerDescriptor.magFilter = .nearest

@@ -180,9 +180,11 @@ static float sampleShadow(depth2d_array<float> shadowMap,
     // peter-panning: the shadow detaches from its caster and falls short. Here
     // that shortfall is not a cosmetic nuisance, it is measurement error in a
     // calendar — at 30° elevation a bias of 0.0015 pulled the shadow tip a
-    // third of a metre in, which the agreement test caught. Culling front
-    // faces in the shadow pass already removes most acne, so the bias only has
-    // to cover depth quantisation.
+    // third of a metre in, which the agreement test caught. The shadow pass
+    // culls back faces (the terrain is a single-sided heightfield, and front
+    // culling would delete its self-shadowing at sunrise), so the bias has to
+    // cover acne on the lit faces as well as depth quantisation; the 0.28 m
+    // tolerance in the agreement test was measured against exactly this pair.
     float bias = mix(0.00035, 0.00004, clamp(ndotl, 0.0, 1.0));
 
     float texel = frame.skyParameters.w;
